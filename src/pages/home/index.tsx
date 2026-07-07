@@ -1,4 +1,5 @@
 import Flex from '@/components/Flex'
+import { Button } from '@/components/Button'
 
 export default function Home() {
   return (
@@ -7,9 +8,7 @@ export default function Home() {
         center
         className='text-white'
       >
-        <div className='w-50 bg-red-500'>1</div>
-        <span className='bg-amber-500'>2</span>
-        <span className='bg-blue-700'>3</span>
+        <Button>复制</Button>
       </Flex>
     </>
   )

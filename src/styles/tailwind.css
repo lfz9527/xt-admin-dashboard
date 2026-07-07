@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import './global.css';
 
 @utility flex-center {
   display: flex;

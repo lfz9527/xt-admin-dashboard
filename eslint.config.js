@@ -43,6 +43,7 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-hooks/preserve-manual-memoization': 'warn',
+      'react-refresh/only-export-components': 'off',
       'no-empty': 'off',
     },
   },
