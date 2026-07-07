@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import Flex from '@/components/Flex'
+import Flex from '@/ui/Flex'
 
 function getContainer(ui: React.ReactElement) {
   const { container } = render(ui)

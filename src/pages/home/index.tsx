@@ -1,5 +1,5 @@
-import Flex from '@/components/Flex'
-import { Button } from '@/components/Button'
+import Flex from '@/ui/Flex'
+import { Button } from '@/ui/Button'
 
 export default function Home() {
   return (
