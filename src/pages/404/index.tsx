@@ -16,7 +16,7 @@ export default function NotFound() {
         404
       </p>
 
-      <div className='mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-[#f3f4f6] px-3 py-[3px] font-mono text-xs break-all text-[#6b7280] dark:border-[#2e2e3a] dark:bg-[#1c1c22] dark:text-[#9ca3af]'>
+      <div className='mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-[#f3f4f6] px-3 py-0.75 font-mono text-xs break-all text-[#6b7280] dark:border-[#2e2e3a] dark:bg-[#1c1c22] dark:text-[#9ca3af]'>
         <span className='size-1.5 shrink-0 rounded-full bg-[#e24b4a]' />
         {location.pathname}
       </div>
@@ -24,7 +24,7 @@ export default function NotFound() {
       <h1 className='mb-2 text-xl font-semibold text-[#111] dark:text-[#f0f0f0]'>
         页面走丢了
       </h1>
-      <p className='mb-8 max-w-[360px] text-sm leading-relaxed text-[#6b7280] dark:text-[#9ca3af]'>
+      <p className='mb-8 max-w-90 text-sm leading-relaxed text-[#6b7280] dark:text-[#9ca3af]'>
         你访问的路由不存在，可能已被删除、移动或链接输入有误。
       </p>
 
