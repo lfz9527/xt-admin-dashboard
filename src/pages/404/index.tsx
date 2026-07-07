@@ -1,10 +1,6 @@
 import { useNavigate, useLocation } from 'react-router'
 
-const btnPrimary =
-  'cursor-pointer rounded-lg bg-[#111] px-[22px] py-[9px] text-[13px] font-medium text-white transition-opacity duration-150 hover:opacity-75 active:opacity-60 dark:bg-[#f0f0f0] dark:text-[#0c0c0e]'
-
-const btnGhost =
-  'cursor-pointer rounded-lg border border-[#d1d5db] bg-transparent px-[22px] py-[9px] text-[13px] text-[#111] transition-colors duration-150 hover:bg-[#f9fafb] active:bg-[#f3f4f6] dark:border-[#374151] dark:text-[#f0f0f0] dark:hover:bg-[#1c1c22] dark:active:bg-[#252530]'
+import { Button } from '@/ui/Button'
 
 export default function NotFound() {
   const navigate = useNavigate()
@@ -29,18 +25,18 @@ export default function NotFound() {
       </p>
 
       <div className='flex flex-wrap justify-center gap-2.5'>
-        <button
-          className={btnPrimary}
+        <Button
+          variant='default'
           onClick={() => navigate('/')}
         >
           返回首页
-        </button>
-        <button
-          className={btnGhost}
+        </Button>
+        <Button
+          variant='outline'
           onClick={() => navigate(-1)}
         >
           上一页
-        </button>
+        </Button>
       </div>
     </div>
   )
