@@ -11,7 +11,7 @@ export default function NotFound() {
   const location = useLocation()
 
   return (
-    <div className='flex min-h-screen flex-col items-center justify-center bg-white px-4 py-8 text-center dark:bg-[#0c0c0e]'>
+    <div className='flex-center size-full flex-col bg-white px-4 py-8 text-center dark:bg-[#0c0c0e]'>
       <p className='mb-4 text-[clamp(72px,13vw,128px)] leading-none font-bold tracking-[-3px] text-[#111] tabular-nums dark:text-[#f0f0f0]'>
         404
       </p>
