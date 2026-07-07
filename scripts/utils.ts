@@ -1,7 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import url from 'node:url'
-import type { SourceFile } from 'ts-morph'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 export const ROOT_DIR = path.resolve(__dirname, '../')
@@ -73,19 +72,4 @@ export function removeComments(code: string): string {
     }
     return match
   })
-}
-
-export function ensureImport(
-  sourceFile: SourceFile,
-  { spec, defaultImport }: { spec: string; defaultImport?: string }
-) {
-  const exists = sourceFile
-    .getImportDeclarations()
-    .some((imp) => imp.getModuleSpecifierValue() === spec)
-  if (!exists) {
-    sourceFile.addImportDeclaration({
-      moduleSpecifier: spec,
-      defaultImport,
-    })
-  }
 }
