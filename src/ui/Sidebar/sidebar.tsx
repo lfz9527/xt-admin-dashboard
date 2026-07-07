@@ -4,6 +4,7 @@ import * as React from 'react'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot } from 'radix-ui'
 
 import { cn } from '@/utils/common'
 import { SidebarProvider, useSidebar } from './context'
@@ -448,38 +449,32 @@ const sidebarMenuButtonVariants = cva(
 )
 
 function SidebarMenuButton({
-  render,
+  asChild = false,
   isActive = false,
   variant = 'default',
   size = 'default',
   tooltip,
   className,
   ...props
-}: useRender.ComponentProps<'button'> &
-  React.ComponentProps<'button'> & {
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>) {
+}: React.ComponentProps<'button'> & {
+  asChild?: boolean
+  isActive?: boolean
+  tooltip?: string | React.ComponentProps<typeof TooltipContent>
+} & VariantProps<typeof sidebarMenuButtonVariants>) {
+  const Comp = asChild ? Slot.Root : 'button'
   const { isMobile, state } = useSidebar()
-  const comp = useRender({
-    defaultTagName: 'button',
-    props: mergeProps<'button'>(
-      {
-        className: cn(sidebarMenuButtonVariants({ variant, size }), className),
-      },
-      props
-    ),
-    render: !tooltip ? render : <TooltipTrigger render={render} />,
-    state: {
-      slot: 'sidebar-menu-button',
-      sidebar: 'menu-button',
-      size,
-      active: isActive,
-    },
-  })
-
+  const button = (
+    <Comp
+      data-slot='sidebar-menu-button'
+      data-sidebar='menu-button'
+      data-size={size}
+      data-active={isActive}
+      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      {...props}
+    />
+  )
   if (!tooltip) {
-    return comp
+    return button
   }
   if (typeof tooltip === 'string') {
     tooltip = {
@@ -488,7 +483,7 @@ function SidebarMenuButton({
   }
   return (
     <Tooltip>
-      {comp}
+      <TooltipTrigger render={button} />
       <TooltipContent
         side='right'
         align='center'
