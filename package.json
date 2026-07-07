@@ -1,0 +1,93 @@
+{
+  "name": "react-development-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint-stylelint": "stylelint \"**/*.{css,scss,less}\"",
+    "lint-stylelint:fix": "stylelint \"**/*.{css,scss,less}\" --fix",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "preview": "vite preview",
+    "prepare": "husky",
+    "commit": "git add . && git-cz",
+    "globalInstall": "tsx ./scripts/install-global.ts",
+    "---": "rimraf 是安装在全局的命令，用于删除文件和目录 可执行 pnpm globalInstall 安装",
+    "clean": "rimraf node_modules  pnpm-lock.yaml || exit 0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-customizable",
+      "config": {
+        "path": "./commit-kit/.cz-config.cjs"
+      }
+    },
+    "cz-customizable": {
+      "config": "./commit-kit/.cz-config.cjs"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,scss,less,md,html,json}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "clsx": "^2.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "^7.14.0",
+    "tailwindcss": "^4.3.1",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@eslint/js": "^9.39.4",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.12.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "commitizen": "^4.3.2",
+    "commitlint-config-cz": "^0.13.3",
+    "cz-customizable": "^7.5.4",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "rollup-plugin-visualizer": "^7.0.1",
+    "stylelint": "^17.6.0",
+    "stylelint-config-idiomatic-order": "^10.0.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-config-tailwindcss": "^1.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.57.0",
+    "unplugin-icons": "^23.0.1",
+    "vite": "^8.0.1",
+    "vite-plugin-compression2": "^2.5.3",
+    "vite-plugin-env-parse": "^1.0.15",
+    "vite-plugin-stylelint": "^6.1.0",
+    "vitest": "^4.1.8",
+    "xt-commit-kit": "^1.0.0"
+  }
+}

@@ -1,0 +1,3 @@
+allowBuilds:
+  # 允许第三方包自动执行构建脚本
+  esbuild: true
