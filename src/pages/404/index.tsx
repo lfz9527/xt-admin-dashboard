@@ -21,7 +21,8 @@ export default function NotFound() {
         页面走丢了
       </h1>
       <p className='mb-8 max-w-90 text-sm leading-relaxed text-[#6b7280] dark:text-[#9ca3af]'>
-        你访问的路由不存在，可能已被删除、移动或链接输入有误。
+        你访问的路由不存在 <br />
+        可能已被删除、移动或链接输入有误。
       </p>
 
       <div className='flex flex-wrap justify-center gap-2.5'>
