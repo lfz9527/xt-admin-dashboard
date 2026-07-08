@@ -1,9 +1,11 @@
 import { useState, useCallback, isValidElement } from 'react'
+import { ChevronRight } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/ui/Collapsible'
+import { cn } from '@/utils/common'
 
 interface CollapseProps {
   title: React.ReactNode
@@ -11,11 +13,17 @@ interface CollapseProps {
   defaultOpen?: boolean
   disabled?: boolean
   className?: string
+
   trigger?: React.ReactNode
+  triggerCls?: string
+
   wrapper?: React.ReactElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
   keepMounted?: boolean
+
+  arrow?: React.ReactNode
+  arrowCls?: string
 }
 
 function Collapse({
@@ -25,10 +33,13 @@ function Collapse({
   disabled = false,
   className,
   trigger,
+  triggerCls,
   wrapper,
   open: controlledOpen,
   onOpenChange,
   keepMounted = true,
+  arrow,
+  arrowCls,
 }: CollapseProps) {
   const isControlled = controlledOpen !== undefined
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
@@ -50,20 +61,36 @@ function Collapse({
     [disabled, defaultOpen, isControlled, onOpenChange]
   )
 
-  const triggerElement: React.ReactElement = isValidElement(trigger) ? (
-    (trigger as React.ReactElement)
-  ) : (
-    <span>{trigger ?? title}</span>
-  )
+  // 完全自定义触发器
+  const isCusTrigger = isValidElement(trigger)
 
   return (
     <Collapsible
       open={currentOpen}
       onOpenChange={handleOpenChange}
-      className={className}
+      className={cn('group/collapsible', className)}
       render={wrapper ?? <div />}
     >
-      <CollapsibleTrigger render={triggerElement} />
+      {isCusTrigger && <CollapsibleTrigger render={trigger} />}
+      {!isCusTrigger && (
+        <CollapsibleTrigger
+          className={cn(
+            'flex items-center gap-2 [&_svg:not([class*="size-"])]:size-4',
+            triggerCls
+          )}
+        >
+          <span>{title}</span>
+          {arrow ?? (
+            <ChevronRight
+              className={cn(
+                'ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90',
+                arrowCls
+              )}
+            />
+          )}
+        </CollapsibleTrigger>
+      )}
+
       <CollapsibleContent keepMounted={keepMounted}>
         {children}
       </CollapsibleContent>
