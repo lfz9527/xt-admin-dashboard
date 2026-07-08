@@ -15,6 +15,7 @@ interface CollapseProps {
   wrapper?: React.ReactElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  keepMounted?: boolean
 }
 
 function Collapse({
@@ -27,6 +28,7 @@ function Collapse({
   wrapper,
   open: controlledOpen,
   onOpenChange,
+  keepMounted = true,
 }: CollapseProps) {
   const isControlled = controlledOpen !== undefined
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
@@ -62,7 +64,9 @@ function Collapse({
       render={wrapper ?? <div />}
     >
       <CollapsibleTrigger render={triggerElement} />
-      <CollapsibleContent>{children}</CollapsibleContent>
+      <CollapsibleContent keepMounted={keepMounted}>
+        {children}
+      </CollapsibleContent>
     </Collapsible>
   )
 }
