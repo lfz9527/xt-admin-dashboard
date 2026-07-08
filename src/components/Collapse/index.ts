@@ -1,2 +1,2 @@
 export { Collapse } from './collapse'
-export type { CollapseItem, CollapseProps } from './collapse'
+export type { CollapseProps } from './collapse'

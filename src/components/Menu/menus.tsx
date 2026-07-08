@@ -11,6 +11,7 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
+  SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
@@ -62,41 +63,49 @@ const items = [
   },
 ]
 
-const collapseItems = items.map((item) => ({
-  key: item.title,
-  title: item.title,
-  className: 'group/collapsible',
-  defaultOpen: item.isActive,
-  trigger: (
-    <SidebarMenuButton tooltip={item.title}>
-      {item.icon && <item.icon />}
-      <span>{item.title}</span>
-      <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
-    </SidebarMenuButton>
-  ),
-  children: (
-    <SidebarMenuSub>
-      {item.items?.map((subItem) => (
-        <SidebarMenuSubItem key={subItem.title}>
-          <SidebarMenuSubButton
-            render={
-              <a href={subItem.url}>
-                <span>{subItem.title}</span>
-              </a>
-            }
-          />
-        </SidebarMenuSubItem>
-      ))}
-    </SidebarMenuSub>
-  ),
-}))
+const collapseItems = items.map((item, index) => {
+  return {
+    key: item.title + index,
+    title: item.title,
+    className: 'group/collapsible',
+    defaultOpen: item.isActive,
+    wrapper: <SidebarMenuItem />,
+    trigger: (
+      <SidebarMenuButton tooltip={item.title}>
+        {item.icon && <item.icon />}
+        <span>{item.title}</span>
+        <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
+      </SidebarMenuButton>
+    ),
+    children: (
+      <SidebarMenuSub>
+        {item.items?.map((subItem) => (
+          <SidebarMenuSubItem key={subItem.title}>
+            <SidebarMenuSubButton
+              render={
+                <a href={subItem.url}>
+                  <span>{subItem.title}</span>
+                </a>
+              }
+            />
+          </SidebarMenuSubItem>
+        ))}
+      </SidebarMenuSub>
+    ),
+  }
+})
 
 export default function Menus() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        <Collapse items={collapseItems} />
+        {collapseItems.map(({ key, ...item }) => (
+          <Collapse
+            key={key}
+            {...item}
+          />
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   )
