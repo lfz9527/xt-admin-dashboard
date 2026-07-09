@@ -2,8 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage, devtools } from 'zustand/middleware'
 import { logger } from './middleware/logger'
 import { getSystemTheme } from '@/utils/common'
-
-type Theme = 'light' | 'dark'
+import { type Theme } from '@/types/setting'
 
 type State = {
   theme: Theme
