@@ -4,19 +4,19 @@ import {
   Settings2,
   SquareTerminal,
 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useMatches } from 'react-router'
 import { Collapse } from '@/components/Collapse'
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarGroup,
 } from '@/ui/Sidebar'
 import type { MenuItem } from './types'
+import type { RouteMeta } from '@/router/types'
 
 const menus: MenuItem[] = [
   {
@@ -43,112 +43,82 @@ const menus: MenuItem[] = [
     title: '系统管理',
     icon: <Settings2 />,
     children: [
-      {
-        key: 'system-users',
-        title: '用户管理',
-        path: '/system/users',
-        children: [
-          { key: 'system-user-1', title: '张三', path: '/system/users/1' },
-          { key: 'system-user-2', title: '李四', path: '/system/users/2' },
-        ],
-      },
+      { key: 'system-users', title: '用户管理', path: '/system/users' },
       { key: 'system-roles', title: '角色管理', path: '/system/roles' },
     ],
   },
 ]
 
-function renderSubItems(children: MenuItem[]) {
+function renderSubItems(children: MenuItem[], activeKey: string) {
   return (
     <SidebarMenuSub>
-      {children.map((child) => {
-        const hasChildren = child.children && child.children.length > 0
-
-        if (hasChildren) {
-          return (
-            <Collapse
-              key={child.key}
-              title={child.title}
-              keepMounted
-              triggerCls='text-sidebar-foreground'
-              trigger={
-                <SidebarMenuSubButton
-                  render={
-                    <span className='whitespace-nowrap'>
-                      <span>{child.title}</span>
-                      <ChevronRight className='ml-auto size-3 transition-transform duration-200 group-data-open/collapsible:rotate-90' />
-                    </span>
-                  }
-                />
-              }
-            >
-              {renderSubItems(child.children!)}
-            </Collapse>
-          )
-        }
-
-        return (
-          <SidebarMenuSubItem key={child.key}>
-            <SidebarMenuSubButton
-              render={
-                <Link
-                  to={child.path ?? '/'}
-                  className='cursor-pointer whitespace-nowrap'
-                >
-                  <span>{child.title}</span>
-                </Link>
-              }
-            />
-          </SidebarMenuSubItem>
-        )
-      })}
+      {children.map((child) => (
+        <SidebarMenuSubItem key={child.key}>
+          <SidebarMenuSubButton
+            isActive={child.key === activeKey}
+            render={
+              <Link
+                to={child.path ?? '/'}
+                className='whitespace-nowrap'
+              >
+                <span>{child.title}</span>
+              </Link>
+            }
+          />
+        </SidebarMenuSubItem>
+      ))}
     </SidebarMenuSub>
   )
 }
 
-const collapseItems = menus
-  .filter((item) => item.children && item.children.length > 0)
-  .map((item) => ({
-    key: item.key,
-    title: item.title,
-    wrapper: <SidebarMenuItem />,
-    trigger: (
-      <SidebarMenuButton tooltip={item.title}>
-        {item.icon}
-        <span className='whitespace-nowrap'>{item.title}</span>
-        <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
-      </SidebarMenuButton>
-    ),
-    children: renderSubItems(item.children!),
-  }))
-
-const leafItems = menus.filter(
-  (item) => !item.children || item.children.length === 0
-)
-
 export default function Menus() {
+  const matches = useMatches()
+  const currentMatch = matches[matches.length - 1]
+  const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
+
   return (
     <SidebarGroup>
-      {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
       <SidebarMenu>
-        {leafItems.map((item) => (
-          <SidebarMenuItem key={item.key}>
-            <SidebarMenuButton
-              asChild
-              tooltip={item.title}
-            >
-              <Link to={item.path ?? '#'}>
-                {item.icon}
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-        {collapseItems.map(({ key, ...item }) => (
-          <Collapse
-            key={key}
-            {...item}
-          />
-        ))}
+        {menus.map((item) => {
+          const hasChildren = item.children && item.children.length > 0
+
+          if (hasChildren) {
+            const hasActiveChild = item.children!.some((c) => c.key === menuKey)
+
+            return (
+              <Collapse
+                key={item.key}
+                title={item.title}
+                defaultOpen={hasActiveChild}
+                wrapper={<SidebarMenuItem />}
+                trigger={
+                  <SidebarMenuButton tooltip={item.title}>
+                    {item.icon}
+                    <span className='whitespace-nowrap'>{item.title}</span>
+                    <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
+                  </SidebarMenuButton>
+                }
+              >
+                {renderSubItems(item.children!, menuKey)}
+              </Collapse>
+            )
+          }
+
+          return (
+            <SidebarMenuItem key={item.key}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={item.key === menuKey}
+              >
+                <Link to={item.path ?? '#'}>
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )
+        })}
       </SidebarMenu>
     </SidebarGroup>
   )

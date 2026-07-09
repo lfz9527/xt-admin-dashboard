@@ -13,42 +13,42 @@ const routes: AppRouteObject[] = [
           {
             path: '/',
             element: Lazy(() => import('@/pages/home')),
-            meta: { title: '首页' },
+            meta: { title: '首页', menuKey: 'home' },
           },
           {
             path: '/dashboard',
             element: Lazy(() => import('@/pages/dashboard')),
-            meta: { title: 'dashboard' },
+            meta: { title: 'dashboard', menuKey: 'dashboard' },
           },
           {
             path: '/dashboard/overview',
             element: Lazy(() => import('@/pages/dashboard/overview')),
-            meta: { title: '概览' },
+            meta: { title: '概览', menuKey: 'dashboard-overview' },
           },
           {
             path: '/dashboard/analytics',
             element: Lazy(() => import('@/pages/dashboard/analytics')),
-            meta: { title: '分析' },
+            meta: { title: '分析', menuKey: 'dashboard-analytics' },
           },
           {
             path: '/system',
             element: Lazy(() => import('@/pages/system')),
-            meta: { title: 'system' },
+            meta: { title: 'system', menuKey: 'system' },
           },
           {
             path: '/system/users',
             element: Lazy(() => import('@/pages/system/users')),
-            meta: { title: '用户管理' },
+            meta: { title: '用户管理', menuKey: 'system-users' },
           },
           {
             path: '/system/users/:id',
             element: Lazy(() => import('@/pages/system/users/detail')),
-            meta: { title: '用户详情' },
+            meta: { title: '用户详情', menuKey: 'system-users' },
           },
           {
             path: '/system/roles',
             element: Lazy(() => import('@/pages/system/roles')),
-            meta: { title: '角色管理' },
+            meta: { title: '角色管理', menuKey: 'system-roles' },
           },
           {
             path: '/404',
