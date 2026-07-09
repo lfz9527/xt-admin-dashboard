@@ -15,7 +15,16 @@ const routes: AppRouteObject[] = [
             element: Lazy(() => import('@/pages/home')),
             meta: { title: '首页' },
           },
-
+          {
+            path: '/dashboard',
+            element: Lazy(() => import('@/pages/dashboard')),
+            meta: { title: 'dashboard' },
+          },
+          {
+            path: '/system',
+            element: Lazy(() => import('@/pages/system')),
+            meta: { title: 'system' },
+          },
           {
             path: '/404',
             element: Lazy(() => import('@/pages/404')),
