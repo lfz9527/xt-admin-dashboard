@@ -73,7 +73,7 @@ const collapseItems = items.map((item, index) => {
     wrapper: <SidebarMenuItem />,
     trigger: (
       <SidebarMenuButton tooltip={item.title}>
-        {Icon && <Icon className='size-5' />}
+        {Icon && <Icon />}
         <span>{item.title}</span>
         <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
       </SidebarMenuButton>
