@@ -6,3 +6,13 @@
   align-items: center;
   justify-content: center;
 }
+
+@keyframes navigate-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}

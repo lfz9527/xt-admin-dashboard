@@ -5,6 +5,11 @@ import { useTheme } from '@/hooks'
 function App() {
   useTheme()
 
-  return <RouterProvider router={router} />
+  return (
+    <RouterProvider
+      router={router}
+      useTransitions={true}
+    />
+  )
 }
 export default App

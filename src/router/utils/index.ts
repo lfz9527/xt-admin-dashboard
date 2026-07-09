@@ -25,6 +25,7 @@ export function buildRouter(routes: AppRouteObject[]): RouteObject[] {
     return {
       ...args,
       handle,
+      loader: () => null,
       children: finalChildren?.length ? finalChildren : undefined,
     }
   }
