@@ -3,51 +3,34 @@ import {
   LayoutDashboard,
   Settings2,
   SquareTerminal,
+  type LucideIcon,
 } from 'lucide-react'
 import { Link, useMatches } from 'react-router'
 import { Collapse } from '@/components/Collapse'
 import {
+  SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarGroup,
 } from '@/ui/Sidebar'
 import type { MenuItem } from './types'
 import type { RouteMeta } from '@/router/types'
+import { useMenu } from '@/store'
 
-const menus: MenuItem[] = [
-  {
-    key: 'home',
-    title: '首页',
-    path: '/',
-    icon: <SquareTerminal />,
-  },
-  {
-    key: 'dashboard',
-    title: 'Dashboard',
-    icon: <LayoutDashboard />,
-    children: [
-      { key: 'dashboard-overview', title: '概览', path: '/dashboard/overview' },
-      {
-        key: 'dashboard-analytics',
-        title: '分析',
-        path: '/dashboard/analytics',
-      },
-    ],
-  },
-  {
-    key: 'system',
-    title: '系统管理',
-    icon: <Settings2 />,
-    children: [
-      { key: 'system-users', title: '用户管理', path: '/system/users' },
-      { key: 'system-roles', title: '角色管理', path: '/system/roles' },
-    ],
-  },
-]
+const iconMap: Record<string, LucideIcon> = {
+  SquareTerminal,
+  LayoutDashboard,
+  Settings2,
+}
+
+function renderIcon(name?: string) {
+  if (!name || !iconMap[name]) return <svg />
+  const Comp = iconMap[name]
+  return <Comp />
+}
 
 function renderSubItems(children: MenuItem[], activeKey: string) {
   return (
@@ -76,6 +59,8 @@ export default function Menus() {
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
 
+  const menus = useMenu((s) => s.menus)
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -93,7 +78,7 @@ export default function Menus() {
                 wrapper={<SidebarMenuItem />}
                 trigger={
                   <SidebarMenuButton tooltip={item.title}>
-                    {item.icon}
+                    {renderIcon(item.icon)}
                     <span className='whitespace-nowrap'>{item.title}</span>
                     <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
                   </SidebarMenuButton>
@@ -112,7 +97,7 @@ export default function Menus() {
                 isActive={item.key === menuKey}
               >
                 <Link to={item.path ?? '#'}>
-                  {item.icon}
+                  {renderIcon(item.icon)}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>

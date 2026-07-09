@@ -12,8 +12,6 @@ import {
 import { useIsMobile } from '@/hooks'
 import { cn } from '@/utils/common'
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state'
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = '16rem'
 const SIDEBAR_WIDTH_MOBILE = '18rem'
 const SIDEBAR_WIDTH_ICON = '46px'
@@ -67,9 +65,6 @@ export function SidebarProvider({
       } else {
         _setOpen(openState)
       }
-
-      // 写入 cookie 以持久化侧边栏状态
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
     [setOpenProp, open]
   )

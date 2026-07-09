@@ -1,11 +1,6 @@
 import * as React from 'react'
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarInset,
-  SidebarRail,
-} from '@/ui/Sidebar'
+import { Sidebar, SidebarContent, SidebarInset } from '@/ui/Sidebar'
 
 import MenuHeader from './menuHeader'
 import Menus from './menus'
@@ -20,7 +15,6 @@ export function Menu({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <Menus />
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   )
 }
