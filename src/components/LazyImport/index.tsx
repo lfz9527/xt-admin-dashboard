@@ -16,6 +16,7 @@ function LazyImport({
         width: '100%',
         height: '100%',
       }}
+      className='text-primary'
     />
   ),
 }: LazyImportProps) {

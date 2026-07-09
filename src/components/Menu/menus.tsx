@@ -1,10 +1,10 @@
 import {
   ChevronRight,
-  BookOpen,
-  Bot,
+  LayoutDashboard,
   Settings2,
   SquareTerminal,
 } from 'lucide-react'
+import { Link } from 'react-router'
 import { Collapse } from '@/components/Collapse'
 import {
   SidebarGroup,
@@ -16,91 +16,133 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/ui/Sidebar'
+import type { MenuItem } from './types'
 
-const items = [
+const menus: MenuItem[] = [
   {
-    title: '演示区',
-    url: '#',
-    icon: SquareTerminal,
-    isActive: true,
-    items: [
-      { title: '历史', url: '#' },
-      { title: '已加星标', url: '#', isActive: true },
-      { title: '设置', url: '#' },
+    key: 'home',
+    title: '首页',
+    path: '/',
+    icon: <SquareTerminal />,
+  },
+  {
+    key: 'dashboard',
+    title: 'Dashboard',
+    icon: <LayoutDashboard />,
+    children: [
+      { key: 'dashboard-overview', title: '概览', path: '/dashboard/overview' },
+      {
+        key: 'dashboard-analytics',
+        title: '分析',
+        path: '/dashboard/analytics',
+      },
     ],
   },
   {
-    title: '模型',
-    url: '#',
-    icon: Bot,
-    items: [
-      { title: 'Genesis', url: '#' },
-      { title: '探索器', url: '#' },
-      { title: '量子', url: '#' },
-    ],
-  },
-  {
-    title: '文档',
-    url: '#',
-    icon: BookOpen,
-    items: [
-      { title: '简介', url: '#' },
-      { title: '开始使用', url: '#' },
-      { title: '教程', url: '#' },
-      { title: '更新日志', url: '#' },
-    ],
-  },
-  {
-    title: '设置',
-    url: '#',
-    icon: Settings2,
-    items: [
-      { title: '常规', url: '#' },
-      { title: '团队', url: '#' },
-      { title: '账单', url: '#' },
-      { title: '限制', url: '#' },
+    key: 'system',
+    title: '系统管理',
+    icon: <Settings2 />,
+    children: [
+      {
+        key: 'system-users',
+        title: '用户管理',
+        path: '/system/users',
+        children: [
+          { key: 'system-user-1', title: '张三', path: '/system/users/1' },
+          { key: 'system-user-2', title: '李四', path: '/system/users/2' },
+        ],
+      },
+      { key: 'system-roles', title: '角色管理', path: '/system/roles' },
     ],
   },
 ]
 
-const collapseItems = items.map((item, index) => {
-  const Icon = item.icon
-  return {
-    key: item.title + index,
-    title: item.title,
-    className: 'group/collapsible',
-    defaultOpen: item.isActive,
-    wrapper: <SidebarMenuItem />,
-    trigger: (
-      <SidebarMenuButton tooltip={item.title}>
-        {Icon && <Icon />}
-        <span>{item.title}</span>
-        <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
-      </SidebarMenuButton>
-    ),
-    children: (
-      <SidebarMenuSub>
-        {item.items?.map((subItem) => (
-          <SidebarMenuSubItem key={subItem.title}>
+function renderSubItems(children: MenuItem[]) {
+  return (
+    <SidebarMenuSub>
+      {children.map((child) => {
+        const hasChildren = child.children && child.children.length > 0
+
+        if (hasChildren) {
+          return (
+            <Collapse
+              key={child.key}
+              title={child.title}
+              keepMounted
+              triggerCls='text-sidebar-foreground'
+              trigger={
+                <SidebarMenuSubButton
+                  render={
+                    <span className='whitespace-nowrap'>
+                      <span>{child.title}</span>
+                      <ChevronRight className='ml-auto size-3 transition-transform duration-200 group-data-open/collapsible:rotate-90' />
+                    </span>
+                  }
+                />
+              }
+            >
+              {renderSubItems(child.children!)}
+            </Collapse>
+          )
+        }
+
+        return (
+          <SidebarMenuSubItem key={child.key}>
             <SidebarMenuSubButton
               render={
-                <a href={subItem.url}>
-                  <span>{subItem.title}</span>
-                </a>
+                <Link
+                  to={child.path ?? '/'}
+                  className='cursor-pointer whitespace-nowrap'
+                >
+                  <span>{child.title}</span>
+                </Link>
               }
             />
           </SidebarMenuSubItem>
-        ))}
-      </SidebarMenuSub>
+        )
+      })}
+    </SidebarMenuSub>
+  )
+}
+
+const collapseItems = menus
+  .filter((item) => item.children && item.children.length > 0)
+  .map((item) => ({
+    key: item.key,
+    title: item.title,
+    wrapper: <SidebarMenuItem />,
+    trigger: (
+      <SidebarMenuButton tooltip={item.title}>
+        {item.icon}
+        <span className='whitespace-nowrap'>{item.title}</span>
+        <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
+      </SidebarMenuButton>
     ),
-  }
-})
+    children: renderSubItems(item.children!),
+  }))
+
+const leafItems = menus.filter(
+  (item) => !item.children || item.children.length === 0
+)
 
 export default function Menus() {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
       <SidebarMenu>
+        {leafItems.map((item) => (
+          <SidebarMenuItem key={item.key}>
+            <SidebarMenuButton
+              asChild
+              tooltip={item.title}
+            >
+              <Link to={item.path ?? '#'}>
+                {item.icon}
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
         {collapseItems.map(({ key, ...item }) => (
           <Collapse
             key={key}
