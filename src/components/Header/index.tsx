@@ -3,6 +3,7 @@ import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
 import Logo from '@/components/Logo'
+import Breadcrumb from '@/components/Breadcrumb'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
@@ -11,8 +12,8 @@ export default function Header() {
   return (
     <header className='flex shrink-0 items-center gap-2 border-b pb-2'>
       {isMobile && <Logo />}
-
       <SidebarTrigger />
+      <Breadcrumb />
       <Button
         variant='ghost'
         size='icon-sm'
