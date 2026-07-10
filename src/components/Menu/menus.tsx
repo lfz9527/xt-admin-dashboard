@@ -27,10 +27,10 @@ const iconMap: Record<string, LucideIcon> = {
   Settings2,
 }
 
-const MenuItemCls = 'py-4.75 '
+const MenuItemCls = 'h-9.5 leading-none'
 const MenuItemHoverCls = 'hover:bg-menu-accent'
 const MenuItemActiveCls =
-  'data-active:bg-menu-accent data-active:text-menu-accent-foreground hover:bg-menu-accent hover:text-menu-accent-foreground'
+  'data-active:bg-menu-accent data-active:text-menu-accent-foreground hover:bg-menu-accent hover:text-menu-accent-foreground font-bold'
 
 function renderIcon(name?: string) {
   if (!name || !iconMap[name]) return <svg />
@@ -91,10 +91,15 @@ export default function Menus() {
                 key={item.key}
                 title={item.title}
                 defaultOpen={hasActiveChild}
-                // wrapper={}
+                wrapper={<SidebarMenuItem />}
                 trigger={
                   <SidebarMenuButton
-                    className={cn(MenuItemCls, MenuItemHoverCls)}
+                    className={cn(
+                      MenuItemCls,
+                      MenuItemHoverCls,
+                      hasActiveChild &&
+                        'text-menu-accent-foreground hover:text-menu-accent-foreground'
+                    )}
                     tooltip={item.title}
                   >
                     {renderIcon(item.icon)}
@@ -119,7 +124,10 @@ export default function Menus() {
                   isActive ? MenuItemActiveCls : MenuItemHoverCls
                 )}
               >
-                <Link to={item.path ?? '#'}>
+                <Link
+                  to={item.path ?? '#'}
+                  className='flex items-center'
+                >
                   {renderIcon(item.icon)}
                   <span>{item.title}</span>
                 </Link>
