@@ -4,23 +4,24 @@
 
 ## 项目概要
 
-React 开发模板，技术栈: React 19 + TypeScript 5.9 + Vite 8 (rolldown) + React Router 7 + Zustand 5。包管理器使用 pnpm。
+React 开发模板，技术栈: React 19 + TypeScript 5.9 + Vite 8 (rolldown) + React Router 7 + Zustand 5 + Tailwind CSS 4 + shadcn/ui。UI 原语基于 @base-ui/react。包管理器使用 pnpm。
 
 ## 常用命令
 
 ```bash
-pnpm dev              # 启动开发服务器 (port 9529, 自动打开浏览器)
-pnpm build            # tsc 类型检查 + vite 构建
-pnpm lint             # ESLint 检查
-pnpm lint:fix         # ESLint 自动修复
-pnpm format           # Prettier 格式化
-pnpm test             # 运行所有测试 (vitest run)
-pnpm test:watch       # 监听模式运行测试
-pnpm preview          # 预览生产构建
-pnpm commit           # 使用 commitizen 交互式提交
-pnpm init-dep <name> <version>  # 按模板初始化可选依赖（如 tailwindcss）
-pnpm globalInstall    # 安装全局工具 (如 rimraf)
-pnpm clean            # 删除 node_modules 和 lock 文件
+pnpm dev                 # 启动开发服务器 (port 9529, 自动打开浏览器)
+pnpm build               # tsc 类型检查 + vite 构建
+pnpm lint                # ESLint 检查
+pnpm lint:fix            # ESLint 自动修复
+pnpm lint-stylelint      # Stylelint 检查
+pnpm lint-stylelint:fix  # Stylelint 自动修复
+pnpm format              # Prettier 格式化
+pnpm test                # 运行所有测试 (vitest run)
+pnpm test:watch          # 监听模式运行测试
+pnpm preview             # 预览生产构建
+pnpm commit              # git add . + commitizen 交互式提交
+pnpm globalInstall       # 安装全局工具 (如 rimraf)
+pnpm clean               # 删除 node_modules 和 lock 文件
 ```
 
 ## 测试体系
@@ -59,6 +60,51 @@ createRoot → StrictMode → ErrorBoundary(GlobalCrash) → App
 
 **懒加载**: 所有页面通过 `Lazy(() => import(...))` 实现代码分割，包装了 `Suspense` + `Loading` 组件作为 fallback。
 
+### 布局与菜单系统
+
+布局渲染链: `BaseLayout` → `MenuProvider`（sidebar 状态受控）→ `Menu`（侧边栏）+ `MenuContent`（`SidebarInset`，主内容区）→ `Main`（Header + `<Outlet />`）
+
+**菜单数据** (`src/store/useMenu.ts`): 当前使用 mock 数据，菜单项类型 `MenuItem` 定义在 `src/components/Menu/types.ts`:
+
+- `key`: 唯一标识，与路由 `meta.menuKey` 关联实现高亮
+- `title` / `icon`（lucide 图标名字符串）/ `path`（路由跳转）/ `children`（子菜单）
+- 菜单通过 `useMatches()` 获取当前路由的 `handle.menuKey` 来判断选中态，子菜单项通过 `Collapse` 组件折叠展开
+
+**Sidebar** (`src/ui/Sidebar/`): 基于 shadcn/ui 风格的自定义实现，通过 `SidebarProvider` 的 context 管理展开/折叠状态。支持 `inset`/`floating`/`sidebar` 三种变体，`offcanvas`/`icon`/`none` 三种折叠模式，移动端自动切换为 Sheet 抽屉。键盘快捷键 `Ctrl/Cmd + B` 切换。
+
+### 主题系统
+
+- **Store** (`src/store/useSetting.ts`): 持久化 `theme: 'light' | 'dark'` 到 localStorage
+- **Hook** (`src/hooks/useTheme.ts`): 监听 store 变化，同步 `document.documentElement` 的 `.dark` class；`toggleTheme(event)` 使用 **View Transition API** 实现从点击位置扩散/收缩的圆形动画
+- **CSS** (`src/styles/theme-transition.css`): 定义 `::view-transition-old/new(root)` 的 clip-path 圆形动画，通过 CSS 自定义属性 `--theme-transition-x/y/radius` 控制动画圆心和半径
+
+### 页面结构
+
+路由页面位于 `src/pages/`：
+
+- `home` — 首页
+- `dashboard/` — 带 `<Outlet />` 的父路由，子页面 `overview`（概览）、`analytics`（分析）
+- `system/` — 带 `<Outlet />` 的父路由，子页面 `users`（用户管理，含 `:id` 详情）、`roles`（角色管理）
+- `login` — 登录页（独立于 Layout 之外）
+- `404` — 404 页面 + 通配 `*` 路由
+
+### 进度条
+
+`@bprogress/react` 实现路由切换顶部进度条。`App` 组件包裹 `<ProgressProvider>`，`useProgress` hook（`src/hooks/useProgress.ts`）监听 `useNavigation().state`，`loading` 时调用 `start()`，`idle` 时调用 `stop(100)`（延迟完成以等待渲染）。
+
+### UI 组件原语
+
+`src/ui/` 下为基于 `@base-ui/react` 的无样式原语组件，使用 `useRender` + `mergeProps` 模式支持 `render` prop 来替换默认元素，统一导出供业务组件使用：
+
+| 组件          | 来源                         | 说明                                                                                                              |
+| ------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Button`      | `@base-ui/react/button`      | `cva` 变体：default/outline/secondary/ghost/destructive/link，size: default/xs/sm/lg/icon/icon-xs/icon-sm/icon-lg |
+| `Collapsible` | `@base-ui/react/collapsible` | `Collapsible` + `CollapsibleTrigger` + `CollapsibleContent`（CSS transition 动画）                                |
+| `Collapse`    | `@/components/Collapse`      | 基于 Collapsible 的受控/非受控折叠面板，支持自定义 trigger、wrapper                                               |
+| `Sheet`       | -                            | 侧边抽屉，移动端 Sidebar 使用                                                                                     |
+| `Tooltip`     | -                            | 基于 `@floating-ui/react` 的 Tooltip，`TooltipProvider` 全局提供 delay 等配置                                     |
+| `Sidebar`     | -                            | 侧边栏完整实现（见布局与菜单系统）                                                                                |
+
 ### HTTP 服务层
 
 `src/service/` 目录结构:
@@ -91,7 +137,7 @@ src/service/
 | `Loading`               | SVG 加载动画（通过 unplugin-icons 导入本地 SVG）                                                  |
 | `Flex`                  | 弹性布局辅助组件，`vertical`/`align`/`justify`/`wrap`/`gap`/`center` 等 props，`gap` 值 × 0.25rem |
 | `Access`                | 条件渲染，`disable` 为 true 时显示 `fallback`（预留权限控制的占位组件）                           |
-| `AutoTooltip`           | 文本溢出时自动显示 Tooltip，支持单行（truncate）和多行（line-clamp），通过 ResizeObserver 监听    |
+| `AutoEllipsis`          | 文本溢出时自动显示 Tooltip，支持单行（truncate）和多行（line-clamp），通过 ResizeObserver 监听    |
 
 ### Hooks
 
@@ -105,13 +151,17 @@ src/service/
 
 ### 状态管理
 
-项目安装了 Zustand 5，store 文件位于 `src/store/` 下。
+项目安装了 Zustand 5，store 文件位于 `src/store/` 下，统一从 `@/store` 导出。
 
-**Store 模式**: 参考 `src/store/useAuthor.ts` — 三层中间件包裹：
+**Store 列表**:
 
-1. 内层 `persist` — 持久化到 `sessionStorage`
-2. 中层 `devtools` — Redux DevTools 集成
-3. 外层自定义 `logger` — 开发环境自动打印状态变更日志（生产环境 `IS_PROD` 时自动静默）
+| Store        | 用途                                    | 持久化         |
+| ------------ | --------------------------------------- | -------------- |
+| `useAuthor`  | 用户认证信息                            | sessionStorage |
+| `useMenu`    | 菜单数据 `menus` + 侧边栏 `sidebarOpen` | localStorage   |
+| `useSetting` | 主题设置 `theme`                        | localStorage   |
+
+**Store 模式**: 三层中间件包裹（以 `useAuthor` 为例）— 内层 `persist` → 中层 `devtools` → 外层自定义 `logger`（开发环境自动打印状态变更日志，生产环境 `IS_PROD` 时自动静默）。
 
 ### 通用工具
 
@@ -159,20 +209,20 @@ import LoadingSvg from '~icons/local-icons/loading'
 // 渲染为 React 组件，fill 自动映射为 currentColor，默认尺寸 24x24
 ```
 
-### 依赖初始化系统
-
-`scripts/init-deps/` 提供可选依赖的自动化安装模板，通过 `ts-morph` 做 AST 级别的代码注入：
-
-```bash
-pnpm init-dep tailwindcss 3   # 安装 Tailwind CSS v3
-pnpm init-dep tailwindcss 4   # 安装 Tailwind CSS v4
-```
-
-目前仅支持 Tailwind CSS 模板，每个版本对应独立的初始化脚本（配置修改 + 代码模板注入）。
-
 ### Tailwind CSS
 
-项目已安装 Tailwind CSS 4（`tailwindcss` + `@tailwindcss/vite`），样式入口文件为 `src/styles/tailwind.css`，在 `main.tsx` 中导入。`tailwind.css` 中定义了一个自定义 utility `@utility flex-center`（`display: flex; align-items: center; justify-content: center`），被 `Loading` 组件使用。同时配置了 `prettier-plugin-tailwindcss` 和 `stylelint-config-tailwindcss` 以保证代码风格一致性。
+项目已安装 Tailwind CSS 4（`tailwindcss` + `@tailwindcss/vite`），同时集成 `shadcn/tailwind.css`（shadcn/ui CSS 变量体系）和 `tw-animate-css`（动画预设）。
+
+CSS 入口为 `src/styles/global.css`（在 `main.tsx` 中通过 `@/styles/tailwind.css` 间接导入），结构：
+
+- `@import 'tailwindcss'` — Tailwind 4 基础
+- `@import 'tw-animate-css'` — 动画工具类
+- `@import 'shadcn/tailwind.css'` — shadcn/ui 基础样式
+- `@theme inline { ... }` — 将 CSS 变量注册为 Tailwind token（`--sidebar-accent` → `bg-sidebar-accent` 等）
+- `:root` / `.dark` — 亮/暗色主题的 CSS 变量值（基于 oklch 色彩空间）
+- `@layer base { ... }` — 全局基础样式
+
+`tailwind.css` 中定义了一个自定义 utility `@utility flex-center`（`display: flex; align-items: center; justify-content: center`），被 `Loading` 组件使用。同时配置了 `prettier-plugin-tailwindcss` 和 `stylelint-config-tailwindcss` 以保证代码风格一致性。
 
 ### 代码风格工具
 
