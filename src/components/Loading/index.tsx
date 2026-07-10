@@ -1,5 +1,5 @@
 import { cn } from '@/utils/common'
-import './loading.css'
+import styles from './loading.module.css'
 
 type Props = Global.ElAttrs<HTMLDivElement> & {
   size?: number | string
@@ -24,11 +24,11 @@ export default function Loading({ className, size = 48, ...props }: Props) {
       style={{ ...sizeToStyle(size), ...props.style }}
       {...props}
     >
-      <div className='xt-spinner'>
+      <div className={styles.spinner}>
         {Array.from({ length: 12 }, (_, i) => (
           <div
             key={i}
-            className='xt-spinner-line'
+            className={styles.line}
           />
         ))}
       </div>
