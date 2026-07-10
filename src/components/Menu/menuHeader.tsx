@@ -5,24 +5,26 @@ import {
   SidebarMenu,
 } from '@/ui/Sidebar'
 
+import { NavLink } from 'react-router'
+
 export default function MenuHeader() {
   return (
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size='lg'>
-            <a
-              href='/'
+            <NavLink
+              to='/'
               className='flex items-center gap-4'
             >
-              <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+              <div className='bg-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
                 <img
                   src='/icon-white.svg'
                   className='size-6'
                 />
               </div>
               <div className='whitespace-nowrap'>XT-DASHBOARD</div>
-            </a>
+            </NavLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

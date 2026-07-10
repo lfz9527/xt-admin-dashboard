@@ -24,7 +24,7 @@ const mockMenus: MenuItem[] = [
     title: 'Dashboard',
     icon: 'LayoutDashboard',
     children: [
-      { key: 'dashboard-overview', title: '概览', path: '/dashboard/overview' },
+      { key: 'dashboard-overview', title: '概览' },
       {
         key: 'dashboard-analytics',
         title: '分析',
@@ -42,6 +42,8 @@ const mockMenus: MenuItem[] = [
     ],
   },
 ]
+
+console.log(333, mockMenus)
 
 const useMenu = create<State & Action>()(
   logger(
