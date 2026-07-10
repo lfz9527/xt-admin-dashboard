@@ -6,7 +6,7 @@
     "source.fixAll.stylelint": "always"
   },
   "css.lint.unknownAtRules": "ignore",
-  "cSpell.words": ["commitlintrc", "esbenp"],
+  "cSpell.words": ["bprogress", "commitlintrc", "esbenp"],
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

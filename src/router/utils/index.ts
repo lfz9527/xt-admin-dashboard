@@ -25,6 +25,7 @@ export function buildRouter(routes: AppRouteObject[]): RouteObject[] {
     return {
       ...args,
       handle,
+      // v7 每个路由必须配置 loader 函数，并开启useTransitions 才能获取路由跳转状态
       loader: () => null,
       children: finalChildren?.length ? finalChildren : undefined,
     }
