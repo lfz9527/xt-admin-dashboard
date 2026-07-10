@@ -12,11 +12,8 @@ function LazyImport({
   children,
   fallback = (
     <Loading
-      style={{
-        width: '100%',
-        height: '100%',
-      }}
-      className='text-primary'
+      size={30}
+      className='size-full'
     />
   ),
 }: LazyImportProps) {

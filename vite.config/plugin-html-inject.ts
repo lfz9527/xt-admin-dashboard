@@ -1,10 +1,17 @@
 const loadingHtml = `<div id="root">
   <style>
+  *{
+    margin:0;
+    padding:0;
+  }
+    html,body,#root{
+      height:100%;
+      width:100%
+    }
     #root {
       display: flex;
       align-items: center;
       justify-content: center;
-      height:100dvh
     }
     .container {
       --uib-size: 48px;
