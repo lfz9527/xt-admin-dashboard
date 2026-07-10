@@ -121,7 +121,8 @@ export default function Menus() {
                 isActive={isActive}
                 className={cn(
                   MenuItemCls,
-                  isActive ? MenuItemActiveCls : MenuItemHoverCls
+                  !isActive && MenuItemHoverCls,
+                  isActive && `${MenuItemActiveCls} font-bold`
                 )}
               >
                 <Link
