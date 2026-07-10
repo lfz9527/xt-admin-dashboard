@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 
 export default function Main() {
   return (
-    <div className='flex flex-1 flex-col gap-4 overflow-auto p-2'>
+    <div className='flex flex-1 flex-col gap-4 overflow-auto'>
       <Header />
       <Outlet />
     </div>
