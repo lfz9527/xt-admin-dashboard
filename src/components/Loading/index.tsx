@@ -1,21 +1,37 @@
 import { cn } from '@/utils/common'
-import LoadingSvg from '~icons/local-icons/loading'
+import './loading.css'
 
 type Props = Global.ElAttrs<HTMLDivElement> & {
   size?: number | string
 }
 
-export default function Loading({ className, size = 24, ...props }: Props) {
+function sizeToStyle(size: number | string) {
+  const numeric =
+    typeof size === 'number' ? size : parseFloat(size as string) || 48
+  const sizePx = typeof size === 'number' ? `${size}px` : size
+  const strokePx = `${(numeric / 12).toFixed(2)}px`
+  return {
+    '--uib-size': sizePx,
+    '--uib-stroke': strokePx,
+  } as React.CSSProperties
+}
+
+export default function Loading({ className, size = 48, ...props }: Props) {
   return (
     <div
       role='status'
       className={cn('flex-center relative', className)}
+      style={{ ...sizeToStyle(size), ...props.style }}
       {...props}
     >
-      <LoadingSvg
-        width={size}
-        height={size}
-      />
+      <div className='xt-spinner'>
+        {Array.from({ length: 12 }, (_, i) => (
+          <div
+            key={i}
+            className='xt-spinner-line'
+          />
+        ))}
+      </div>
     </div>
   )
 }
