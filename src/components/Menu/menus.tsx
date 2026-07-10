@@ -76,8 +76,6 @@ export default function Menus() {
 
   const menus = useMenu((s) => s.menus)
 
-  console.log('menus=', menus)
-
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>
