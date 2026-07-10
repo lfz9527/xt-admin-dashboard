@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react'
-import AutoTooltip from '@/components/AutoTooltip'
+import AutoEllipsis from '@/components/AutoEllipsis'
 
-describe('AutoTooltip', () => {
+describe('AutoEllipsis', () => {
   let resizeCallback: () => void
 
   beforeEach(() => {
@@ -20,12 +20,12 @@ describe('AutoTooltip', () => {
   })
 
   it('should render text content', () => {
-    render(<AutoTooltip text='hello' />)
+    render(<AutoEllipsis text='hello' />)
     expect(screen.getByText('hello')).toBeInTheDocument()
   })
 
   it('should set title when text overflows (single line)', () => {
-    render(<AutoTooltip text='long text' />)
+    render(<AutoEllipsis text='long text' />)
     const el = screen.getByText('long text')
     vi.spyOn(el, 'scrollWidth', 'get').mockReturnValue(200)
     vi.spyOn(el, 'clientWidth', 'get').mockReturnValue(100)
@@ -34,7 +34,7 @@ describe('AutoTooltip', () => {
   })
 
   it('should not set title when text fits (single line)', () => {
-    render(<AutoTooltip text='short' />)
+    render(<AutoEllipsis text='short' />)
     const el = screen.getByText('short')
     vi.spyOn(el, 'scrollWidth', 'get').mockReturnValue(50)
     vi.spyOn(el, 'clientWidth', 'get').mockReturnValue(100)
@@ -44,7 +44,7 @@ describe('AutoTooltip', () => {
 
   it('should set title when text overflows (multiline)', () => {
     render(
-      <AutoTooltip
+      <AutoEllipsis
         text='long text'
         lines={3}
       />
@@ -57,7 +57,7 @@ describe('AutoTooltip', () => {
   })
 
   it('should render numeric text', () => {
-    render(<AutoTooltip text={123} />)
+    render(<AutoEllipsis text={123} />)
     expect(screen.getByText('123')).toBeInTheDocument()
   })
 })

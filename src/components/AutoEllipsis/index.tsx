@@ -6,7 +6,7 @@ export type AutoTooltipProps = Global.ElAttrs<HTMLDivElement> & {
   text: string | number
   lines?: number
 }
-export default function AutoTooltip({
+export default function Index({
   text,
   className,
   style,
