@@ -57,12 +57,13 @@ const routes: AppRouteObject[] = [
             ],
           },
           {
+            id: '404-page',
             path: '/404',
             element: Lazy(() => import('@/pages/404')),
             meta: { title: '404' },
           },
           {
-            id: '404',
+            id: '404-catch',
             path: '*',
             element: Lazy(() => import('@/pages/404')),
             meta: { title: '404' },
