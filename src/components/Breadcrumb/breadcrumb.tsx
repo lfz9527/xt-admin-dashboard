@@ -18,6 +18,7 @@ import {
 import type { DropdownItem } from '@/components/Dropdown'
 import { renderDropdownItem } from '@/components/Dropdown/dropdown'
 import { useBreadcrumbCollapse } from './useBreadcrumbCollapse'
+import { NavLink } from 'react-router'
 
 export interface BreadcrumbItemData {
   /** 显示文本 */
@@ -130,7 +131,7 @@ export function Breadcrumb({
                   <BreadcrumbPage>{item.label}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink
-                    render={<a href={item.href}>{item.label}</a>}
+                    render={<NavLink to={item.href}>{item.label}</NavLink>}
                   />
                 )}
               </BreadcrumbItem>

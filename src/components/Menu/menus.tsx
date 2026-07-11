@@ -93,7 +93,7 @@ function Tree({ item, menuKey, level }: TreeProps) {
         key={item.key}
         title={item.title}
         defaultOpen={isDefaultOpen}
-        className='[&:not([data-closed])>button>svg]:rotate-90'
+        className='[&:not([data-closed])>button>svg:last-child]:rotate-90'
         trigger={
           <SidebarMenuButton
             style={style}

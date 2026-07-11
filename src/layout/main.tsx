@@ -5,7 +5,7 @@ export default function Main() {
   return (
     <div className='flex flex-1 flex-col overflow-auto'>
       <Header />
-      <div className='p-2'>
+      <div className='size-full p-(--main-content-padding)'>
         <Outlet />
       </div>
     </div>

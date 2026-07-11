@@ -86,6 +86,7 @@
   --menu-accent-foreground: oklch(54.6% 0.245 262.881deg);
   --menu-left-padding: 24px;
   --header-height: 48px;
+  --main-content-padding: 8px;
 }
 
 .dark {

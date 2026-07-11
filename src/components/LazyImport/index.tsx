@@ -13,7 +13,7 @@ function LazyImport({
   fallback = (
     <Loading
       size={30}
-      className='size-full'
+      className='h-100 w-full'
     />
   ),
 }: LazyImportProps) {
