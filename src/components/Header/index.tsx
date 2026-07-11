@@ -16,8 +16,8 @@ export default function Header() {
   const matches = useMatches()
   const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
-  // 最后一个 match 命中 * 通配 → 404，不展示面包屑
-  const is404 = currentMatch?.pathname === '*'
+  // 命中 404 路由 → 不展示面包屑
+  const is404 = (currentMatch?.handle as RouteMeta)?.title === '404'
   const menuKey = is404
     ? ''
     : ((currentMatch?.handle as RouteMeta)?.menuKey ?? '')
