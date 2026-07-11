@@ -23,6 +23,7 @@ const mockMenus: MenuItem[] = [
   {
     key: 'dashboard',
     title: 'Dashboard',
+    path: '/dashboard',
     icon: 'LayoutDashboard',
     children: [
       { key: 'dashboard-overview', title: '概览', path: '/dashboard/overview' },
@@ -36,6 +37,7 @@ const mockMenus: MenuItem[] = [
   {
     key: 'system',
     title: '系统管理',
+    path: '/system',
     icon: 'Settings2',
     children: [
       {
