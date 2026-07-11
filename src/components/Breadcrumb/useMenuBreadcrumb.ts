@@ -111,6 +111,13 @@ export function useMenuBreadcrumb(
     if (pathname) {
       const trailing = extractTrailingSegments(pathname, path)
       if (trailing.length > 0) {
+        // 菜单末节点后有动态段时，恢复其 href（因为当前页是尾部动态段而非菜单末节点）
+        if (base.length > 0) {
+          base[base.length - 1] = {
+            ...base[base.length - 1],
+            href: path[path.length - 1].path,
+          }
+        }
         return [...base, ...trailing]
       }
     }

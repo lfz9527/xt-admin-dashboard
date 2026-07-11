@@ -99,7 +99,7 @@ describe('useMenuBreadcrumb', () => {
 
     expect(result.current).toEqual([
       { label: '系统管理', href: '/system' },
-      { label: '用户管理', href: undefined },
+      { label: '用户管理', href: '/system/users' },
       { label: '12312', href: undefined },
     ])
   })
@@ -116,7 +116,7 @@ describe('useMenuBreadcrumb', () => {
 
     expect(result.current).toEqual([
       { label: '系统管理', href: '/system' },
-      { label: '用户管理', href: undefined },
+      { label: '用户管理', href: '/system/users' },
       { label: '12312', href: undefined },
       { label: 'edit', href: undefined },
       { label: 'confirm', href: undefined },
@@ -141,7 +141,7 @@ describe('useMenuBreadcrumb', () => {
 
     expect(result.current).toEqual([
       { label: '系统管理', href: '/system' },
-      { label: '用户管理', href: undefined },
+      { label: '用户管理', href: '/system/users' },
       { label: '12312', href: undefined },
     ])
   })
