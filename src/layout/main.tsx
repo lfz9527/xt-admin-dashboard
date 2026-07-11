@@ -3,9 +3,11 @@ import Header from '@/components/Header'
 
 export default function Main() {
   return (
-    <div className='flex flex-1 flex-col gap-4 overflow-auto'>
+    <div className='flex flex-1 flex-col overflow-auto'>
       <Header />
-      <Outlet />
+      <div className='p-2'>
+        <Outlet />
+      </div>
     </div>
   )
 }
