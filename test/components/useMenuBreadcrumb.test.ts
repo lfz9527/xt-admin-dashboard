@@ -134,6 +134,18 @@ describe('useMenuBreadcrumb', () => {
     ])
   })
 
+  it('menuKey 为空但 pathname 能匹配菜单时应正常生成', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(mockMenus, '', undefined, '/system/users/12312')
+    )
+
+    expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
+      { label: '用户管理', href: undefined },
+      { label: '12312', href: undefined },
+    ])
+  })
+
   it('menus 为空数组时退回 fallbackTitle', () => {
     const { result } = renderHook(() => useMenuBreadcrumb([], 'home', '首页'))
 
