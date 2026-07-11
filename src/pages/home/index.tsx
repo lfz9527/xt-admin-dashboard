@@ -3,7 +3,7 @@ import { Button } from '@/ui/Button'
 import { useBoolean } from '@/hooks'
 
 export default function Index() {
-  const { value, toggle } = useBoolean(true)
+  const { value, toggle } = useBoolean(false)
   return (
     <>
       Home
@@ -16,7 +16,6 @@ export default function Index() {
       <Drawer
         open={value}
         onOpenChange={toggle}
-        maskClosable={false}
         title='用户详情'
         footer={<Button onClick={toggle}>保存</Button>}
       >

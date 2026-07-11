@@ -15,7 +15,6 @@ import { cn } from '@/utils/common'
 const SIDEBAR_WIDTH = '16rem'
 const SIDEBAR_WIDTH_MOBILE = '18rem'
 const SIDEBAR_WIDTH_ICON = '46px'
-const SIDEBAR_KEYBOARD_SHORTCUT = 'b'
 
 export type SidebarContextProps = {
   state: 'expanded' | 'collapsed'
@@ -73,22 +72,6 @@ export function SidebarProvider({
   const toggleSidebar = useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
   }, [isMobile, setOpen, setOpenMobile])
-
-  // 注册键盘快捷键（Ctrl/Cmd + B）切换侧边栏
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
-      ) {
-        event.preventDefault()
-        toggleSidebar()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggleSidebar])
 
   // 对外暴露 data-state="expanded" | "collapsed"，方便 Tailwind 样式控制
   const state = open ? 'expanded' : 'collapsed'
