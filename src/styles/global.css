@@ -84,6 +84,7 @@
   --sidebar-ring: oklch(70.9% 0.01 56.259deg);
   --menu-accent: color-mix(in oklab, var(--primary) 10%, transparent);
   --menu-accent-foreground: oklch(54.6% 0.245 262.881deg);
+  --menu-left-padding: 24px;
   --header-height: 48px;
 }
 

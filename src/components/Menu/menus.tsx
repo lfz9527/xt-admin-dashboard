@@ -13,13 +13,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/ui/Sidebar'
 import type { MenuItem } from './types'
 import type { RouteMeta } from '@/router/types'
 import { useMenu } from '@/store'
 import { cn } from '@/utils/common'
+import { useMemo } from 'react'
 
 const iconMap: Record<string, LucideIcon> = {
   SquareTerminal,
@@ -38,44 +37,39 @@ function renderIcon(name?: string) {
   return <Comp />
 }
 
-function renderSubItems(children: MenuItem[], activeKey: string) {
-  return (
-    <SidebarMenuSub className='mx-0 border-l-0 px-0'>
-      {children.map((child) => {
-        const isActive = child.key === activeKey
-        return (
-          <SidebarMenuSubItem key={child.key}>
-            <SidebarMenuSubButton
-              isActive={isActive}
-              className={cn(
-                MenuItemCls,
-                isActive ? MenuItemActiveCls : MenuItemHoverCls,
-                'pl-2'
-              )}
-              render={
-                <Link
-                  to={child.path ?? '/'}
-                  className='whitespace-nowrap'
-                >
-                  {renderIcon(child.icon)}
-                  <span>{child.title}</span>
-                </Link>
-              }
-            />
-          </SidebarMenuSubItem>
-        )
-      })}
-    </SidebarMenuSub>
+function hasActiveDescendant(item: MenuItem, activeKey: string): boolean {
+  if (!activeKey || !item.children?.length) return false
+  return item.children.some(
+    (child) => child.key === activeKey || hasActiveDescendant(child, activeKey)
   )
 }
 
-function renderItems(item: MenuItem, isActive: boolean) {
-  return (
-    <SidebarMenuItem key={item.key}>
+type TreeProps = {
+  item: MenuItem
+  menuKey: string
+  level: number
+}
+
+function Tree({ item, menuKey, level }: TreeProps) {
+  const { key, children = [] } = item
+  const isActive = menuKey === key
+  const isDefaultOpen = hasActiveDescendant(item, menuKey)
+
+  const style = useMemo(
+    () => ({
+      paddingLeft: `calc(var(--menu-left-padding) * ${level})`,
+    }),
+    [level]
+  )
+
+  if (!children?.length) {
+    return (
       <SidebarMenuButton
         asChild
         tooltip={item.title}
         isActive={isActive}
+        key={key}
+        style={style}
         className={cn(
           MenuItemCls,
           !isActive && MenuItemHoverCls,
@@ -83,46 +77,55 @@ function renderItems(item: MenuItem, isActive: boolean) {
         )}
       >
         <Link
-          to={item.path ?? '#'}
+          to={item.path ?? '/'}
           className='flex items-center'
         >
-          {renderIcon(item.icon)}
+          {item.icon && renderIcon(item.icon)}
           <span>{item.title}</span>
         </Link>
       </SidebarMenuButton>
-    </SidebarMenuItem>
-  )
-}
+    )
+  }
 
-function renderCollage(
-  item: MenuItem,
-  hasActiveChild: boolean,
-  menuKey: string
-) {
   return (
-    <Collapse
-      key={item.key}
-      title={item.title}
-      defaultOpen={hasActiveChild}
-      wrapper={<SidebarMenuItem />}
-      trigger={
-        <SidebarMenuButton
-          className={cn(
-            MenuItemCls,
-            MenuItemHoverCls,
-            hasActiveChild &&
-              'text-menu-accent-foreground hover:text-menu-accent-foreground'
-          )}
-          tooltip={item.title}
+    <SidebarMenuItem>
+      <Collapse
+        key={item.key}
+        title={item.title}
+        defaultOpen={isDefaultOpen}
+        className='[&:not([data-closed])>button>svg]:rotate-90'
+        trigger={
+          <SidebarMenuButton
+            style={style}
+            className={cn(
+              MenuItemCls,
+              MenuItemHoverCls,
+              isDefaultOpen &&
+                'text-menu-accent-foreground hover:text-menu-accent-foreground'
+            )}
+            tooltip={item.title}
+          >
+            {item.icon && renderIcon(item.icon)}
+            <span className='whitespace-nowrap'>{item.title}</span>
+            <ChevronRight className='ml-auto transition-transform' />
+          </SidebarMenuButton>
+        }
+      >
+        <SidebarMenuSub
+          key={item.key}
+          className='mx-0 border-l-0 px-0'
         >
-          {renderIcon(item.icon)}
-          <span className='whitespace-nowrap'>{item.title}</span>
-          <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
-        </SidebarMenuButton>
-      }
-    >
-      {renderSubItems(item.children!, menuKey)}
-    </Collapse>
+          {children.map((subItem) => (
+            <Tree
+              key={subItem.key}
+              item={subItem}
+              menuKey={menuKey}
+              level={level + 1}
+            />
+          ))}
+        </SidebarMenuSub>
+      </Collapse>
+    </SidebarMenuItem>
   )
 }
 
@@ -130,23 +133,19 @@ export default function Menus() {
   const matches = useMatches()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
-
   const menus = useMenu((s) => s.menus)
-
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>
         {menus.map((item) => {
-          const isActive = item.key === menuKey
-          const hasChildren = item.children && item.children.length > 0
-
-          if (hasChildren) {
-            const hasActiveChild = item.children!.some((c) => c.key === menuKey)
-
-            return renderCollage(item, hasActiveChild, menuKey)
-          }
-
-          return renderItems(item, isActive)
+          return (
+            <Tree
+              key={item.key}
+              item={item}
+              menuKey={menuKey}
+              level={0}
+            />
+          )
         })}
       </SidebarMenu>
     </SidebarGroup>

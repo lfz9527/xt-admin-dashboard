@@ -48,6 +48,7 @@ const mockMenus: MenuItem[] = [
         key: 'system-roles',
         title: '角色管理',
         path: '/system/roles',
+        icon: 'Settings2',
         children: [
           {
             key: 'system-roles-detail',
