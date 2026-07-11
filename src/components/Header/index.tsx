@@ -1,13 +1,24 @@
 import { Moon, Sun } from 'lucide-react'
+import { useMatches } from 'react-router'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
-import { Breadcrumb } from '@/components/Breadcrumb'
+import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
+import { useMenu } from '@/store'
 import { Separator } from '@/ui/Separator'
+import type { RouteMeta } from '@/router/types'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const isMobile = useIsMobile()
+  const menus = useMenu((s) => s.menus)
+
+  const matches = useMatches()
+  const currentMatch = matches[matches.length - 1]
+  const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
+  const routeTitle = (currentMatch?.handle as RouteMeta)?.title
+
+  const breadcrumbItems = useMenuBreadcrumb(menus, menuKey, routeTitle)
 
   return (
     <header className='flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)'>
@@ -21,16 +32,7 @@ export default function Header() {
                 className='mr-2 data-vertical:self-auto data-[orientation=vertical]:h-4'
               />
               <Breadcrumb
-                items={[
-                  { label: '首页', href: '/' },
-                  { label: 'Dashboard', href: '/dashboard' },
-                  { label: '系统管理', href: '/system' },
-                  { label: '用户管理', href: '/system/users' },
-                  { label: '编辑用户', href: '/system/users/1' },
-                  { label: '权限设置', href: '/system/users/1/permissions' },
-                  { label: '角色分配', href: '/system/users/1/roles' },
-                  { label: '确认' },
-                ]}
+                items={breadcrumbItems}
                 maxItems={4}
                 startCount={1}
                 endCount={2}
