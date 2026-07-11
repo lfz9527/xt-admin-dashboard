@@ -87,6 +87,53 @@ describe('useMenuBreadcrumb', () => {
     ])
   })
 
+  it('pathname 超出菜单路径时应追加动态段', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(
+        mockMenus,
+        'system-users',
+        undefined,
+        '/system/users/12312'
+      )
+    )
+
+    expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
+      { label: '用户管理', href: undefined },
+      { label: '12312', href: undefined },
+    ])
+  })
+
+  it('pathname 有多段动态参数时应全部追加', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(
+        mockMenus,
+        'system-users',
+        undefined,
+        '/system/users/12312/edit/confirm'
+      )
+    )
+
+    expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
+      { label: '用户管理', href: undefined },
+      { label: '12312', href: undefined },
+      { label: 'edit', href: undefined },
+      { label: 'confirm', href: undefined },
+    ])
+  })
+
+  it('pathname 与菜单路径完全一致时不追加', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(mockMenus, 'system-users', undefined, '/system/users')
+    )
+
+    expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
+      { label: '用户管理', href: undefined },
+    ])
+  })
+
   it('menus 为空数组时退回 fallbackTitle', () => {
     const { result } = renderHook(() => useMenuBreadcrumb([], 'home', '首页'))
 

@@ -1,5 +1,5 @@
 import { Moon, Sun } from 'lucide-react'
-import { useMatches } from 'react-router'
+import { useMatches, useLocation } from 'react-router'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
@@ -14,11 +14,17 @@ export default function Header() {
   const menus = useMenu((s) => s.menus)
 
   const matches = useMatches()
+  const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
   const routeTitle = (currentMatch?.handle as RouteMeta)?.title
 
-  const breadcrumbItems = useMenuBreadcrumb(menus, menuKey, routeTitle)
+  const breadcrumbItems = useMenuBreadcrumb(
+    menus,
+    menuKey,
+    routeTitle,
+    pathname
+  )
 
   return (
     <header className='flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)'>

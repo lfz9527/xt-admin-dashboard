@@ -32,10 +32,37 @@ function menuPathToBreadcrumb(path: MenuItem[]): BreadcrumbItemData[] {
   })
 }
 
+function extractTrailingSegments(
+  pathname: string,
+  menuPath: MenuItem[]
+): { label: string }[] {
+  const lastMenuItem = menuPath[menuPath.length - 1]
+  const menuEndPath = lastMenuItem.path
+  if (!menuEndPath) return []
+
+  // 规范化尾部斜杠
+  const normalizedPathname = pathname.replace(/\/$/, '')
+  const normalizedMenuPath = menuEndPath.replace(/\/$/, '')
+
+  if (
+    normalizedPathname === normalizedMenuPath ||
+    !normalizedPathname.startsWith(normalizedMenuPath + '/')
+  ) {
+    return []
+  }
+
+  const trailing = normalizedPathname.slice(normalizedMenuPath.length)
+  return trailing
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => ({ label: decodeURIComponent(segment) }))
+}
+
 export function useMenuBreadcrumb(
   menus: MenuItem[],
   menuKey: string,
-  fallbackTitle?: string
+  fallbackTitle?: string,
+  pathname?: string
 ): BreadcrumbItemData[] {
   return useMemo(() => {
     if (!menuKey) {
@@ -45,6 +72,15 @@ export function useMenuBreadcrumb(
     if (!path) {
       return fallbackTitle ? [{ label: fallbackTitle }] : []
     }
-    return menuPathToBreadcrumb(path)
-  }, [menus, menuKey, fallbackTitle])
+    const base = menuPathToBreadcrumb(path)
+
+    if (pathname) {
+      const trailing = extractTrailingSegments(pathname, path)
+      if (trailing.length > 0) {
+        return [...base, ...trailing]
+      }
+    }
+
+    return base
+  }, [menus, menuKey, fallbackTitle, pathname])
 }
