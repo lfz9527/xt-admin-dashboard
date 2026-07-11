@@ -41,6 +41,10 @@ const routes: AppRouteObject[] = [
             meta: { title: '用户管理', menuKey: 'system-users' },
           },
           {
+            path: '/system/users/:id',
+            element: Lazy(() => import('@/pages/system/users')),
+          },
+          {
             path: '/system/roles',
             element: Lazy(() => import('@/pages/system/roles')),
             meta: { title: '角色管理', menuKey: 'system-roles' },
@@ -58,6 +62,7 @@ const routes: AppRouteObject[] = [
             meta: { title: '404' },
           },
           {
+            id: '404',
             path: '*',
             element: Lazy(() => import('@/pages/404')),
             meta: { title: '404' },

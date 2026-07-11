@@ -16,16 +16,14 @@ export default function Header() {
   const matches = useMatches()
   const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
-  // 命中 404 路由 → 不展示面包屑
-  const is404 = (currentMatch?.handle as RouteMeta)?.title === '404'
-  const menuKey = is404
-    ? ''
-    : ((currentMatch?.handle as RouteMeta)?.menuKey ?? '')
+  // 命中 catch-all 路由（id='404'），不展示面包屑
+  const is404 = currentMatch?.id === '404'
+  const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
   const routeTitle = (currentMatch?.handle as RouteMeta)?.title
 
   const breadcrumbItems = useMenuBreadcrumb(
     menus,
-    menuKey,
+    is404 ? '' : menuKey,
     routeTitle,
     pathname
   )
@@ -37,26 +35,24 @@ export default function Header() {
       <div className='flex w-full justify-between gap-2 px-2'>
         <div className='flex min-w-0 items-center gap-1 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600'>
           <SidebarTrigger />
-          {!isMobile && (
+          {!isMobile && !is404 && (
             <>
               <Separator
                 orientation='vertical'
                 className='mr-2 data-vertical:self-auto data-[orientation=vertical]:h-4'
               />
-              {!is404 && (
-                <Breadcrumb
-                  items={breadcrumbItems}
-                  maxItems={4}
-                  startCount={1}
-                  endCount={2}
-                  ellipsisDropdownItem={(item) => ({
-                    label: item.label,
-                    onClick: item.href
-                      ? () => console.log('navigate to:', item.href)
-                      : undefined,
-                  })}
-                />
-              )}
+              <Breadcrumb
+                items={breadcrumbItems}
+                maxItems={4}
+                startCount={1}
+                endCount={2}
+                ellipsisDropdownItem={(item) => ({
+                  label: item.label,
+                  onClick: item.href
+                    ? () => console.log('navigate to:', item.href)
+                    : undefined,
+                })}
+              />
             </>
           )}
         </div>
