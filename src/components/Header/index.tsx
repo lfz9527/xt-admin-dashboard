@@ -16,7 +16,11 @@ export default function Header() {
   const matches = useMatches()
   const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
-  const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
+  // 最后一个 match 命中 * 通配 → 404，不展示面包屑
+  const is404 = currentMatch?.pathname === '*'
+  const menuKey = is404
+    ? ''
+    : ((currentMatch?.handle as RouteMeta)?.menuKey ?? '')
   const routeTitle = (currentMatch?.handle as RouteMeta)?.title
 
   const breadcrumbItems = useMenuBreadcrumb(
@@ -25,6 +29,8 @@ export default function Header() {
     routeTitle,
     pathname
   )
+
+  console.log('breadcrumbItems', breadcrumbItems)
 
   return (
     <header className='flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)'>
@@ -37,18 +43,20 @@ export default function Header() {
                 orientation='vertical'
                 className='mr-2 data-vertical:self-auto data-[orientation=vertical]:h-4'
               />
-              <Breadcrumb
-                items={breadcrumbItems}
-                maxItems={4}
-                startCount={1}
-                endCount={2}
-                ellipsisDropdownItem={(item) => ({
-                  label: item.label,
-                  onClick: item.href
-                    ? () => console.log('navigate to:', item.href)
-                    : undefined,
-                })}
-              />
+              {!is404 && (
+                <Breadcrumb
+                  items={breadcrumbItems}
+                  maxItems={4}
+                  startCount={1}
+                  endCount={2}
+                  ellipsisDropdownItem={(item) => ({
+                    label: item.label,
+                    onClick: item.href
+                      ? () => console.log('navigate to:', item.href)
+                      : undefined,
+                  })}
+                />
+              )}
             </>
           )}
         </div>
