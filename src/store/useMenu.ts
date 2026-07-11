@@ -10,6 +10,7 @@ type State = {
 
 type Action = {
   setSidebarOpen: (open: boolean) => void
+  toggleMenu: () => void
 }
 
 const mockMenus: MenuItem[] = [
@@ -54,6 +55,7 @@ const useMenu = create<State & Action>()(
           sidebarOpen: true,
 
           setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
+          toggleMenu: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
         }),
         {
           name: 'app-menu',

@@ -27,7 +27,7 @@ function useEventListener<
   handler:
     | ((event: HTMLElementEventMap[K]) => void)
     | ((event: SVGElementEventMap[K]) => void),
-  element: RefObject<T>,
+  element?: RefObject<T>,
   options?: boolean | AddEventListenerOptions
 ): void
 
