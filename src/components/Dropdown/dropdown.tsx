@@ -54,7 +54,7 @@ export interface DropdownProps {
   triggerMode?: 'click' | 'hover'
 }
 
-function renderItem(item: DropdownItem, index: number) {
+export function renderDropdownItem(item: DropdownItem, index: number) {
   if (item.type === 'separator') {
     return <DropdownMenuSeparator key={index} />
   }
@@ -161,7 +161,7 @@ export function Dropdown({
         sideOffset={sideOffset}
         className='w-40'
       >
-        <DropdownMenuGroup>{items.map(renderItem)}</DropdownMenuGroup>
+        <DropdownMenuGroup>{items.map(renderDropdownItem)}</DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

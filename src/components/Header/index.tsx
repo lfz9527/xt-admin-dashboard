@@ -2,7 +2,7 @@ import { Moon, Sun } from 'lucide-react'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
-import Breadcrumb from '@/components/Breadcrumb'
+import { Breadcrumb } from '@/components/Breadcrumb'
 import { Separator } from '@/ui/Separator'
 
 export default function Header() {
@@ -20,7 +20,27 @@ export default function Header() {
                 orientation='vertical'
                 className='mr-2 data-vertical:self-auto data-[orientation=vertical]:h-4'
               />
-              <Breadcrumb />
+              <Breadcrumb
+                items={[
+                  { label: '首页', href: '/' },
+                  { label: 'Dashboard', href: '/dashboard' },
+                  { label: '系统管理', href: '/system' },
+                  { label: '用户管理', href: '/system/users' },
+                  { label: '编辑用户', href: '/system/users/1' },
+                  { label: '权限设置', href: '/system/users/1/permissions' },
+                  { label: '角色分配', href: '/system/users/1/roles' },
+                  { label: '确认' },
+                ]}
+                maxItems={4}
+                startCount={1}
+                endCount={2}
+                ellipsisDropdownItem={(item) => ({
+                  label: item.label,
+                  onClick: item.href
+                    ? () => console.log('navigate to:', item.href)
+                    : undefined,
+                })}
+              />
             </>
           )}
         </div>
