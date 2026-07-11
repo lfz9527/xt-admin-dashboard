@@ -69,6 +69,63 @@ function renderSubItems(children: MenuItem[], activeKey: string) {
   )
 }
 
+function renderItems(item: MenuItem, isActive: boolean) {
+  return (
+    <SidebarMenuItem key={item.key}>
+      <SidebarMenuButton
+        asChild
+        tooltip={item.title}
+        isActive={isActive}
+        className={cn(
+          MenuItemCls,
+          !isActive && MenuItemHoverCls,
+          isActive && `${MenuItemActiveCls} font-bold`
+        )}
+      >
+        <Link
+          to={item.path ?? '#'}
+          className='flex items-center'
+        >
+          {renderIcon(item.icon)}
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
+function renderCollage(
+  item: MenuItem,
+  hasActiveChild: boolean,
+  menuKey: string
+) {
+  return (
+    <Collapse
+      key={item.key}
+      title={item.title}
+      defaultOpen={hasActiveChild}
+      wrapper={<SidebarMenuItem />}
+      trigger={
+        <SidebarMenuButton
+          className={cn(
+            MenuItemCls,
+            MenuItemHoverCls,
+            hasActiveChild &&
+              'text-menu-accent-foreground hover:text-menu-accent-foreground'
+          )}
+          tooltip={item.title}
+        >
+          {renderIcon(item.icon)}
+          <span className='whitespace-nowrap'>{item.title}</span>
+          <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
+        </SidebarMenuButton>
+      }
+    >
+      {renderSubItems(item.children!, menuKey)}
+    </Collapse>
+  )
+}
+
 export default function Menus() {
   const matches = useMatches()
   const currentMatch = matches[matches.length - 1]
@@ -86,55 +143,10 @@ export default function Menus() {
           if (hasChildren) {
             const hasActiveChild = item.children!.some((c) => c.key === menuKey)
 
-            return (
-              <Collapse
-                key={item.key}
-                title={item.title}
-                defaultOpen={hasActiveChild}
-                wrapper={<SidebarMenuItem />}
-                trigger={
-                  <SidebarMenuButton
-                    className={cn(
-                      MenuItemCls,
-                      MenuItemHoverCls,
-                      hasActiveChild &&
-                        'text-menu-accent-foreground hover:text-menu-accent-foreground'
-                    )}
-                    tooltip={item.title}
-                  >
-                    {renderIcon(item.icon)}
-                    <span className='whitespace-nowrap'>{item.title}</span>
-                    <ChevronRight className='ml-auto transition-transform duration-300 group-data-open/collapsible:rotate-90' />
-                  </SidebarMenuButton>
-                }
-              >
-                {renderSubItems(item.children!, menuKey)}
-              </Collapse>
-            )
+            return renderCollage(item, hasActiveChild, menuKey)
           }
 
-          return (
-            <SidebarMenuItem key={item.key}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                isActive={isActive}
-                className={cn(
-                  MenuItemCls,
-                  !isActive && MenuItemHoverCls,
-                  isActive && `${MenuItemActiveCls} font-bold`
-                )}
-              >
-                <Link
-                  to={item.path ?? '#'}
-                  className='flex items-center'
-                >
-                  {renderIcon(item.icon)}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )
+          return renderItems(item, isActive)
         })}
       </SidebarMenu>
     </SidebarGroup>

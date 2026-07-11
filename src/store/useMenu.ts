@@ -38,8 +38,25 @@ const mockMenus: MenuItem[] = [
     title: '系统管理',
     icon: 'Settings2',
     children: [
-      { key: 'system-users', title: '用户管理', path: '/system/users' },
-      { key: 'system-roles', title: '角色管理', path: '/system/roles' },
+      {
+        key: 'system-users',
+        title: '用户管理',
+        path: '/system/users',
+        icon: 'LayoutDashboard',
+      },
+      {
+        key: 'system-roles',
+        title: '角色管理',
+        path: '/system/roles',
+        children: [
+          {
+            key: 'system-roles-detail',
+            title: '三级菜单',
+            icon: 'Settings2',
+            path: '/system/roles/detail',
+          },
+        ],
+      },
     ],
   },
 ]
