@@ -57,7 +57,8 @@ function Tree({ item, menuKey, level }: TreeProps) {
 
   const style = useMemo(
     () => ({
-      paddingLeft: `calc(var(--menu-left-padding) * ${level})`,
+      paddingLeft:
+        level > 0 ? `calc(var(--menu-left-padding) * ${level} + 8px)` : '',
     }),
     [level]
   )
