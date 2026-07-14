@@ -4,7 +4,7 @@ import {
   useNavTab,
   NavTab,
   type Tab,
-} from '@/components/NavTab'
+} from '@/layout/NavTab'
 
 describe('NavTabProvider + useNavTab', () => {
   it('不在 Provider 内使用时抛出错误', () => {
