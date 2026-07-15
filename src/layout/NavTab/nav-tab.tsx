@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
+import { Button } from '@/ui/Button'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
   const { tabs, activeTabId, setActiveTab, removeTab } = useNavTab()
@@ -46,6 +47,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
               data-slot='nav-tab-item'
               data-active={isActive ? 'true' : 'false'}
               className={cn(
+                'group',
                 'z-1 mb-0.75 flex w-30 cursor-pointer items-center gap-2 px-2 text-sm',
                 'hover:bg-sidebar-accent data-[active=true]:hover:bg-transparent',
                 'data-[active=false]:rounded-sm',
@@ -60,7 +62,10 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
               {tab.closable && (
                 <span
                   data-slot='nav-tab-close'
-                  className={cn('flex-center size-4')}
+                  className={cn(
+                    'flex-center size-4 rounded',
+                    'group-data-[active=true]:hover:bg-menu-accent'
+                  )}
                   onClick={(e) => {
                     e.stopPropagation()
                     removeTab(tab.id)
