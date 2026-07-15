@@ -48,6 +48,8 @@ export function NavTabProvider({
     defaultActiveTabId
   )
 
+  console.log('tabs===', tabs)
+
   const addTab = useCallback((tab: Tab) => {
     setTabs((prev) => {
       if (prev.some((t) => t.id === tab.id)) return prev

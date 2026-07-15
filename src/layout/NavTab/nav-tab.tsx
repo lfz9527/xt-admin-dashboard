@@ -32,52 +32,74 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       ref={containerRef}
       data-slot='nav-tab'
-      className={cn(
-        'relative flex items-center gap-1.5 border-b px-2 py-1',
-        className
-      )}
+      className='size-full flex-1 overflow-hidden px-2 pt-0.75'
       {...props}
     >
-      {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId
+      <div className='relative flex h-full'>
+        {tabs.map((tab) => {
+          const isActive = tab.id === activeTabId
 
-        return (
-          <div
-            key={tab.id}
-            data-tab-id={tab.id}
-            data-slot='nav-tab-item'
-            data-active={isActive ? 'true' : 'false'}
-            className='group/nav-tab-item text-muted-foreground data-[active=true]:text-menu-accent-foreground hover:text-menu-accent-foreground hover:bg-menu-accent relative z-10 flex w-30 cursor-pointer items-center gap-1 rounded-sm px-2 py-1.5 text-sm transition-colors select-none data-[active=true]:font-medium'
-            onClick={() => setActiveTab(tab.id)}
+          return (
+            <div
+              key={tab.id}
+              data-tab-id={tab.id}
+              data-slot='nav-tab-item'
+              data-active={isActive ? 'true' : 'false'}
+              className={cn(
+                'z-1 mb-0.75 flex w-30 cursor-pointer items-center gap-2 px-2 text-sm',
+                'hover:bg-sidebar-accent data-[active=true]:hover:bg-transparent',
+                'data-[active=false]:rounded-sm',
+                'data-[active=true]:text-menu-accent-foreground'
+              )}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <AutoEllipsis
+                text={tab.title}
+                className='min-w-0 flex-1 select-none'
+              />
+              {tab.closable && (
+                <span
+                  data-slot='nav-tab-close'
+                  className={cn('flex-center size-4')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeTab(tab.id)
+                  }}
+                >
+                  <X className='size-3' />
+                </span>
+              )}
+            </div>
+          )
+        })}
+
+        <div
+          className='absolute top-0 bottom-0 z-0 px-1 transition-all duration-200'
+          style={
+            {
+              left: pillStyle.left,
+              width: pillStyle.width,
+              '--svg-size': 7,
+            } as React.CSSProperties
+          }
+        >
+          <div className='bg-menu-accent size-full rounded-tl-sm rounded-tr-sm' />
+          <svg
+            className='fill-menu-accent absolute bottom-0 -left-0.75 transition-all duration-150'
+            height='var(--svg-size)'
+            width='var(--svg-size)'
           >
-            <AutoEllipsis
-              text={tab.title}
-              className='min-w-0 flex-1'
-            />
-            {tab.closable && (
-              <span
-                data-slot='nav-tab-close'
-                className={cn(
-                  'hover:bg-menu-accent inline-flex size-4 items-center justify-center rounded-sm transition-opacity',
-                  isActive
-                    ? 'opacity-100'
-                    : 'opacity-0 group-hover/nav-tab-item:opacity-100'
-                )}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  removeTab(tab.id)
-                }}
-              >
-                <X className='size-3' />
-              </span>
-            )}
-          </div>
-        )
-      })}
-      <div
-        className='bg-menu-accent absolute top-1 bottom-1 z-0 rounded-sm transition-all duration-200'
-        style={{ left: pillStyle.left, width: pillStyle.width }}
-      />
+            <path d='M 0 7 A 7 7 0 0 0 7 0 L 7 7 Z'></path>
+          </svg>
+          <svg
+            className='fill-menu-accent absolute -right-0.75 bottom-0 transition-all duration-150'
+            height='var(--svg-size)'
+            width='var(--svg-size)'
+          >
+            <path d='M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z'></path>
+          </svg>
+        </div>
+      </div>
     </div>
   )
 }
