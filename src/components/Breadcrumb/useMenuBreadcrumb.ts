@@ -90,8 +90,7 @@ export function useMenuBreadcrumb(
   menus: MenuItem[],
   menuKey: string,
   fallbackTitle?: string,
-  pathname?: string,
-  isStaticDetail = false
+  pathname?: string
 ): BreadcrumbItemData[] {
   return useMemo(() => {
     // menuKey 为空时（路由未匹配），尝试从 URL pathname 推导

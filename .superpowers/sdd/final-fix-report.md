@@ -39,3 +39,30 @@ Tests       26 passed (26)
 
 - 未运行全量测试；此前审查记录显示存在与本次无关的 Loading 测试失败和构建阶段既有问题。
 - Header 中既有 breadcrumb console 日志未处理，避免扩大范围。
+
+
+## P1 修复实际验证（2026-08-19）
+
+- `src/pages/system/index.tsx` 渲染 `<Outlet />`，并在路由测试中断言用户/角色详情主体内容。
+- `AppRouteObject` 使用 `Omit<RouteObject, 'children'>` 递归定义，避免子路由退化为 `RouteObject`；删除 `useMenuBreadcrumb` 未使用的 `isStaticDetail` 参数。
+- 清理 `src/ui/Sidebar/context.tsx`、测试中的未使用导入。
+
+### `pnpm exec vitest run test/router/menu.test.ts test/router/routes.test.tsx test/components/useMenuBreadcrumb.test.ts test/components/Menu.test.tsx`
+
+通过：4 个测试文件，26 个测试全部通过。保留既有 `No HydrateFallback` 与 store/console 日志噪声。
+
+### `pnpm exec tsc --noEmit`
+
+通过，无输出。
+
+### `pnpm lint`
+
+通过：`$ eslint .`。
+
+### `pnpm build`
+
+通过：Vite production build 完成（8.85s）。存在既有 chunk size warning 与 `unplugin-icons` timing warning，不影响构建。
+
+### Concerns
+
+- 未修改用户已有 logo、`public/` 或用户 docs 文件；构建生成物未纳入提交。

@@ -27,7 +27,7 @@ export type RouteMeta = RouteObject['handle'] & {
   permission?: string | string[]
 }
 
-export type AppRouteObject = RouteObject & {
+export type AppRouteObject = Omit<RouteObject, 'children'> & {
   meta?: RouteMeta
   children?: AppRouteObject[]
   envs?: string[]

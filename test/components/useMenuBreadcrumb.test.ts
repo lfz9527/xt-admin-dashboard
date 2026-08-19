@@ -104,8 +104,7 @@ describe('useMenuBreadcrumb', () => {
         routeMenus,
         'system-users',
         undefined,
-        '/system/users/123',
-        false
+        '/system/users/123'
       )
     )
 
@@ -122,8 +121,7 @@ describe('useMenuBreadcrumb', () => {
         routeMenus,
         'system-roles',
         '角色管理详情',
-        '/system/roles/detail',
-        true
+        '/system/roles/detail'
       )
     )
 

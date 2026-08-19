@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import Header from '@/components/Header'
 import { SidebarProvider } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
 
@@ -67,6 +66,8 @@ describe('Menus', () => {
     )
 
     expect((await screen.findAllByText('用户管理')).length).toBeGreaterThan(0)
+    expect(await screen.findByText(/users/)).toBeInTheDocument()
+    expect(await screen.findByText(/user detail/)).toBeInTheDocument()
     expect(await screen.findByText('123')).toBeInTheDocument()
     expect(
       screen
@@ -79,6 +80,8 @@ describe('Menus', () => {
     })
 
     expect((await screen.findAllByText('角色管理')).length).toBeGreaterThan(0)
+    expect(await screen.findByText(/roles/)).toBeInTheDocument()
+    expect(await screen.findByText(/roles-detail/)).toBeInTheDocument()
     expect(await screen.findByText('角色管理详情')).toBeInTheDocument()
     expect(screen.queryByText('detail')).not.toBeInTheDocument()
     expect(
