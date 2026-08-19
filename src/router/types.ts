@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react'
 import type { RouteObject } from 'react-router'
 
 export type RouteMeta = RouteObject['handle'] & {
@@ -16,7 +17,7 @@ export type RouteMeta = RouteObject['handle'] & {
   /**
    * 菜单图标
    */
-  icon?: string
+  icon?: LucideIcon
   /**
    * 是否显示在菜单中
    */

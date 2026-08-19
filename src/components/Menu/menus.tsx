@@ -1,10 +1,4 @@
-import {
-  ChevronRight,
-  LayoutDashboard,
-  Settings2,
-  SquareTerminal,
-  type LucideIcon,
-} from 'lucide-react'
+import { ChevronRight, type LucideIcon } from 'lucide-react'
 import { Link, useMatches } from 'react-router'
 import { Collapse } from '@/components/Collapse'
 import {
@@ -21,21 +15,13 @@ import { useMemo } from 'react'
 import routes from '@/router/routes'
 import { routeToMenus, allowAllPermissions } from '@/router/menu'
 
-const iconMap: Record<string, LucideIcon> = {
-  SquareTerminal,
-  LayoutDashboard,
-  Settings2,
-}
-
 const MenuItemCls = 'h-9.5 leading-none'
 const MenuItemHoverCls = 'hover:bg-menu-accent'
 const MenuItemActiveCls =
   'data-active:bg-menu-accent data-active:text-menu-accent-foreground hover:bg-menu-accent hover:text-menu-accent-foreground font-bold'
 
-function renderIcon(name?: string) {
-  if (!name || !iconMap[name]) return <svg />
-  const Comp = iconMap[name]
-  return <Comp />
+function renderIcon(Icon?: LucideIcon) {
+  return Icon ? <Icon /> : null
 }
 
 function hasActiveDescendant(item: MenuItem, activeKey: string): boolean {

@@ -1,3 +1,4 @@
+import { LayoutDashboard, Settings2, SquareTerminal } from 'lucide-react'
 import type { AppRouteObject } from './types'
 import { Lazy } from '@/components/LazyImport'
 import BasicGuard from './guards/BasicGuard'
@@ -13,7 +14,7 @@ const routes: AppRouteObject[] = [
           {
             path: '/',
             element: Lazy(() => import('@/pages/home')),
-            meta: { title: '首页', menuKey: 'home', icon: 'SquareTerminal' },
+            meta: { title: '首页', menuKey: 'home', icon: SquareTerminal },
           },
           {
             path: '/dashboard',
@@ -21,7 +22,7 @@ const routes: AppRouteObject[] = [
             meta: {
               title: 'Dashboard',
               menuKey: 'dashboard',
-              icon: 'LayoutDashboard',
+              icon: LayoutDashboard,
             },
             children: [
               {
@@ -39,7 +40,7 @@ const routes: AppRouteObject[] = [
           {
             path: '/system',
             element: Lazy(() => import('@/pages/system')),
-            meta: { title: '系统管理', menuKey: 'system', icon: 'Settings2' },
+            meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
             children: [
               {
                 path: 'users',
@@ -47,7 +48,7 @@ const routes: AppRouteObject[] = [
                 meta: {
                   title: '用户管理',
                   menuKey: 'system-users',
-                  icon: 'LayoutDashboard',
+                  icon: LayoutDashboard,
                 },
                 children: [
                   {
@@ -67,7 +68,7 @@ const routes: AppRouteObject[] = [
                 meta: {
                   title: '角色管理',
                   menuKey: 'system-roles',
-                  icon: 'Settings2',
+                  icon: Settings2,
                 },
                 children: [
                   {
