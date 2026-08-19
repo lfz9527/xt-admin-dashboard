@@ -87,6 +87,38 @@ describe('useMenuBreadcrumb', () => {
     ])
   })
 
+  it('用户详情使用所属菜单生成面包屑', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(
+        [{ key: 'system-users', title: '用户管理', path: '/system/users' }],
+        'system-users',
+        undefined,
+        '/system/users/123'
+      )
+    )
+
+    expect(result.current).toEqual([
+      { label: '用户管理', href: '/system/users' },
+      { label: '123', href: undefined },
+    ])
+  })
+
+  it('角色详情使用所属菜单生成面包屑', () => {
+    const { result } = renderHook(() =>
+      useMenuBreadcrumb(
+        [{ key: 'system-roles', title: '角色管理', path: '/system/roles' }],
+        'system-roles',
+        undefined,
+        '/system/roles/detail'
+      )
+    )
+
+    expect(result.current).toEqual([
+      { label: '角色管理', href: '/system/roles' },
+      { label: 'detail', href: undefined },
+    ])
+  })
+
   it('pathname 超出菜单路径时应追加动态段', () => {
     const { result } = renderHook(() =>
       useMenuBreadcrumb(
