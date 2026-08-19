@@ -1,10 +1,50 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import {
-  NavTabProvider,
-  useNavTab,
-  NavTab,
-  type Tab,
-} from '@/layout/NavTab'
+import { act, render, screen, fireEvent } from '@testing-library/react'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { NavTabProvider, useNavTab, NavTab, type Tab } from '@/layout/NavTab'
+
+let resizeObserverCallbacks: ResizeObserverCallback[] = []
+const originalResizeObserver = window.ResizeObserver
+
+beforeEach(() => {
+  resizeObserverCallbacks = []
+  window.ResizeObserver = class {
+    constructor(callback: ResizeObserverCallback) {
+      resizeObserverCallbacks.push(callback)
+    }
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  } as unknown as typeof ResizeObserver
+})
+
+afterEach(() => {
+  window.ResizeObserver = originalResizeObserver
+})
+
+function triggerResizeObservers() {
+  act(() => {
+    resizeObserverCallbacks.forEach((callback) =>
+      callback([], {} as ResizeObserver)
+    )
+  })
+}
+
+function setViewportMetrics(
+  viewport: Element,
+  metrics: Partial<{
+    clientWidth: number
+    scrollWidth: number
+    scrollLeft: number
+  }>
+) {
+  Object.entries(metrics).forEach(([property, value]) => {
+    Object.defineProperty(viewport, property, {
+      configurable: true,
+      value,
+      writable: true,
+    })
+  })
+}
 
 describe('NavTabProvider + useNavTab', () => {
   it('不在 Provider 内使用时抛出错误', () => {
@@ -184,6 +224,232 @@ describe('NavTab', () => {
 
     expect(screen.getByText('Tab 1')).toBeInTheDocument()
     expect(screen.getByText('Tab 2')).toBeInTheDocument()
+  })
+
+  it('使用 ScrollArea 提供横向滚动区域', () => {
+    render(
+      <NavTabProvider
+        defaultTabs={[
+          { id: '1', title: 'Tab 1' },
+          { id: '2', title: 'Tab 2' },
+        ]}
+        defaultActiveTabId='1'
+      >
+        <NavTab />
+      </NavTabProvider>
+    )
+
+    const scrollArea = document.querySelector('[data-slot="scroll-area"]')
+    expect(scrollArea).toBeInTheDocument()
+    expect(scrollArea).toHaveClass('min-w-0', 'flex-1')
+    expect(scrollArea?.parentElement).toHaveClass('flex')
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )
+    expect(viewport).toBeInTheDocument()
+    expect(viewport).toContainElement(
+      document.querySelector('[data-slot="nav-tab-item"]')
+    )
+  })
+
+  it('无溢出时不渲染滚动按钮', () => {
+    render(
+      <NavTabProvider
+        defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+        defaultActiveTabId='1'
+      >
+        <NavTab />
+      </NavTabProvider>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, { clientWidth: 120, scrollWidth: 120 })
+    triggerResizeObservers()
+
+    expect(
+      screen.queryByRole('button', { name: '向左滚动' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '向右滚动' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('有溢出时显示滚动按钮并按边界禁用', () => {
+    render(
+      <NavTabProvider
+        defaultTabs={[
+          { id: '1', title: 'Tab 1' },
+          { id: '2', title: 'Tab 2' },
+        ]}
+        defaultActiveTabId='1'
+      >
+        <NavTab />
+      </NavTabProvider>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 240,
+      scrollLeft: 0,
+    })
+    triggerResizeObservers()
+
+    expect(screen.getByRole('button', { name: '向左滚动' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '向右滚动' })).toBeEnabled()
+  })
+
+  it('点击滚动按钮按平滑方向滚动 viewport', () => {
+    render(
+      <NavTabProvider
+        defaultTabs={[
+          { id: '1', title: 'Tab 1' },
+          { id: '2', title: 'Tab 2' },
+        ]}
+        defaultActiveTabId='1'
+      >
+        <NavTab />
+      </NavTabProvider>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    ) as HTMLElement & {
+      scrollBy: (options: ScrollToOptions) => void
+    }
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 240,
+      scrollLeft: 0,
+    })
+    const scrollBy = vi.fn()
+    viewport.scrollBy = scrollBy
+    triggerResizeObservers()
+
+    fireEvent.click(screen.getByRole('button', { name: '向右滚动' }))
+    expect(scrollBy).toHaveBeenCalledWith({ left: 120, behavior: 'smooth' })
+
+    setViewportMetrics(viewport, { scrollLeft: 120 })
+    viewport.dispatchEvent(new Event('scroll'))
+    triggerResizeObservers()
+
+    fireEvent.click(screen.getByRole('button', { name: '向左滚动' }))
+    expect(scrollBy).toHaveBeenCalledWith({ left: -120, behavior: 'smooth' })
+  })
+  it('切换激活 Tab 后自动滚动到可见区域', () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'scrollIntoView'
+    )
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+
+    try {
+      render(
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      )
+
+      const tab2 = screen
+        .getByText('Tab 2')
+        .closest('[data-slot="nav-tab-item"]') as HTMLElement
+      const viewport = document.querySelector(
+        '[data-slot="scroll-area-viewport"]'
+      )!
+      expect(viewport).toContainElement(tab2)
+      scrollIntoView.mockClear()
+
+      fireEvent.click(screen.getByText('Tab 2'))
+
+      const callIndex = scrollIntoView.mock.contexts.findIndex(
+        (context) => context === tab2
+      )
+      expect(callIndex).toBeGreaterThanOrEqual(0)
+      expect(scrollIntoView.mock.calls[callIndex]).toEqual([
+        { inline: 'nearest', block: 'nearest' },
+      ])
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          Element.prototype,
+          'scrollIntoView',
+          originalScrollIntoView
+        )
+      } else {
+        Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+      }
+    }
+  })
+
+  it('通过 addTab 新增并激活 Tab 后自动滚动', () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'scrollIntoView'
+    )
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+
+    function Adder() {
+      const { addTab } = useNavTab()
+      return (
+        <>
+          <button onClick={() => addTab({ id: 'new', title: 'New Tab' })}>
+            Add
+          </button>
+          <NavTab />
+        </>
+      )
+    }
+
+    try {
+      render(
+        <NavTabProvider>
+          <Adder />
+        </NavTabProvider>
+      )
+      scrollIntoView.mockClear()
+
+      fireEvent.click(screen.getByText('Add'))
+
+      const newTab = screen
+        .getByText('New Tab')
+        .closest('[data-slot="nav-tab-item"]') as HTMLElement
+      const callIndex = scrollIntoView.mock.contexts.findIndex(
+        (context) => context === newTab
+      )
+      expect(callIndex).toBeGreaterThanOrEqual(0)
+      expect(scrollIntoView.mock.calls[callIndex]).toEqual([
+        { inline: 'nearest', block: 'nearest' },
+      ])
+      expect(newTab).toHaveAttribute('data-active', 'true')
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          Element.prototype,
+          'scrollIntoView',
+          originalScrollIntoView
+        )
+      } else {
+        Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+      }
+    }
   })
 
   it('点击标签页切换激活', () => {
