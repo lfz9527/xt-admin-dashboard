@@ -62,7 +62,7 @@ export function NavTabProvider({
   const removeTab = useCallback((id: string) => {
     setTabs((prev) => {
       const target = prev.find((t) => t.id === id)
-      if (!target || !target.closable) return prev
+      if (!target || !target.closable || prev.length === 1) return prev
 
       const remaining = prev.filter((t) => t.id !== id)
 

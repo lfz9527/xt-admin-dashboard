@@ -88,6 +88,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
       <div className='flex size-full min-w-0'>
         {scrollState.hasOverflow && (
           <Button
+            aria-label='向左滚动'
             className='h-full w-7 shrink-0 rounded-none shadow-sm'
             disabled={!scrollState.canScrollLeft}
             onClick={() => scrollTabs(-1)}
@@ -132,7 +133,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                     text={tab.title}
                     className='min-w-0 flex-1 select-none'
                   />
-                  {tab.closable && (
+                  {tab.closable && tabs.length > 1 && (
                     <span
                       data-slot='nav-tab-close'
                       className={cn(
@@ -181,6 +182,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
         </ScrollArea>
         {scrollState.hasOverflow && (
           <Button
+            aria-label='向右滚动'
             className='h-full w-7 shrink-0 rounded-none shadow-sm'
             disabled={!scrollState.canScrollRight}
             onClick={() => scrollTabs(1)}
