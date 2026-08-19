@@ -15,7 +15,9 @@ export default function MenuHeader() {
           <SidebarMenuButton size='lg'>
             <div className='text-sidebar-primary-foreground flex items-center gap-4'>
               <Logo />
-              <div className='whitespace-nowrap'>XT-DASHBOARD</div>
+              <div className='text-foreground whitespace-nowrap'>
+                lifangzheng
+              </div>
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
