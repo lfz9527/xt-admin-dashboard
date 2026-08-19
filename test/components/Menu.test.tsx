@@ -36,6 +36,9 @@ describe('Menus', () => {
       'system',
       'system-users',
       'system-roles',
+      'level-one',
+      'level-two',
+      'level-three',
     ])
     expect(menus[0]).toMatchObject({ key: 'home', icon: SquareTerminal })
     expect(menus[1]).toMatchObject({

@@ -85,6 +85,29 @@ const routes: AppRouteObject[] = [
             ],
           },
           {
+            path: '/level-one',
+            meta: {
+              title: '一级菜单',
+              menuKey: 'level-one',
+              icon: Settings2,
+            },
+            children: [
+              {
+                path: 'level-two',
+                meta: { title: '二级菜单', menuKey: 'level-two' },
+                children: [
+                  {
+                    path: 'level-three',
+                    element: Lazy(
+                      () => import('@/pages/level-one/level-two/level-three')
+                    ),
+                    meta: { title: '三级菜单', menuKey: 'level-three' },
+                  },
+                ],
+              },
+            ],
+          },
+          {
             id: '404-page',
             path: '/404',
             element: Lazy(() => import('@/pages/404')),
