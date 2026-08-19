@@ -1,0 +1,43 @@
+# AGENTS.md
+
+## 项目概览
+
+- React 19 + TypeScript + Vite 的后台管理仪表盘。
+- 应用入口：`src/main.tsx`；路由与页面：`src/router/`、`src/pages/`。
+- 主要目录：
+  - `src/components/`：业务/复合组件
+  - `src/ui/`：基础 UI 组件
+  - `src/layout/`：布局、菜单与导航 Tab
+  - `src/hooks/`：通用 React hooks
+  - `src/store/`：Zustand 状态
+  - `src/service/`：HTTP 客户端与请求层
+  - `src/styles/`：全局、Tailwind 与主题样式
+  - `test/`：Vitest 测试
+  - `vite.config/`：Vite 配置与插件
+
+## 常用命令
+
+使用 pnpm：
+
+- `pnpm dev`：启动开发服务器
+- `pnpm build`：TypeScript 构建检查并执行 Vite 生产构建
+- `pnpm lint`：运行 ESLint
+- `pnpm lint:fix`：自动修复 ESLint 问题
+- `pnpm lint-stylelint`：检查 CSS/SCSS/Less
+- `pnpm test`：运行全部 Vitest 测试
+- `pnpm test -- test/components/NavTab.test.tsx`：运行单个测试文件
+- `pnpm format`：使用 Prettier 格式化项目
+
+## 编辑约定
+
+- TypeScript/TSX 使用现有 ESLint 与 Prettier 约定；不要为未使用变量、`any` 等项目已放宽的规则额外引入风格限制。
+- `@/*` 映射到 `src/*`，跨目录导入优先使用该别名；同目录或相邻模块保持项目现有相对路径风格。
+- 新增页面需要同步考虑 `src/router/routes.tsx`；全局状态放入 `src/store/`，请求逻辑放入 `src/service/`，避免在 UI 组件中重复实现基础设施逻辑。
+- 样式优先沿用 Tailwind 与现有 CSS 变量/主题体系；修改布局或导航时检查对应组件测试与响应式表现。
+- 错误边界与全局错误处理集中在 `src/components/ErrorBoundary/`，不要绕过既有错误处理直接添加全局兜底。
+- 修改行为后优先补充或更新 `test/` 中对应的 Vitest/Testing Library 测试，并至少运行相关测试、`pnpm lint` 与 `pnpm build`。
+
+## 注意事项
+
+- `dist/`、`node_modules/` 和 `public/` 已被 ESLint 忽略，不要把生成物或依赖目录纳入源码修改。
+- 项目使用 React Router、Zustand、Tailwind CSS v4 与 Vite 插件配置；涉及这些基础设施的改动应先阅读其现有实现和配置文件。
