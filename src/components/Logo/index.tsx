@@ -7,7 +7,7 @@ export default function Logo() {
       className='bg-primary flex-center aspect-square size-8 rounded-lg'
     >
       <img
-        src='/icon-white.svg'
+        src='/logo-white.png'
         className='size-6'
       />
     </NavLink>
