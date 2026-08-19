@@ -39,15 +39,17 @@ const routes: AppRouteObject[] = [
             path: '/system/users',
             element: Lazy(() => import('@/pages/system/users')),
             meta: { title: '用户管理', menuKey: 'system-users' },
-          },
-          {
-            path: '/system/users/:id',
-            element: Lazy(() => import('@/pages/system/users/detail')),
-            meta: {
-              title: '用户详情',
-              menuKey: 'system-users',
-              showInMenu: false,
-            },
+            children: [
+              {
+                path: ':id',
+                element: Lazy(() => import('@/pages/system/users/detail')),
+                meta: {
+                  title: '用户详情',
+                  menuKey: 'system-users',
+                  showInMenu: false,
+                },
+              },
+            ],
           },
           {
             path: '/system/roles',

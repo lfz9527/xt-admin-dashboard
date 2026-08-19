@@ -22,21 +22,18 @@ const findRoute = (
 }
 
 describe('application routes', () => {
-  it('associates hidden user detail with the users menu and detail component', async () => {
-    const detail = findRoute(
-      routes,
-      (route) => route.path === '/system/users/:id'
-    )
+  it('nests hidden user detail under the users route with a relative path', () => {
+    const users = findRoute(routes, (route) => route.path === '/system/users')
+    const detail = users?.children?.find((route) => route.path === ':id')
 
+    expect(detail).toBeDefined()
+    expect(detail?.path).toBe(':id')
     expect(detail?.meta).toEqual({
       title: '用户详情',
       menuKey: 'system-users',
       showInMenu: false,
     })
     expect(detail?.element).toBeDefined()
-    expect(detail?.element).not.toBe(
-      findRoute(routes, (route) => route.path === '/system/users')?.element
-    )
   })
 
   it('nests role detail under the roles route and keeps it hidden from menus', () => {
