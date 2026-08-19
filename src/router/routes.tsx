@@ -13,57 +13,73 @@ const routes: AppRouteObject[] = [
           {
             path: '/',
             element: Lazy(() => import('@/pages/home')),
-            meta: { title: '首页', menuKey: 'home' },
+            meta: { title: '首页', menuKey: 'home', icon: 'SquareTerminal' },
           },
           {
             path: '/dashboard',
             element: Lazy(() => import('@/pages/dashboard')),
-            meta: { title: 'dashboard', menuKey: 'dashboard' },
-          },
-          {
-            path: '/dashboard/overview',
-            element: Lazy(() => import('@/pages/dashboard/overview')),
-            meta: { title: '概览', menuKey: 'dashboard-overview' },
-          },
-          {
-            path: '/dashboard/analytics',
-            element: Lazy(() => import('@/pages/dashboard/analytics')),
-            meta: { title: '分析', menuKey: 'dashboard-analytics' },
-          },
-          {
-            path: '/system',
-            element: Lazy(() => import('@/pages/system')),
-            meta: { title: 'system', menuKey: 'system' },
-          },
-          {
-            path: '/system/users',
-            element: Lazy(() => import('@/pages/system/users')),
-            meta: { title: '用户管理', menuKey: 'system-users' },
+            meta: {
+              title: 'Dashboard',
+              menuKey: 'dashboard',
+              icon: 'LayoutDashboard',
+            },
             children: [
               {
-                path: ':id',
-                element: Lazy(() => import('@/pages/system/users/detail')),
-                meta: {
-                  title: '用户详情',
-                  menuKey: 'system-users',
-                  showInMenu: false,
-                },
+                path: 'overview',
+                element: Lazy(() => import('@/pages/dashboard/overview')),
+                meta: { title: '概览', menuKey: 'dashboard-overview' },
+              },
+              {
+                path: 'analytics',
+                element: Lazy(() => import('@/pages/dashboard/analytics')),
+                meta: { title: '分析', menuKey: 'dashboard-analytics' },
               },
             ],
           },
           {
-            path: '/system/roles',
-            element: Lazy(() => import('@/pages/system/roles')),
-            meta: { title: '角色管理', menuKey: 'system-roles' },
+            path: '/system',
+            element: Lazy(() => import('@/pages/system')),
+            meta: { title: '系统管理', menuKey: 'system', icon: 'Settings2' },
             children: [
               {
-                path: 'detail',
-                element: Lazy(() => import('@/pages/system/roles/detail')),
+                path: 'users',
+                element: Lazy(() => import('@/pages/system/users')),
                 meta: {
-                  title: '角色管理详情',
-                  menuKey: 'system-roles',
-                  showInMenu: false,
+                  title: '用户管理',
+                  menuKey: 'system-users',
+                  icon: 'LayoutDashboard',
                 },
+                children: [
+                  {
+                    path: ':id',
+                    element: Lazy(() => import('@/pages/system/users/detail')),
+                    meta: {
+                      title: '用户详情',
+                      menuKey: 'system-users',
+                      showInMenu: false,
+                    },
+                  },
+                ],
+              },
+              {
+                path: 'roles',
+                element: Lazy(() => import('@/pages/system/roles')),
+                meta: {
+                  title: '角色管理',
+                  menuKey: 'system-roles',
+                  icon: 'Settings2',
+                },
+                children: [
+                  {
+                    path: 'detail',
+                    element: Lazy(() => import('@/pages/system/roles/detail')),
+                    meta: {
+                      title: '角色管理详情',
+                      menuKey: 'system-roles',
+                      showInMenu: false,
+                    },
+                  },
+                ],
               },
             ],
           },

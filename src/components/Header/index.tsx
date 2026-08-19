@@ -27,7 +27,8 @@ export default function Header() {
     menus,
     is404 ? '' : menuKey,
     routeTitle,
-    pathname
+    pathname,
+    (currentMatch?.handle as RouteMeta)?.showInMenu === false
   )
 
   console.log('breadcrumbItems', breadcrumbItems)

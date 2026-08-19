@@ -37,7 +37,12 @@ describe('Menus', () => {
       'system-users',
       'system-roles',
     ])
-    expect(menus.some(({ key }) => key.includes('detail'))).toBe(false)
+    expect(menus[0]).toMatchObject({ key: 'home', icon: 'SquareTerminal' })
+    expect(menus[1]).toMatchObject({
+      key: 'dashboard',
+      icon: 'LayoutDashboard',
+    })
+    expect(menus[2]).toMatchObject({ key: 'system', icon: 'Settings2' })
     expect(
       menus
         .flatMap((item) => item.children ?? [])
@@ -74,7 +79,8 @@ describe('Menus', () => {
     })
 
     expect((await screen.findAllByText('角色管理')).length).toBeGreaterThan(0)
-    expect(await screen.findByText('detail')).toBeInTheDocument()
+    expect(await screen.findByText('角色管理详情')).toBeInTheDocument()
+    expect(screen.queryByText('detail')).not.toBeInTheDocument()
     expect(
       screen
         .getAllByRole('link', { name: '角色管理' })

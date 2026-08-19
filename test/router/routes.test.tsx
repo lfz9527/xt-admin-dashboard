@@ -23,7 +23,8 @@ const findRoute = (
 
 describe('application routes', () => {
   it('nests hidden user detail under the users route with a relative path', () => {
-    const users = findRoute(routes, (route) => route.path === '/system/users')
+    const system = findRoute(routes, (route) => route.path === '/system')
+    const users = system?.children?.find((route) => route.path === 'users')
     const detail = users?.children?.find((route) => route.path === ':id')
 
     expect(detail).toBeDefined()
@@ -37,7 +38,8 @@ describe('application routes', () => {
   })
 
   it('nests role detail under the roles route and keeps it hidden from menus', () => {
-    const roles = findRoute(routes, (route) => route.path === '/system/roles')
+    const system = findRoute(routes, (route) => route.path === '/system')
+    const roles = system?.children?.find((route) => route.path === 'roles')
     const detail = roles?.children?.find((route) => route.path === 'detail')
 
     expect(detail?.meta).toEqual({

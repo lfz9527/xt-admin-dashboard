@@ -104,11 +104,13 @@ describe('useMenuBreadcrumb', () => {
         routeMenus,
         'system-users',
         undefined,
-        '/system/users/123'
+        '/system/users/123',
+        false
       )
     )
 
     expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
       { label: '用户管理', href: '/system/users' },
       { label: '123', href: undefined },
     ])
@@ -119,14 +121,16 @@ describe('useMenuBreadcrumb', () => {
       useMenuBreadcrumb(
         routeMenus,
         'system-roles',
-        undefined,
-        '/system/roles/detail'
+        '角色管理详情',
+        '/system/roles/detail',
+        true
       )
     )
 
     expect(result.current).toEqual([
+      { label: '系统管理', href: '/system' },
       { label: '角色管理', href: '/system/roles' },
-      { label: 'detail', href: undefined },
+      { label: '角色管理详情', href: undefined },
     ])
   })
 

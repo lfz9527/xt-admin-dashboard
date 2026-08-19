@@ -37,6 +37,14 @@ export function routeToMenus(
       return children
     }
 
+    const hasDeniedChildren = route.children?.every(
+      (child) =>
+        child.meta?.permission !== undefined &&
+        !hasRoutePermission(child.meta, checker)
+    )
+
+    if (hasDeniedChildren && children.length === 0) return []
+
     return [
       {
         key: route.meta.menuKey,

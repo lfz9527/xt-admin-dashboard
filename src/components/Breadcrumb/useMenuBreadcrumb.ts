@@ -90,7 +90,8 @@ export function useMenuBreadcrumb(
   menus: MenuItem[],
   menuKey: string,
   fallbackTitle?: string,
-  pathname?: string
+  pathname?: string,
+  isStaticDetail = false
 ): BreadcrumbItemData[] {
   return useMemo(() => {
     // menuKey 为空时（路由未匹配），尝试从 URL pathname 推导
@@ -107,6 +108,14 @@ export function useMenuBreadcrumb(
     }
 
     const base = menuPathToBreadcrumb(path)
+
+    if (pathname?.endsWith('/detail') && fallbackTitle) {
+      base[base.length - 1] = {
+        ...base[base.length - 1],
+        href: path[path.length - 1].path,
+      }
+      return [...base, { label: fallbackTitle }]
+    }
 
     if (pathname) {
       const trailing = extractTrailingSegments(pathname, path)
