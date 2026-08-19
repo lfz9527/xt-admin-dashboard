@@ -1,8 +1,19 @@
 import { renderHook } from '@testing-library/react'
+import { vi } from 'vitest'
+
+vi.hoisted(() => {
+  if (typeof window !== 'undefined' && !window.matchMedia) {
+    window.matchMedia = () => ({ matches: false }) as MediaQueryList
+  }
+})
+
 import { useMenuBreadcrumb } from '@/components/Breadcrumb/useMenuBreadcrumb'
 import type { MenuItem } from '@/components/Menu/types'
+import routes from '@/router/routes'
+import { allowAllPermissions, routeToMenus } from '@/router/menu'
 
-// 模拟菜单树：首页 + 系统管理 > 角色管理 > 三级菜单
+const routeMenus = routeToMenus(routes, allowAllPermissions)
+
 const mockMenus: MenuItem[] = [
   { key: 'home', title: '首页', path: '/' },
   {
@@ -87,10 +98,10 @@ describe('useMenuBreadcrumb', () => {
     ])
   })
 
-  it('用户详情使用所属菜单生成面包屑', () => {
+  it('真实路由生成的用户菜单支持详情面包屑', () => {
     const { result } = renderHook(() =>
       useMenuBreadcrumb(
-        [{ key: 'system-users', title: '用户管理', path: '/system/users' }],
+        routeMenus,
         'system-users',
         undefined,
         '/system/users/123'
@@ -103,10 +114,10 @@ describe('useMenuBreadcrumb', () => {
     ])
   })
 
-  it('角色详情使用所属菜单生成面包屑', () => {
+  it('真实路由生成的角色菜单支持详情面包屑', () => {
     const { result } = renderHook(() =>
       useMenuBreadcrumb(
-        [{ key: 'system-roles', title: '角色管理', path: '/system/roles' }],
+        routeMenus,
         'system-roles',
         undefined,
         '/system/roles/detail'

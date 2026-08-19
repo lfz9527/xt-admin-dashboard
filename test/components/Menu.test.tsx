@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import Header from '@/components/Header'
 import { SidebarProvider } from '@/ui/Sidebar'
+import { ProgressProvider } from '@bprogress/react'
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -11,7 +12,8 @@ vi.hoisted(() => {
 })
 
 import routes from '@/router/routes'
-import { routeToMenus } from '@/router/menu'
+import { routeToMenus, allowAllPermissions } from '@/router/menu'
+import { buildRouter } from '@/router/utils'
 import useMenu from '@/store/useMenu'
 
 describe('Menus', () => {
@@ -32,6 +34,8 @@ describe('Menus', () => {
       'dashboard-overview',
       'dashboard-analytics',
       'system',
+      'system-users',
+      'system-roles',
     ])
     expect(menus.some(({ key }) => key.includes('detail'))).toBe(false)
     expect(
@@ -41,31 +45,41 @@ describe('Menus', () => {
     ).toBe(false)
   })
 
-  it('derives Header breadcrumbs from routes instead of the menu store', () => {
+  it('renders complete detail breadcrumbs from real routes and derived menus', async () => {
     const router = createMemoryRouter(
-      [
-        {
-          path: '/system',
-          handle: { title: 'system', menuKey: 'system' },
-          children: [
-            {
-              path: 'users',
-              handle: { title: '用户管理', menuKey: 'system-users' },
-              element: <Header />,
-            },
-          ],
-        },
-      ],
-      { initialEntries: ['/system/users'] }
+      buildRouter(routes, allowAllPermissions),
+      {
+        initialEntries: ['/system/users/123'],
+      }
     )
 
     render(
       <SidebarProvider>
-        <RouterProvider router={router} />
+        <ProgressProvider>
+          <RouterProvider router={router} />
+        </ProgressProvider>
       </SidebarProvider>
     )
 
-    expect(screen.getByText('用户管理')).toBeInTheDocument()
+    expect((await screen.findAllByText('用户管理')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('123')).toBeInTheDocument()
+    expect(
+      screen
+        .getAllByRole('link', { name: '用户管理' })
+        .find((link) => link.getAttribute('aria-current') === 'page')
+    ).toHaveAttribute('href', '/system/users')
+
+    await act(async () => {
+      await router.navigate('/system/roles/detail')
+    })
+
+    expect((await screen.findAllByText('角色管理')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('detail')).toBeInTheDocument()
+    expect(
+      screen
+        .getAllByRole('link', { name: '角色管理' })
+        .find((link) => link.getAttribute('aria-current') === 'page')
+    ).toHaveAttribute('href', '/system/roles')
   })
 
   it('keeps only sidebar state in the menu store', () => {

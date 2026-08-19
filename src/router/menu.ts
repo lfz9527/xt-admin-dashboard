@@ -36,7 +36,6 @@ export function routeToMenus(
     ) {
       return children
     }
-    if (route.children && children.length === 0) return []
 
     return [
       {
