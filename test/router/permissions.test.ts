@@ -24,8 +24,11 @@ describe('route permissions', () => {
   })
 
   it('allowAllPermissions 允许现有路由', () => {
-    expect(hasRoutePermission({ title: '首页' }, allowAllPermissions)).toBe(
-      true
-    )
+    expect(
+      hasRoutePermission(
+        { title: '首页', permission: 'dashboard:view' },
+        allowAllPermissions
+      )
+    ).toBe(true)
   })
 })

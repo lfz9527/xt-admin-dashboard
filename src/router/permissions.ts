@@ -10,7 +10,7 @@ export const hasRoutePermission = (
   meta: RouteMeta | undefined,
   checker: PermissionChecker
 ): boolean => {
-  if (!meta?.permission) {
+  if (meta?.permission === undefined) {
     return true
   }
 
