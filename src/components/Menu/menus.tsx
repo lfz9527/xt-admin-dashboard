@@ -19,7 +19,7 @@ import type { RouteMeta } from '@/router/types'
 import { cn } from '@/utils/common'
 import { useMemo } from 'react'
 import routes from '@/router/routes'
-import { routeToMenus } from '@/router/menu'
+import { routeToMenus, allowAllPermissions } from '@/router/menu'
 
 const iconMap: Record<string, LucideIcon> = {
   SquareTerminal,
@@ -135,7 +135,7 @@ export default function Menus() {
   const matches = useMatches()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
-  const menus = useMemo(() => routeToMenus(routes), [])
+  const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>

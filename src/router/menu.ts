@@ -6,6 +6,8 @@ import {
 } from './permissions'
 import type { AppRouteObject } from './types'
 
+export { allowAllPermissions } from './permissions'
+
 const joinRoutePath = (
   parentPath: string,
   routePath: string | undefined

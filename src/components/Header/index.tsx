@@ -4,14 +4,16 @@ import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
 import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
-import { useMenu } from '@/store'
 import { Separator } from '@/ui/Separator'
 import type { RouteMeta } from '@/router/types'
+import routes from '@/router/routes'
+import { allowAllPermissions, routeToMenus } from '@/router/menu'
+import { useMemo } from 'react'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const isMobile = useIsMobile()
-  const menus = useMenu((s) => s.menus)
+  const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
 
   const matches = useMatches()
   const { pathname } = useLocation()
