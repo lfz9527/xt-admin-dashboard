@@ -16,9 +16,10 @@ import {
 } from '@/ui/Sidebar'
 import type { MenuItem } from './types'
 import type { RouteMeta } from '@/router/types'
-import { useMenu } from '@/store'
 import { cn } from '@/utils/common'
 import { useMemo } from 'react'
+import routes from '@/router/routes'
+import { routeToMenus } from '@/router/menu'
 
 const iconMap: Record<string, LucideIcon> = {
   SquareTerminal,
@@ -134,7 +135,7 @@ export default function Menus() {
   const matches = useMatches()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
-  const menus = useMenu((s) => s.menus)
+  const menus = useMemo(() => routeToMenus(routes), [])
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>

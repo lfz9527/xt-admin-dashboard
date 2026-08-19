@@ -29,8 +29,8 @@ export function routeToMenus(
 
     if (
       route.meta?.showInMenu === false ||
-      !route.meta.menuKey ||
-      !route.meta.title
+      !route.meta?.menuKey ||
+      !route.meta?.title
     ) {
       return children
     }
