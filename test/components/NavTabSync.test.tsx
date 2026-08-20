@@ -25,6 +25,7 @@ import { SidebarProvider } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
 import routes from '@/router/routes'
 import { buildRouter } from '@/router/utils'
+import { NavTab, NavTabProvider, NavTabSync } from '@/layout/NavTab'
 
 function renderApp(initialEntry: string) {
   const router = createMemoryRouter(buildRouter(routes), {
@@ -64,6 +65,45 @@ describe('NavTabSync', () => {
       'true'
     )
     expect(tabItem('/')?.getAttribute('data-active')).toBe('false')
+  })
+
+  it('title 未配置时标签标题使用最后一个动态参数值', async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          element: (
+            <NavTabProvider>
+              <NavTabSync />
+              <NavTab />
+            </NavTabProvider>
+          ),
+          children: [
+            { path: 'users/:id', element: <div>user</div> },
+            {
+              path: 'posts/:id/edit/:step',
+              element: <div>post</div>,
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/users/196114'] }
+    )
+    render(<RouterProvider router={router} />)
+
+    await waitFor(() => {
+      const tab = document.querySelector('[data-tab-id="/users/196114"]')
+      expect(tab?.textContent?.trim()).toBe('196114')
+    })
+
+    await act(async () => {
+      await router.navigate('/posts/88/edit/2')
+    })
+
+    await waitFor(() => {
+      const tab = document.querySelector('[data-tab-id="/posts/88/edit/2"]')
+      expect(tab?.textContent?.trim()).toBe('2')
+    })
   })
 
   it('点击标签切换到对应标签激活', async () => {

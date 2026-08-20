@@ -85,7 +85,7 @@ describe('Menus', () => {
     expect((await screen.findAllByText('用户管理')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/users/)).toBeInTheDocument()
     expect(await screen.findByText(/user detail/)).toBeInTheDocument()
-    expect(await screen.findByText('123')).toBeInTheDocument()
+    expect((await screen.findAllByText('123')).length).toBeGreaterThan(0)
     expect(
       screen
         .getAllByRole('link', { name: '用户管理' })

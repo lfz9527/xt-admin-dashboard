@@ -55,7 +55,7 @@ const routes: AppRouteObject[] = [
                     path: ':id',
                     element: Lazy(() => import('@/pages/system/users/detail')),
                     meta: {
-                      title: '用户详情',
+                      // title: '用户详情',
                       menuKey: 'system-users',
                       showInMenu: false,
                     },
