@@ -92,9 +92,10 @@ function Tree({ item, menuKey, level }: TreeProps) {
         trigger={
           <SidebarMenuButton
             style={style}
+            isActive={isActive}
             className={cn(
               MenuItemCls,
-              MenuItemHoverCls,
+              isActive ? MenuItemActiveCls : MenuItemHoverCls,
               isDefaultOpen &&
                 'text-menu-accent-foreground hover:text-menu-accent-foreground'
             )}

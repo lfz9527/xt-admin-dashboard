@@ -95,6 +95,25 @@ describe('Menus', () => {
     ).toHaveAttribute('href', '/system/roles')
   })
 
+  it('父级菜单在自身路由激活时保持高亮', async () => {
+    const router = createMemoryRouter(buildRouter(routes), {
+      initialEntries: ['/system'],
+    })
+
+    render(
+      <SidebarProvider>
+        <ProgressProvider>
+          <RouterProvider router={router} />
+        </ProgressProvider>
+      </SidebarProvider>
+    )
+
+    const systemButton = await screen.findByRole('button', {
+      name: '系统管理',
+    })
+    expect(systemButton).toHaveAttribute('data-active', 'true')
+  })
+
   it('keeps only sidebar state in the menu store', () => {
     const state = useMenu.getState()
 
