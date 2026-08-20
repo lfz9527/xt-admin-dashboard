@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, Link } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -150,6 +150,20 @@ export default function LoginFeature() {
                   </FormItem>
                 )}
               />
+              <div className='text-muted-foreground flex justify-between text-sm'>
+                <Link
+                  to='/register'
+                  className='hover:text-foreground'
+                >
+                  注册账号
+                </Link>
+                <Link
+                  to='/forgot-password'
+                  className='hover:text-foreground'
+                >
+                  忘记密码
+                </Link>
+              </div>
               <Button
                 type='submit'
                 className='h-10 w-full'

@@ -55,7 +55,7 @@ const routes: AppRouteObject[] = [
                     path: ':id',
                     element: Lazy(() => import('@/pages/system/users/detail')),
                     meta: {
-                      // title: '用户详情',
+                      title: '用户详情',
                       menuKey: 'system-users',
                       showInMenu: false,
                     },
@@ -120,6 +120,16 @@ const routes: AppRouteObject[] = [
         path: '*',
         element: Lazy(() => import('@/pages/404')),
         meta: { title: '404' },
+      },
+      {
+        path: '/register',
+        element: Lazy(() => import('@/pages/register')),
+        meta: { title: '注册' },
+      },
+      {
+        path: '/forgot-password',
+        element: Lazy(() => import('@/pages/forgot-password')),
+        meta: { title: '忘记密码' },
       },
       {
         path: '/login',

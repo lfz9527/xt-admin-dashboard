@@ -33,6 +33,23 @@ describe('LoginFeature', () => {
     })
   })
 
+  it('exposes registration and password recovery links', () => {
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('link', { name: '注册账号' })).toHaveAttribute(
+      'href',
+      '/register'
+    )
+    expect(screen.getByRole('link', { name: '忘记密码' })).toHaveAttribute(
+      'href',
+      '/forgot-password'
+    )
+  })
+
   it('shows validation messages for empty fields', async () => {
     const user = userEvent.setup()
     render(

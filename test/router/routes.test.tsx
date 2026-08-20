@@ -49,6 +49,19 @@ describe('application routes', () => {
     })
   })
 
+  it('includes authentication page routes with their page titles', () => {
+    const register = findRoute(routes, (route) => route.path === '/register')
+    const forgotPassword = findRoute(
+      routes,
+      (route) => route.path === '/forgot-password'
+    )
+
+    expect(register?.meta?.title).toBe('注册')
+    expect(register?.element).toBeDefined()
+    expect(forgotPassword?.meta?.title).toBe('忘记密码')
+    expect(forgotPassword?.element).toBeDefined()
+  })
+
   it('keeps 404 routes outside the application layout', () => {
     const guard = routes[0]
     const layout = guard.children?.find(
