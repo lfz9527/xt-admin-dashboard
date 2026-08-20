@@ -1,11 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 
+import { EncryptionManager } from '@/utils/EncryptionManager'
 import LoginFeature from '@/features/login'
 import useAuthor from '@/store/useAuthor'
 
 const navigate = vi.fn()
+const encryptionManager = new EncryptionManager('xt-admin-dashboard-login-key')
 
 vi.mock('react-router', async () => {
   const actual =
@@ -16,7 +18,13 @@ vi.mock('react-router', async () => {
 describe('LoginFeature', () => {
   beforeEach(() => {
     navigate.mockReset()
-    useAuthor.setState({ token: '' })
+    sessionStorage.clear()
+    useAuthor.setState({
+      token: '',
+      account: '',
+      encryptedPassword: '',
+      remember: false,
+    })
   })
 
   it('shows validation messages for empty fields', async () => {
@@ -51,7 +59,7 @@ describe('LoginFeature', () => {
     )
   })
 
-  it('stores a mock token and navigates home after submit', async () => {
+  it('stores encrypted credentials after submit', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -65,11 +73,70 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('button', { name: '登录' }))
 
     expect(screen.getByRole('button', { name: /登录中/ })).toBeDisabled()
-    await new Promise((resolve) => setTimeout(resolve, 1300))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/'), {
+      timeout: 2000,
+    })
     expect(useAuthor.getState().token).toMatch(/^mock-token-/)
-    expect(navigate).toHaveBeenCalledWith('/')
-    expect(sessionStorage.getItem('login-credentials')).toBe(
-      JSON.stringify({ account: 'admin', password: 'password' })
+
+    const stored = JSON.parse(
+      sessionStorage.getItem('app-author') ?? '{}'
+    ).state
+    expect(stored.password).toBeUndefined()
+    expect(stored.encryptedPassword).not.toContain('password')
+    await expect(
+      encryptionManager.decrypt(stored.encryptedPassword)
+    ).resolves.toBe('password')
+  })
+
+  it('fills saved credentials on load', async () => {
+    const encryptedPassword = await encryptionManager.encrypt('password')
+    useAuthor.setState({
+      account: 'admin',
+      encryptedPassword,
+      remember: true,
+    })
+
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
     )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('账号')).toHaveValue('admin')
+      expect(screen.getByLabelText('密码')).toHaveValue('password')
+    })
+    expect(screen.getByRole('checkbox', { name: '记住账号密码' })).toBeChecked()
+  })
+
+  it('clears saved credentials when remember is disabled', async () => {
+    const user = userEvent.setup()
+    const encryptedPassword = await encryptionManager.encrypt('password')
+    useAuthor.setState({
+      account: 'admin',
+      encryptedPassword,
+      remember: true,
+    })
+
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('账号')).toHaveValue('admin')
+    )
+    await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
+    await user.click(screen.getByRole('button', { name: '登录' }))
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/'), {
+      timeout: 2000,
+    })
+    expect(useAuthor.getState()).toMatchObject({
+      account: '',
+      encryptedPassword: '',
+      remember: false,
+    })
   })
 })

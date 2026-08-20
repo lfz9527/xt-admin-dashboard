@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -39,23 +40,34 @@ function createMockToken() {
 export default function LoginFeature() {
   const navigate = useNavigate()
   const setToken = useAuthor((state) => state.setToken)
+  const saveCredentials = useAuthor((state) => state.saveCredentials)
+  const clearCredentials = useAuthor((state) => state.clearCredentials)
+  const getCredentials = useAuthor((state) => state.getCredentials)
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { account: '', password: '', remember: false },
   })
 
+  const loadCredentials = useCallback(async () => {
+    const credentials = await getCredentials()
+    if (credentials) {
+      form.reset(credentials)
+    }
+  }, [form, getCredentials])
+
+  useEffect(() => {
+    loadCredentials()
+  }, [loadCredentials])
+
   const onSubmit = async (values: Values) => {
     await new Promise((resolve) => setTimeout(resolve, 1200))
     setToken(createMockToken())
-    navigate('/')
     if (values.remember) {
-      sessionStorage.setItem(
-        'login-credentials',
-        JSON.stringify({ account: values.account, password: values.password })
-      )
+      await saveCredentials(values.account, values.password)
     } else {
-      sessionStorage.removeItem('login-credentials')
+      clearCredentials()
     }
+    navigate('/')
   }
 
   return (
