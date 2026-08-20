@@ -61,6 +61,16 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     })
   }
 
+  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
+    const viewport = viewportRef.current
+    if (!viewport) return
+    // 无溢出时不拦截，滚轮保留页面默认垂直滚动
+    const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth
+    if (maxScrollLeft <= 0) return
+    e.preventDefault()
+    viewport.scrollLeft += e.deltaX + e.deltaY
+  }
+
   useEffect(() => {
     updatePill()
     const tab = activeTabId && tabRefs.current.get(activeTabId)
@@ -131,6 +141,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot='nav-tab'
       className='size-full flex-1 overflow-hidden'
+      onWheel={handleWheel}
       {...props}
     >
       <div className='flex size-full min-w-0'>

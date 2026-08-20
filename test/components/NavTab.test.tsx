@@ -363,6 +363,98 @@ describe('NavTab', () => {
     fireEvent.click(screen.getByRole('button', { name: '向左滚动' }))
     expect(scrollBy).toHaveBeenCalledWith({ left: -120, behavior: 'smooth' })
   })
+
+  it('悬停标签栏时滚轮控制横向滚动', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 360,
+      scrollLeft: 0,
+    })
+    triggerResizeObservers()
+
+    const navTab = document.querySelector('[data-slot="nav-tab"]')!
+    fireEvent.wheel(navTab, { deltaY: 100 })
+
+    expect(viewport.scrollLeft).toBe(100)
+  })
+
+  it('无溢出时滚轮不拦截页面滚动', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 120,
+      scrollLeft: 0,
+    })
+    triggerResizeObservers()
+
+    const navTab = document.querySelector('[data-slot="nav-tab"]')!
+    fireEvent.wheel(navTab, { deltaY: 100 })
+
+    expect(viewport.scrollLeft).toBe(0)
+  })
+
+  it('鼠标移出标签栏后滚轮不控制横向滚动', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 360,
+      scrollLeft: 0,
+    })
+    triggerResizeObservers()
+
+    fireEvent.wheel(document.body, { deltaY: 100 })
+
+    expect(viewport.scrollLeft).toBe(0)
+  })
+
   it('激活 Tab 变化后自动滚动到可见区域', () => {
     const originalScrollIntoView = Object.getOwnPropertyDescriptor(
       Element.prototype,
