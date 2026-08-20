@@ -21,14 +21,7 @@ const MenuItemActiveCls =
   'data-active:bg-menu-accent data-active:text-menu-accent-foreground hover:bg-menu-accent hover:text-menu-accent-foreground font-bold'
 
 function renderIcon(Icon?: LucideIcon) {
-  return Icon ? (
-    <Icon />
-  ) : (
-    <svg
-      className='size-4 shrink-0'
-      aria-hidden='true'
-    />
-  )
+  return Icon ? <Icon /> : null
 }
 
 function hasActiveDescendant(item: MenuItem, activeKey: string): boolean {
