@@ -1,3 +1,5 @@
+import LoginFeature from '@/features/login'
+
 export default function Login() {
-  return 'Login'
+  return <LoginFeature />
 }

@@ -110,6 +110,10 @@ function FormControl({
     'aria-describedby': describedBy,
     'aria-invalid': !!error,
     'data-slot': 'form-control',
+    className: cn(
+      children.props.className as string | undefined,
+      'aria-invalid:border-destructive aria-invalid:ring-destructive/20'
+    ),
   })
 }
 

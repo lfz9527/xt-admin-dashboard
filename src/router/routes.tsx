@@ -124,7 +124,7 @@ const routes: AppRouteObject[] = [
       {
         path: '/login',
         element: Lazy(() => import('@/pages/login')),
-        meta: { title: '登陆' },
+        meta: { title: '登录' },
       },
     ],
   },
