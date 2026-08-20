@@ -10,6 +10,7 @@ import { Button } from '@/ui/Button'
 import { Checkbox } from '@/ui/Checkbox'
 import { Input } from '@/ui/Input'
 import { Spinner } from '@/ui/Spinner'
+import { toast } from '@/ui/Toast'
 import {
   Card,
   CardContent,
@@ -67,7 +68,8 @@ export default function LoginFeature() {
     } else {
       clearCredentials()
     }
-    navigate('/')
+    toast.success('登录成功')
+    navigate('/', { replace: true })
   }
 
   return (

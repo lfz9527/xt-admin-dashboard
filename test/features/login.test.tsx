@@ -6,8 +6,13 @@ import { EncryptionManager } from '@/utils/EncryptionManager'
 import LoginFeature from '@/features/login'
 import useAuthor from '@/store/useAuthor'
 
-const navigate = vi.fn()
+const navigate = vi.hoisted(() => vi.fn())
+const toastSuccess = vi.hoisted(() => vi.fn())
 const encryptionManager = new EncryptionManager('xt-admin-dashboard-login-key')
+
+vi.mock('@/ui/Toast', () => ({
+  toast: { success: toastSuccess },
+}))
 
 vi.mock('react-router', async () => {
   const actual =
@@ -18,6 +23,7 @@ vi.mock('react-router', async () => {
 describe('LoginFeature', () => {
   beforeEach(() => {
     navigate.mockReset()
+    toastSuccess.mockReset()
     sessionStorage.clear()
     useAuthor.setState({
       token: '',
@@ -73,9 +79,11 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('button', { name: '登录' }))
 
     expect(screen.getByRole('button', { name: /登录中/ })).toBeDisabled()
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/'), {
-      timeout: 2000,
-    })
+    await waitFor(
+      () => expect(navigate).toHaveBeenCalledWith('/', { replace: true }),
+      { timeout: 2000 }
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('登录成功')
     expect(useAuthor.getState().token).toMatch(/^mock-token-/)
 
     const stored = JSON.parse(
@@ -130,9 +138,11 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
     await user.click(screen.getByRole('button', { name: '登录' }))
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/'), {
-      timeout: 2000,
-    })
+    await waitFor(
+      () => expect(navigate).toHaveBeenCalledWith('/', { replace: true }),
+      { timeout: 2000 }
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('登录成功')
     expect(useAuthor.getState()).toMatchObject({
       account: '',
       encryptedPassword: '',

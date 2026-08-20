@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router'
 import { useTheme, useCommand } from '@/hooks'
 import { ProgressProvider } from '@bprogress/react'
 import { useMenu } from '@/store'
+import { Toaster } from '@/ui/Toast'
 
 function App() {
   const toggleMenu = useMenu((m) => m.toggleMenu)
@@ -18,6 +19,7 @@ function App() {
         router={router}
         useTransitions={true}
       />
+      <Toaster />
     </ProgressProvider>
   )
 }
