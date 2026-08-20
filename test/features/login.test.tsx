@@ -33,21 +33,35 @@ describe('LoginFeature', () => {
     })
   })
 
-  it('exposes registration and password recovery links', () => {
+  it('switches to registration without navigating', async () => {
+    const user = userEvent.setup()
     render(
       <MemoryRouter>
         <LoginFeature />
       </MemoryRouter>
     )
 
-    expect(screen.getByRole('link', { name: '注册账号' })).toHaveAttribute(
-      'href',
-      '/register'
+    await user.click(screen.getByRole('button', { name: '注册账号' }))
+
+    expect(screen.getByText('注册管理后台')).toBeInTheDocument()
+    expect(screen.getByLabelText('邮箱')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: '返回登录' })).toBeInTheDocument()
+  })
+
+  it('switches to password recovery without navigating', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
     )
-    expect(screen.getByRole('link', { name: '忘记密码' })).toHaveAttribute(
-      'href',
-      '/forgot-password'
-    )
+
+    await user.click(screen.getByRole('button', { name: '忘记密码' }))
+
+    expect(screen.getByText('忘记密码')).toBeInTheDocument()
+    expect(screen.getByLabelText('新密码')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('shows validation messages for empty fields', async () => {
