@@ -1,7 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useForm } from 'react-hook-form'
+import {
+  useForm,
+  type FieldValues,
+  type Path,
+  type UseFormReturn,
+} from 'react-hook-form'
 import { z } from 'zod'
 
 import useAuthor from '@/store/useAuthor'
@@ -123,9 +128,9 @@ export default function LoginFeature() {
     setMode('login')
   }
 
-  const renderField = (
-    form: typeof registerForm | typeof forgotPasswordForm,
-    name: 'email' | 'username' | 'code' | 'password' | 'confirmPassword',
+  const renderField = <T extends FieldValues>(
+    form: UseFormReturn<T>,
+    name: Path<T>,
     label: string,
     placeholder: string,
     autoComplete: string
@@ -152,25 +157,20 @@ export default function LoginFeature() {
     />
   )
 
-  const fields =
-    mode === 'register'
-      ? ([
-          ['email', '邮箱', '请输入邮箱', 'email'],
-          ['username', '用户名', '请输入用户名', 'username'],
-          ['code', '验证码', '请输入验证码', 'one-time-code'],
-          ['password', '密码', '请输入密码', 'new-password'],
-          ['confirmPassword', '确认密码', '请确认密码', 'new-password'],
-        ] as const)
-      : ([
-          ['email', '邮箱', '请输入邮箱', 'email'],
-          ['code', '验证码', '请输入验证码', 'one-time-code'],
-          ['password', '新密码', '请输入新密码', 'new-password'],
-          ['confirmPassword', '确认密码', '请确认密码', 'new-password'],
-        ] as const)
-
   const isRegister = mode === 'register'
-  const isForgotPassword = mode === 'forgot-password'
-  const authForm = isRegister ? registerForm : forgotPasswordForm
+  const registerFields = [
+    ['email', '邮箱', '请输入邮箱', 'email'],
+    ['username', '用户名', '请输入用户名', 'username'],
+    ['code', '验证码', '请输入验证码', 'one-time-code'],
+    ['password', '密码', '请输入密码', 'new-password'],
+    ['confirmPassword', '确认密码', '请确认密码', 'new-password'],
+  ] as const
+  const forgotPasswordFields = [
+    ['email', '邮箱', '请输入邮箱', 'email'],
+    ['code', '验证码', '请输入验证码', 'one-time-code'],
+    ['password', '新密码', '请输入新密码', 'new-password'],
+    ['confirmPassword', '确认密码', '请确认密码', 'new-password'],
+  ] as const
 
   return (
     <main className='bg-muted/30 flex min-h-dvh items-center justify-center px-4 py-6 sm:py-8'>
@@ -297,29 +297,74 @@ export default function LoginFeature() {
                 </Button>
               </form>
             </Form>
-          ) : (
-            <Form {...authForm}>
+          ) : mode === 'register' ? (
+            <Form {...registerForm}>
               <form
                 className='flex flex-col gap-5'
-                onSubmit={authForm.handleSubmit(
-                  isRegister ? onRegisterSubmit : onForgotPasswordSubmit
-                )}
+                onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
               >
-                {fields.map(([name, label, placeholder, autoComplete]) =>
-                  renderField(authForm, name, label, placeholder, autoComplete)
+                {registerFields.map(
+                  ([name, label, placeholder, autoComplete]) =>
+                    renderField(
+                      registerForm,
+                      name,
+                      label,
+                      placeholder,
+                      autoComplete
+                    )
                 )}
                 <Button
                   type='submit'
                   className='h-10 w-full'
-                  disabled={authForm.formState.isSubmitting}
+                  disabled={registerForm.formState.isSubmitting}
                 >
-                  {authForm.formState.isSubmitting ? (
+                  {registerForm.formState.isSubmitting ? (
                     <>
                       <Spinner />
-                      {isRegister ? '注册中...' : '重置中...'}
+                      注册中...
                     </>
-                  ) : isRegister ? (
+                  ) : (
                     '注册'
+                  )}
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  className='text-muted-foreground text-center text-sm underline-offset-4 hover:bg-transparent hover:underline'
+                  onClick={() => setMode('login')}
+                >
+                  返回登录
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <Form {...forgotPasswordForm}>
+              <form
+                className='flex flex-col gap-5'
+                onSubmit={forgotPasswordForm.handleSubmit(
+                  onForgotPasswordSubmit
+                )}
+              >
+                {forgotPasswordFields.map(
+                  ([name, label, placeholder, autoComplete]) =>
+                    renderField(
+                      forgotPasswordForm,
+                      name,
+                      label,
+                      placeholder,
+                      autoComplete
+                    )
+                )}
+                <Button
+                  type='submit'
+                  className='h-10 w-full'
+                  disabled={forgotPasswordForm.formState.isSubmitting}
+                >
+                  {forgotPasswordForm.formState.isSubmitting ? (
+                    <>
+                      <Spinner />
+                      重置中...
+                    </>
                   ) : (
                     '重置密码'
                   )}
