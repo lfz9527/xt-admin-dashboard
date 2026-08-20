@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronsUp, X } from 'lucide-react'
+import { useNavigate } from 'react-router'
 import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
@@ -7,7 +8,8 @@ import { Button } from '@/ui/Button'
 import { ScrollArea } from '@/ui/ScrollArea'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
-  const { tabs, activeTabId, setActiveTab, removeTab } = useNavTab()
+  const { tabs, activeTabId, removeTab } = useNavTab()
+  const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef(new Map<string, HTMLDivElement>())
@@ -79,6 +81,19 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
 
   if (tabs.length === 0) return null
 
+  function handleClose(id: string) {
+    const idx = tabs.findIndex((t) => t.id === id)
+    if (id === activeTabId && tabs.length > 1 && idx >= 0) {
+      const remaining = tabs.filter((t) => t.id !== id)
+      const nextIdx = Math.max(0, idx - 1)
+      const next = remaining[Math.min(nextIdx, remaining.length - 1)]
+      removeTab(id)
+      navigate(next.id)
+    } else {
+      removeTab(id)
+    }
+  }
+
   return (
     <div
       data-slot='nav-tab'
@@ -127,7 +142,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                     'data-[active=false]:rounded-sm',
                     'data-[active=true]:text-menu-accent-foreground'
                   )}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => navigate(tab.id)}
                 >
                   <AutoEllipsis
                     text={tab.title}
@@ -142,7 +157,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                       )}
                       onClick={(e) => {
                         e.stopPropagation()
-                        removeTab(tab.id)
+                        handleClose(tab.id)
                       }}
                     >
                       <X className='size-3' />

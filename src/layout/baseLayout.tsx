@@ -1,7 +1,7 @@
 import Main from './main'
 import { MenuProvider, Menu, MenuContent } from '@/components/Menu'
 import { useMenu } from '@/store'
-import { NavTabProvider } from './NavTab'
+import { NavTabProvider, NavTabSync } from './NavTab'
 
 export default function BaseLayout() {
   const sidebarOpen = useMenu((s) => s.sidebarOpen)
@@ -15,6 +15,7 @@ export default function BaseLayout() {
       <Menu />
       <MenuContent>
         <NavTabProvider>
+          <NavTabSync />
           <Main />
         </NavTabProvider>
       </MenuContent>

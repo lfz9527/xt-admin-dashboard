@@ -1,5 +1,6 @@
 import { act, render, screen, fireEvent } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
+import { MemoryRouter, useLocation } from 'react-router'
 import { NavTabProvider, useNavTab, NavTab, type Tab } from '@/layout/NavTab'
 
 let resizeObserverCallbacks: ResizeObserverCallback[] = []
@@ -72,9 +73,11 @@ describe('NavTabProvider + useNavTab', () => {
     }
 
     render(
-      <NavTabProvider>
-        <Adder />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider>
+          <Adder />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Add'))
@@ -96,9 +99,11 @@ describe('NavTabProvider + useNavTab', () => {
     }
 
     render(
-      <NavTabProvider>
-        <Adder />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider>
+          <Adder />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Add'))
@@ -124,12 +129,14 @@ describe('NavTabProvider + useNavTab', () => {
     }
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='2'
-      >
-        <Remover />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='2'
+        >
+          <Remover />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Remove'))
@@ -155,12 +162,14 @@ describe('NavTabProvider + useNavTab', () => {
     }
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <Remover />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <Remover />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Remove'))
@@ -184,12 +193,14 @@ describe('NavTabProvider + useNavTab', () => {
     }
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <Switcher />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <Switcher />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Switch'))
@@ -200,9 +211,11 @@ describe('NavTabProvider + useNavTab', () => {
 describe('NavTab', () => {
   it('tabs 为空时不渲染任何内容', () => {
     const { container } = render(
-      <NavTabProvider>
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider>
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
     expect(container.querySelector('[data-slot="nav-tab"]')).toBeNull()
   })
@@ -214,12 +227,14 @@ describe('NavTab', () => {
     ]
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     expect(screen.getByText('Tab 1')).toBeInTheDocument()
@@ -228,15 +243,17 @@ describe('NavTab', () => {
 
   it('使用 ScrollArea 提供横向滚动区域', () => {
     render(
-      <NavTabProvider
-        defaultTabs={[
-          { id: '1', title: 'Tab 1' },
-          { id: '2', title: 'Tab 2' },
-        ]}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     const scrollArea = document.querySelector('[data-slot="scroll-area"]')
@@ -254,12 +271,14 @@ describe('NavTab', () => {
 
   it('无溢出时不渲染滚动按钮', () => {
     render(
-      <NavTabProvider
-        defaultTabs={[{ id: '1', title: 'Tab 1' }]}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     const viewport = document.querySelector(
@@ -278,15 +297,17 @@ describe('NavTab', () => {
 
   it('有溢出时显示滚动按钮并按边界禁用', () => {
     render(
-      <NavTabProvider
-        defaultTabs={[
-          { id: '1', title: 'Tab 1' },
-          { id: '2', title: 'Tab 2' },
-        ]}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     const viewport = document.querySelector(
@@ -305,15 +326,17 @@ describe('NavTab', () => {
 
   it('点击滚动按钮按平滑方向滚动 viewport', () => {
     render(
-      <NavTabProvider
-        defaultTabs={[
-          { id: '1', title: 'Tab 1' },
-          { id: '2', title: 'Tab 2' },
-        ]}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     const viewport = document.querySelector(
@@ -340,7 +363,7 @@ describe('NavTab', () => {
     fireEvent.click(screen.getByRole('button', { name: '向左滚动' }))
     expect(scrollBy).toHaveBeenCalledWith({ left: -120, behavior: 'smooth' })
   })
-  it('切换激活 Tab 后自动滚动到可见区域', () => {
+  it('激活 Tab 变化后自动滚动到可见区域', () => {
     const originalScrollIntoView = Object.getOwnPropertyDescriptor(
       Element.prototype,
       'scrollIntoView'
@@ -351,17 +374,29 @@ describe('NavTab', () => {
       value: scrollIntoView,
     })
 
+    function Activator() {
+      const { setActiveTab } = useNavTab()
+      return (
+        <>
+          <button onClick={() => setActiveTab('2')}>Activate 2</button>
+          <NavTab />
+        </>
+      )
+    }
+
     try {
       render(
-        <NavTabProvider
-          defaultTabs={[
-            { id: '1', title: 'Tab 1' },
-            { id: '2', title: 'Tab 2' },
-          ]}
-          defaultActiveTabId='1'
-        >
-          <NavTab />
-        </NavTabProvider>
+        <MemoryRouter>
+          <NavTabProvider
+            defaultTabs={[
+              { id: '1', title: 'Tab 1' },
+              { id: '2', title: 'Tab 2' },
+            ]}
+            defaultActiveTabId='1'
+          >
+            <Activator />
+          </NavTabProvider>
+        </MemoryRouter>
       )
 
       const tab2 = screen
@@ -373,7 +408,7 @@ describe('NavTab', () => {
       expect(viewport).toContainElement(tab2)
       scrollIntoView.mockClear()
 
-      fireEvent.click(screen.getByText('Tab 2'))
+      fireEvent.click(screen.getByText('Activate 2'))
 
       const callIndex = scrollIntoView.mock.contexts.findIndex(
         (context) => context === tab2
@@ -420,9 +455,11 @@ describe('NavTab', () => {
 
     try {
       render(
-        <NavTabProvider>
-          <Adder />
-        </NavTabProvider>
+        <MemoryRouter>
+          <NavTabProvider>
+            <Adder />
+          </NavTabProvider>
+        </MemoryRouter>
       )
       scrollIntoView.mockClear()
 
@@ -452,34 +489,35 @@ describe('NavTab', () => {
     }
   })
 
-  it('点击标签页切换激活', () => {
-    // 使用 consumer 验证 activeTabId 变化
+  it('点击标签页跳转对应路由', () => {
     function Page() {
-      const { activeTabId } = useNavTab()
+      const { pathname } = useLocation()
       return (
         <div>
           <NavTab />
-          <span data-testid='active'>{activeTabId}</span>
+          <span data-testid='pathname'>{pathname}</span>
         </div>
       )
     }
 
     const defaultTabs: Tab[] = [
-      { id: '1', title: 'Tab 1' },
-      { id: '2', title: 'Tab 2' },
+      { id: '/', title: 'Tab 1' },
+      { id: '/two', title: 'Tab 2' },
     ]
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <Page />
-      </NavTabProvider>
+      <MemoryRouter initialEntries={['/']}>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='/'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     fireEvent.click(screen.getByText('Tab 2'))
-    expect(screen.getByTestId('active').textContent).toBe('2')
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
   })
 
   it('关闭按钮点击触发 removeTab', () => {
@@ -499,12 +537,14 @@ describe('NavTab', () => {
     ]
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <Page />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     // 第一个 tab 的关闭按钮 (X icon)
@@ -517,6 +557,45 @@ describe('NavTab', () => {
     expect(screen.getByTestId('count').textContent).toBe('1')
   })
 
+  it('关闭激活标签后跳转前一个标签路由', () => {
+    function Page() {
+      const { pathname } = useLocation()
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='pathname'>{pathname}</span>
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '/', title: 'Tab 1' },
+      { id: '/two', title: 'Tab 2' },
+    ]
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='/'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1Close = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+      .querySelector('[data-slot="nav-tab-close"]')!
+
+    fireEvent.click(tab1Close)
+    expect(screen.getByTestId('count').textContent).toBe('1')
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
+  })
+
   it('closable=false 不显示关闭按钮', () => {
     const defaultTabs: Tab[] = [
       { id: '1', title: 'Home', closable: false },
@@ -524,12 +603,14 @@ describe('NavTab', () => {
     ]
 
     render(
-      <NavTabProvider
-        defaultTabs={defaultTabs}
-        defaultActiveTabId='1'
-      >
-        <NavTab />
-      </NavTabProvider>
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
     )
 
     const items = document.querySelectorAll('[data-slot="nav-tab-item"]')

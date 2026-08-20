@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LayoutDashboard, Settings2, SquareTerminal } from 'lucide-react'
 import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
@@ -8,6 +8,19 @@ import { ProgressProvider } from '@bprogress/react'
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
     window.matchMedia = () => ({ matches: false }) as MediaQueryList
+  }
+})
+
+beforeEach(() => {
+  if (!window.ResizeObserver) {
+    window.ResizeObserver = class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    } as unknown as typeof ResizeObserver
+  }
+  if (!Element.prototype.getAnimations) {
+    Element.prototype.getAnimations = () => []
   }
 })
 
@@ -86,7 +99,9 @@ describe('Menus', () => {
     expect((await screen.findAllByText('角色管理')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/roles/)).toBeInTheDocument()
     expect(await screen.findByText(/roles-detail/)).toBeInTheDocument()
-    expect(await screen.findByText('角色管理详情')).toBeInTheDocument()
+    expect((await screen.findAllByText('角色管理详情')).length).toBeGreaterThan(
+      0
+    )
     expect(screen.queryByText('detail')).not.toBeInTheDocument()
     expect(
       screen

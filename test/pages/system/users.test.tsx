@@ -3,11 +3,24 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { ProgressProvider } from '@bprogress/react'
 import { SidebarProvider } from '@/ui/Sidebar'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
     window.matchMedia = () => ({ matches: false }) as MediaQueryList
+  }
+})
+
+beforeEach(() => {
+  if (!window.ResizeObserver) {
+    window.ResizeObserver = class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    } as unknown as typeof ResizeObserver
+  }
+  if (!Element.prototype.getAnimations) {
+    Element.prototype.getAnimations = () => []
   }
 })
 
