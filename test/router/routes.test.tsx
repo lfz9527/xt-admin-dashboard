@@ -30,7 +30,6 @@ describe('application routes', () => {
     expect(detail).toBeDefined()
     expect(detail?.path).toBe(':id')
     expect(detail?.meta).toEqual({
-      title: '用户详情',
       menuKey: 'system-users',
       showInMenu: false,
     })
