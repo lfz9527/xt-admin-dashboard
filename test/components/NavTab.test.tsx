@@ -820,6 +820,60 @@ describe('NavTab', () => {
     expect(screen.queryByText('Tab 3')).not.toBeInTheDocument()
   })
 
+  it('关闭全部标签页后延迟重测并隐藏滚动按钮', async () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+          defaultActiveTabId='2'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const viewport = document.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    )!
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 360,
+      scrollLeft: 0,
+    })
+    triggerResizeObservers()
+
+    expect(screen.getByRole('button', { name: '向左滚动' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '向右滚动' })).toBeEnabled()
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab1)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
+
+    // 布局已收缩为无溢出，但 ResizeObserver 不会触发，需等延迟重测
+    setViewportMetrics(viewport, {
+      clientWidth: 120,
+      scrollWidth: 120,
+      scrollLeft: 0,
+    })
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150))
+    })
+
+    expect(
+      screen.queryByRole('button', { name: '向左滚动' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: '向右滚动' })
+    ).not.toBeInTheDocument()
+  })
+
   it('只有一个标签时右键菜单的关闭项禁用', () => {
     render(
       <MemoryRouter>

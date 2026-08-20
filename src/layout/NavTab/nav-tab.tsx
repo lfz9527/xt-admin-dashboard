@@ -26,6 +26,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     canScrollLeft: false,
     canScrollRight: false,
   })
+  const updateScrollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   function updatePill() {
     const container = containerRef.current
@@ -66,7 +67,8 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     if (tab && typeof tab.scrollIntoView === 'function') {
       tab.scrollIntoView({ inline: 'nearest', block: 'nearest' })
     }
-    updateScrollState()
+    // 等待关闭动画结束后再测量，避免读到收缩前的 scrollWidth
+    updateScrollTimerRef.current = setTimeout(() => updateScrollState(), 100)
 
     const viewport = viewportRef.current
     const container = containerRef.current
@@ -81,6 +83,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     resizeObserver?.observe(container)
 
     return () => {
+      clearTimeout(updateScrollTimerRef.current)
       viewport.removeEventListener('scroll', updateScrollState)
       resizeObserver?.disconnect()
     }
