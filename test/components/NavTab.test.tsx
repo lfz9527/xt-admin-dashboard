@@ -841,6 +841,9 @@ describe('NavTab', () => {
       'aria-disabled',
       'true'
     )
+    expect(
+      screen.getByRole('menuitem', { name: '关闭全部标签页' })
+    ).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('第一个标签的右键菜单关闭左侧禁用，最后一个关闭右侧禁用', () => {

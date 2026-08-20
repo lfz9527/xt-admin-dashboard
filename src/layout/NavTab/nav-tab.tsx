@@ -221,7 +221,10 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                       关闭右侧标签页
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={handleCloseAll}>
+                    <ContextMenuItem
+                      disabled={tabs.length <= 1}
+                      onClick={handleCloseAll}
+                    >
                       关闭全部标签页
                     </ContextMenuItem>
                   </ContextMenuContent>
