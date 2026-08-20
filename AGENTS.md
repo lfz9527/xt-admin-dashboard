@@ -41,3 +41,9 @@
 
 - `dist/`、`node_modules/` 和 `public/` 已被 ESLint 忽略，不要把生成物或依赖目录纳入源码修改。
 - 项目使用 React Router、Zustand、Tailwind CSS v4 与 Vite 插件配置；涉及这些基础设施的改动应先阅读其现有实现和配置文件。
+- 表单依赖 `react-hook-form`、`zod` 和 `@hookform/resolvers`；通用表单桥接组件位于 `src/ui/Form/`，字段布局优先复用 `src/ui/Field/`。
+- 页面路由集中在 `src/router/routes.tsx`，页面通常通过 `Lazy(() => import(...))` 懒加载；新增或改动页面时同步检查路由元信息和对应测试。
+- HTTP 请求封装在 `src/service/`，状态管理使用 `src/store/` 的 Zustand；不要在页面组件中重复实现请求客户端或全局状态基础设施。
+- UI 组件使用 Tailwind CSS v4 语义化主题变量（如 `bg-background`、`text-muted-foreground`、`border-border`、`text-destructive`），通过 `cn` 合并 className，并保持现有 `data-slot`、`data-invalid` 和 ARIA 状态约定。
+- 当前登录页是表单演示，未连接真实认证接口；不要将演示提交状态误作真实 token 或认证成功。
+- 运行单个测试使用 `pnpm exec vitest run test/<path>.test.tsx`；修改行为后至少运行相关测试、`pnpm lint` 和 `pnpm build`。
