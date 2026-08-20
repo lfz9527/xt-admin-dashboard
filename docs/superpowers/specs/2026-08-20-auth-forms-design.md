@@ -22,16 +22,15 @@
 
 ## 架构与复用
 
-- 新增 `src/features/register` 和 `src/features/forgot-password`，分别维护各自表单 schema、提交状态和页面展示。
-- 新增 `src/pages/register` 和 `src/pages/forgot-password`，保持页面层仅负责加载 Feature。
+- 注册、忘记密码与登录统一位于 `src/features/login/index.tsx`，通过本地 `mode` 状态切换，不拆分独立 Feature。
+- 不新增独立注册/忘记密码页面与路由；登录入口通过 `setMode('register')` 和 `setMode('forgot-password')` 切换。
+- 注册和重置提交成功后显示 Toast，并通过 `setMode('login')` 返回登录模式，不调用 `navigate('/login')`。
 - 复用现有 Logo、Card、Input、Button、Spinner、Toast 以及 Form 组件。
-- 在 `src/router/routes.tsx` 增加 `/register` 和 `/forgot-password` 路由。
-- 在登录 Feature 中增加两个认证页面入口，不修改现有登录模拟逻辑。
 
 ## 提交行为
 
 - 使用 `react-hook-form` 的 `isSubmitting` 展示提交中状态并禁用按钮。
-- 提交成功模拟短暂等待后调用成功 Toast，并使用 `navigate('/login', { replace: true })` 返回登录页。
+- 提交成功模拟短暂等待后调用成功 Toast，并使用 `setMode('login')` 返回登录模式。
 - 不新增认证状态、服务端请求、密码持久化或路由鉴权逻辑。
 
 ## 测试验收
@@ -39,6 +38,6 @@
 - 注册表单空字段显示校验错误。
 - 注册表单校验邮箱格式、用户名、验证码和密码确认一致性。
 - 忘记密码表单校验邮箱、验证码和密码确认一致性。
-- 两个表单提交时按钮进入禁用和提交中文案，成功后显示 Toast 并导航到登录页。
-- 路由测试确认新增两个公开路由。
+- 两个表单提交时按钮进入禁用和提交中文案，成功后显示 Toast 并回到登录模式且不导航。
+- 路由测试确认不存在独立注册和忘记密码路由。
 - 保持现有登录测试通过。

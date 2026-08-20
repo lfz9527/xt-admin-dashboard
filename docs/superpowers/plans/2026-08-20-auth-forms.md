@@ -1,10 +1,13 @@
 # 注册与忘记密码表单 Implementation Plan
 
+> 历史计划，最终实现以 `docs/superpowers/plans/2026-08-20-login-auth-switch.md` 为准。
+> 本历史计划中的独立 Feature、页面和路由方案已被最终实现取代；当前认证表单统一位于 `src/features/login/index.tsx`，使用本地 mode 切换，成功后通过 `setMode('login')` 返回登录模式。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在现有登录演示页中新增注册与忘记密码模拟表单，并通过公开路由和登录页入口提供访问。
+**Goal:** 在现有登录演示页中新增注册与忘记密码模拟表单，并通过登录页本地模式切换提供访问。
 
-**Architecture:** 分别新增 `register` 与 `forgot-password` Feature，各自使用 `react-hook-form`、`zod` 和现有 UI 表单组件维护独立 schema 与提交逻辑。新增对应页面壳和公开路由；提交只模拟等待、Toast 成功提示并返回登录页，不引入真实接口或认证状态。
+**Architecture:** 最终实现统一使用 `src/features/login/index.tsx` 的本地 `mode` 状态切换认证表单；不新增独立 Feature、页面或公开路由，注册与重置成功后调用 `setMode('login')`，不调用导航返回登录页。下方任务步骤保留为历史计划记录。
 
 **Tech Stack:** React 19、TypeScript、React Router、react-hook-form、zod、Vitest、Testing Library、Tailwind CSS。
 

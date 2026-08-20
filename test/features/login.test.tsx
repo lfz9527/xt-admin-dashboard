@@ -96,6 +96,99 @@ describe('LoginFeature', () => {
     )
   })
 
+  it('validates registration fields and matching passwords', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '注册账号' }))
+    await user.click(screen.getByRole('button', { name: '注册' }))
+
+    expect(await screen.findAllByRole('alert')).toHaveLength(5)
+
+    await user.type(screen.getByLabelText('邮箱'), 'invalid')
+    await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('确认密码'), 'different')
+    await user.click(screen.getByRole('button', { name: '注册' }))
+
+    expect(await screen.findByText('请输入有效的邮箱')).toBeInTheDocument()
+    expect(screen.getByText('两次输入的密码不一致')).toBeInTheDocument()
+  })
+
+  it('validates password recovery fields and matching passwords', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '忘记密码' }))
+    await user.click(screen.getByRole('button', { name: '重置密码' }))
+
+    expect(await screen.findAllByRole('alert')).toHaveLength(4)
+
+    await user.type(screen.getByLabelText('邮箱'), 'invalid')
+    await user.type(screen.getByLabelText('新密码'), 'password')
+    await user.type(screen.getByLabelText('确认密码'), 'different')
+    await user.click(screen.getByRole('button', { name: '重置密码' }))
+
+    expect(await screen.findByText('请输入有效的邮箱')).toBeInTheDocument()
+    expect(screen.getByText('两次输入的密码不一致')).toBeInTheDocument()
+  })
+
+  it('completes registration and returns to login mode without navigating', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '注册账号' }))
+    await user.type(screen.getByLabelText('邮箱'), 'admin@example.com')
+    await user.type(screen.getByLabelText('用户名'), 'admin')
+    await user.type(screen.getByLabelText('验证码'), '1234')
+    await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('确认密码'), 'password')
+    await user.click(screen.getByRole('button', { name: '注册' }))
+
+    expect(screen.getByRole('button', { name: /注册中/ })).toBeDisabled()
+    await waitFor(
+      () => expect(screen.getByText('登录管理后台')).toBeInTheDocument(),
+      { timeout: 2000 }
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('注册成功')
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('completes password recovery and returns to login mode without navigating', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '忘记密码' }))
+    await user.type(screen.getByLabelText('邮箱'), 'admin@example.com')
+    await user.type(screen.getByLabelText('验证码'), '1234')
+    await user.type(screen.getByLabelText('新密码'), 'password')
+    await user.type(screen.getByLabelText('确认密码'), 'password')
+    await user.click(screen.getByRole('button', { name: '重置密码' }))
+
+    expect(screen.getByRole('button', { name: /重置中/ })).toBeDisabled()
+    await waitFor(
+      () => expect(screen.getByText('登录管理后台')).toBeInTheDocument(),
+      { timeout: 2000 }
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('密码重置成功')
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it('stores encrypted credentials after submit', async () => {
     const user = userEvent.setup()
     render(
