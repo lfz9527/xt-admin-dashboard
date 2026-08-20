@@ -12,7 +12,7 @@ import { Input } from '@/ui/Input'
 import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
-import type { LoginValues } from './types'
+import { loginSchema, type LoginValues } from './types'
 
 type LoginFormProps = {
   form: UseFormReturn<LoginValues>
@@ -28,7 +28,10 @@ export default function LoginForm({
   onForgotPassword,
 }: LoginFormProps) {
   return (
-    <Form {...form}>
+    <Form
+      {...form}
+      schema={loginSchema}
+    >
       <form
         className='flex flex-col gap-5'
         onSubmit={form.handleSubmit(onSubmit)}
@@ -38,7 +41,7 @@ export default function LoginForm({
           name='account'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>账号</FormLabel>
+              <FormLabel showRequired={false}>账号</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -56,7 +59,7 @@ export default function LoginForm({
           name='password'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>密码</FormLabel>
+              <FormLabel showRequired={false}>密码</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -88,6 +91,7 @@ export default function LoginForm({
               />
               <FormLabel
                 htmlFor={field.name}
+                showRequired={false}
                 className='text-muted-foreground font-normal'
               >
                 记住账号密码

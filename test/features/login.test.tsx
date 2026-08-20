@@ -161,7 +161,7 @@ describe('LoginFeature', () => {
       () => expect(screen.getByText('登录管理后台')).toBeInTheDocument(),
       { timeout: 2000 }
     )
-    expect(toastSuccess).toHaveBeenCalledWith('注册成功')
+    expect(toastSuccess).toHaveBeenCalledWith('注册成功，请登录')
     expect(navigate).not.toHaveBeenCalled()
   })
 
@@ -185,7 +185,7 @@ describe('LoginFeature', () => {
       () => expect(screen.getByText('登录管理后台')).toBeInTheDocument(),
       { timeout: 2000 }
     )
-    expect(toastSuccess).toHaveBeenCalledWith('密码重置成功')
+    expect(toastSuccess).toHaveBeenCalledWith('密码重置成功，请登录')
     expect(navigate).not.toHaveBeenCalled()
   })
 

@@ -14,7 +14,7 @@ import type { UseFormReturn } from 'react-hook-form'
 
 import AuthField from './AuthField'
 import sendVerificationCode from './sendVerificationCode'
-import type { ForgotPasswordValues } from './types'
+import { forgotPasswordSchema, type ForgotPasswordValues } from './types'
 
 type ForgotPasswordFormProps = {
   form: UseFormReturn<ForgotPasswordValues>
@@ -28,7 +28,10 @@ export default function ForgotPasswordForm({
   onBackToLogin,
 }: ForgotPasswordFormProps) {
   return (
-    <Form {...form}>
+    <Form
+      {...form}
+      schema={forgotPasswordSchema}
+    >
       <form
         className='flex flex-col gap-5'
         onSubmit={form.handleSubmit(onSubmit)}

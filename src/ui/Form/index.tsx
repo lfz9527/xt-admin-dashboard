@@ -15,12 +15,59 @@ import {
   type ControllerProps,
   type FieldPath,
   type FieldValues,
+  type FormProviderProps,
 } from 'react-hook-form'
 
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/ui/Field'
 import { cn } from '@/utils/common'
 
-const Form = FormProvider
+type FormProps<TFieldValues extends FieldValues> =
+  FormProviderProps<TFieldValues> & {
+    schema?: unknown
+  }
+
+type FormContextValue = {
+  schema?: unknown
+}
+
+const FormContext = createContext<FormContextValue>({})
+
+function Form<TFieldValues extends FieldValues>({
+  schema,
+  ...props
+}: FormProps<TFieldValues>) {
+  return (
+    <FormContext.Provider value={{ schema }}>
+      <FormProvider {...props} />
+    </FormContext.Provider>
+  )
+}
+
+function getSchemaField(schema: unknown, name: string): unknown {
+  const definition = (
+    schema as {
+      _zod?: { def?: { type?: string; shape?: Record<string, unknown> } }
+    }
+  )?._zod
+
+  if (definition?.def?.type !== 'object' || !definition.def.shape)
+    return undefined
+
+  return name.split('.').reduce<unknown>((current, segment) => {
+    const currentDefinition = (
+      current as {
+        _zod?: { def?: { type?: string; shape?: Record<string, unknown> } }
+      }
+    )?._zod
+    return currentDefinition?.def?.shape?.[segment]
+  }, schema)
+}
+
+function isSchemaFieldRequired(schema: unknown, name: string) {
+  const field = getSchemaField(schema, name)
+  const optin = (field as { _zod?: { optin?: string } })?._zod?.optin
+  return field !== undefined && optin !== 'optional'
+}
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -50,6 +97,7 @@ function FormField<
 
 function useFormField() {
   const field = useContext(FormFieldContext)
+  const { schema } = useContext(FormContext)
   const { getFieldState } = useFormContext()
   const formState = useFormState({ name: field?.name })
 
@@ -62,6 +110,7 @@ function useFormField() {
   return {
     ...field,
     ...fieldState,
+    schema,
     formItemId: `${field.id}-form-item`,
     formDescriptionId: `${field.id}-form-item-description`,
     formMessageId: `${field.id}-form-item-message`,
@@ -81,8 +130,18 @@ function FormItem({ className, ...props }: ComponentProps<typeof Field>) {
   )
 }
 
-function FormLabel({ className, ...props }: ComponentProps<typeof FieldLabel>) {
-  const { error, formItemId } = useFormField()
+type FormLabelProps = ComponentProps<typeof FieldLabel> & {
+  showRequired?: boolean
+}
+
+function FormLabel({
+  className,
+  children,
+  showRequired,
+  ...props
+}: FormLabelProps) {
+  const { error, formItemId, name, schema } = useFormField()
+  const required = showRequired ?? isSchemaFieldRequired(schema, name)
 
   return (
     <FieldLabel
@@ -91,7 +150,18 @@ function FormLabel({ className, ...props }: ComponentProps<typeof FieldLabel>) {
       htmlFor={formItemId}
       className={cn(error && 'text-destructive', className)}
       {...props}
-    />
+    >
+      {required && (
+        <span
+          aria-hidden='true'
+          className='text-destructive'
+          data-slot='required-indicator'
+        >
+          *
+        </span>
+      )}
+      {children}
+    </FieldLabel>
   )
 }
 

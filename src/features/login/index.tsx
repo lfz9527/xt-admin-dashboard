@@ -77,13 +77,13 @@ export default function LoginFeature() {
 
   const onRegisterSubmit = async (_values: RegisterValues) => {
     await new Promise((resolve) => setTimeout(resolve, 1200))
-    toast.success('注册成功')
+    toast.success('注册成功，请登录')
     setMode('login')
   }
 
   const onForgotPasswordSubmit = async (_values: ForgotPasswordValues) => {
     await new Promise((resolve) => setTimeout(resolve, 1200))
-    toast.success('密码重置成功')
+    toast.success('密码重置成功，请登录')
     setMode('login')
   }
 

@@ -13,7 +13,7 @@ import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
 import AuthField from './AuthField'
-import type { RegisterValues } from './types'
+import { registerSchema, type RegisterValues } from './types'
 
 type RegisterFormProps = {
   form: UseFormReturn<RegisterValues>
@@ -35,7 +35,10 @@ export default function RegisterForm({
   onBackToLogin,
 }: RegisterFormProps) {
   return (
-    <Form {...form}>
+    <Form
+      {...form}
+      schema={registerSchema}
+    >
       <form
         className='flex flex-col gap-5'
         onSubmit={form.handleSubmit(onSubmit)}
