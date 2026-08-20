@@ -122,16 +122,6 @@ const routes: AppRouteObject[] = [
         meta: { title: '404' },
       },
       {
-        path: '/register',
-        element: Lazy(() => import('@/pages/register')),
-        meta: { title: '注册' },
-      },
-      {
-        path: '/forgot-password',
-        element: Lazy(() => import('@/pages/forgot-password')),
-        meta: { title: '忘记密码' },
-      },
-      {
         path: '/login',
         element: Lazy(() => import('@/pages/login')),
         meta: { title: '登录' },
