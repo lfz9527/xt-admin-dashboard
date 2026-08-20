@@ -386,13 +386,14 @@ describe('NavTab', () => {
     setViewportMetrics(viewport, {
       clientWidth: 120,
       scrollWidth: 360,
-      scrollLeft: 0,
+      scrollLeft: 200,
     })
     triggerResizeObservers()
 
     const navTab = document.querySelector('[data-slot="nav-tab"]')!
     fireEvent.wheel(navTab, { deltaY: 100 })
 
+    // 滚轮向下时标签向左滚动（scrollLeft 减小）
     expect(viewport.scrollLeft).toBe(100)
   })
 

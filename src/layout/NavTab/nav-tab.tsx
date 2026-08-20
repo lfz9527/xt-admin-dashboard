@@ -68,7 +68,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth
     if (maxScrollLeft <= 0) return
     e.preventDefault()
-    viewport.scrollLeft += e.deltaX + e.deltaY
+    viewport.scrollLeft += e.deltaX - e.deltaY
   }
 
   useEffect(() => {
