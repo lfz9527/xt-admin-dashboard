@@ -139,7 +139,7 @@ test/router/routes.test.tsx                        |  10 +-
 
 ### 提交
 
-- Commit hash：待提交后填入。
+- Commit hash：`b19198688db0598ee2552c334cca5f4c42e5ec11`。
 
 ### Concerns
 
