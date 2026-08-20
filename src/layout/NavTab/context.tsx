@@ -18,6 +18,7 @@ export type NavTabContextProps = {
   activeTabId: string | null
   addTab: (tab: Tab) => void
   removeTab: (id: string) => void
+  removeTabs: (ids: string[]) => void
   setActiveTab: (id: string) => void
 }
 
@@ -69,10 +70,25 @@ export function NavTabProvider({
       setActiveTabId((prevActive) => {
         if (prevActive !== id) return prevActive
         if (remaining.length === 0) return null
-        // 激活前一个标签页
-        const idx = prev.findIndex((t) => t.id === id)
-        const nextIdx = Math.max(0, idx - 1)
-        return remaining[Math.min(nextIdx, remaining.length - 1)].id
+        // 激活第一个标签页
+        return remaining[0].id
+      })
+
+      return remaining
+    })
+  }, [])
+
+  const removeTabs = useCallback((ids: string[]) => {
+    if (ids.length === 0) return
+    setTabs((prev) => {
+      const idSet = new Set(ids)
+      const remaining = prev.filter((t) => !idSet.has(t.id))
+      // 至少保留一个标签页
+      if (remaining.length === 0) return prev
+
+      setActiveTabId((prevActive) => {
+        if (prevActive && !idSet.has(prevActive)) return prevActive
+        return remaining[0].id
       })
 
       return remaining
@@ -89,9 +105,10 @@ export function NavTabProvider({
       activeTabId,
       addTab,
       removeTab,
+      removeTabs,
       setActiveTab,
     }),
-    [tabs, activeTabId, addTab, removeTab, setActiveTab]
+    [tabs, activeTabId, addTab, removeTab, removeTabs, setActiveTab]
   )
 
   return (

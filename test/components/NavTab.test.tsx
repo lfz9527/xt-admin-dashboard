@@ -557,7 +557,7 @@ describe('NavTab', () => {
     expect(screen.getByTestId('count').textContent).toBe('1')
   })
 
-  it('关闭激活标签后跳转前一个标签路由', () => {
+  it('关闭激活标签后跳转第一个标签路由', () => {
     function Page() {
       const { pathname } = useLocation()
       const { tabs } = useNavTab()
@@ -573,27 +573,29 @@ describe('NavTab', () => {
     const defaultTabs: Tab[] = [
       { id: '/', title: 'Tab 1' },
       { id: '/two', title: 'Tab 2' },
+      { id: '/three', title: 'Tab 3' },
     ]
 
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/three']}>
         <NavTabProvider
           defaultTabs={defaultTabs}
-          defaultActiveTabId='/'
+          defaultActiveTabId='/three'
         >
           <Page />
         </NavTabProvider>
       </MemoryRouter>
     )
 
-    const tab1Close = screen
-      .getByText('Tab 1')
+    const tab3Close = screen
+      .getByText('Tab 3')
       .closest('[data-slot="nav-tab-item"]')!
       .querySelector('[data-slot="nav-tab-close"]')!
 
-    fireEvent.click(tab1Close)
-    expect(screen.getByTestId('count').textContent).toBe('1')
-    expect(screen.getByTestId('pathname').textContent).toBe('/two')
+    fireEvent.click(tab3Close)
+    expect(screen.getByTestId('count').textContent).toBe('2')
+    // 关闭激活标签后激活剩余第一个标签，而非前一个
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
   })
 
   it('closable=false 不显示关闭按钮', () => {
@@ -619,5 +621,266 @@ describe('NavTab', () => {
 
     expect(homeItem.querySelector('[data-slot="nav-tab-close"]')).toBeNull()
     expect(pageItem.querySelector('[data-slot="nav-tab-close"]')).not.toBeNull()
+  })
+
+  it('右键标签弹出包含四个菜单项的菜单', () => {
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+      { id: '3', title: 'Tab 3' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='2'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+
+    fireEvent.contextMenu(tab2)
+
+    expect(screen.getByRole('menuitem', { name: '关闭' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: '关闭左侧标签页' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: '关闭右侧标签页' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: '关闭全部标签页' })
+    ).toBeInTheDocument()
+  })
+
+  it('右键菜单关闭当前标签', () => {
+    function Page() {
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab2)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭' }))
+
+    expect(screen.getByTestId('count').textContent).toBe('1')
+    expect(screen.queryByText('Tab 2')).not.toBeInTheDocument()
+  })
+
+  it('右键菜单关闭左侧标签页', () => {
+    function Page() {
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+      { id: '3', title: 'Tab 3' },
+      { id: '4', title: 'Tab 4' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='3'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab3 = screen
+      .getByText('Tab 3')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab3)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭左侧标签页' }))
+
+    expect(screen.getByTestId('count').textContent).toBe('2')
+    expect(screen.queryByText('Tab 1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tab 2')).not.toBeInTheDocument()
+    expect(screen.getByText('Tab 3')).toBeInTheDocument()
+    expect(screen.getByText('Tab 4')).toBeInTheDocument()
+  })
+
+  it('右键菜单关闭右侧标签页', () => {
+    function Page() {
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+      { id: '3', title: 'Tab 3' },
+      { id: '4', title: 'Tab 4' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab2)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭右侧标签页' }))
+
+    expect(screen.getByTestId('count').textContent).toBe('2')
+    expect(screen.getByText('Tab 1')).toBeInTheDocument()
+    expect(screen.getByText('Tab 2')).toBeInTheDocument()
+    expect(screen.queryByText('Tab 3')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tab 4')).not.toBeInTheDocument()
+  })
+
+  it('右键菜单关闭全部标签页仅保留当前激活', () => {
+    function Page() {
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+      { id: '3', title: 'Tab 3' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='2'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab1)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
+
+    expect(screen.getByTestId('count').textContent).toBe('1')
+    expect(screen.getByText('Tab 2')).toBeInTheDocument()
+    expect(screen.queryByText('Tab 1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tab 3')).not.toBeInTheDocument()
+  })
+
+  it('只有一个标签时右键菜单的关闭项禁用', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab1)
+
+    expect(screen.getByRole('menuitem', { name: '关闭' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    )
+  })
+
+  it('第一个标签的右键菜单关闭左侧禁用，最后一个关闭右侧禁用', () => {
+    const defaultTabs: Tab[] = [
+      { id: '1', title: 'Tab 1' },
+      { id: '2', title: 'Tab 2' },
+      { id: '3', title: 'Tab 3' },
+    ]
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab1)
+    expect(
+      screen.getByRole('menuitem', { name: '关闭左侧标签页' })
+    ).toHaveAttribute('aria-disabled', 'true')
+    expect(
+      screen.getByRole('menuitem', { name: '关闭右侧标签页' })
+    ).not.toHaveAttribute('aria-disabled')
+
+    const tab3 = screen
+      .getByText('Tab 3')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab3)
+    expect(
+      screen.getByRole('menuitem', { name: '关闭左侧标签页' })
+    ).not.toHaveAttribute('aria-disabled')
+    expect(
+      screen.getByRole('menuitem', { name: '关闭右侧标签页' })
+    ).toHaveAttribute('aria-disabled', 'true')
   })
 })

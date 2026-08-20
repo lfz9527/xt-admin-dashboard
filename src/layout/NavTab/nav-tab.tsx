@@ -5,10 +5,17 @@ import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
 import { Button } from '@/ui/Button'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/ui/ContextMenu'
 import { ScrollArea } from '@/ui/ScrollArea'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
-  const { tabs, activeTabId, removeTab } = useNavTab()
+  const { tabs, activeTabId, removeTab, removeTabs } = useNavTab()
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -82,16 +89,39 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
   if (tabs.length === 0) return null
 
   function handleClose(id: string) {
-    const idx = tabs.findIndex((t) => t.id === id)
-    if (id === activeTabId && tabs.length > 1 && idx >= 0) {
-      const remaining = tabs.filter((t) => t.id !== id)
-      const nextIdx = Math.max(0, idx - 1)
-      const next = remaining[Math.min(nextIdx, remaining.length - 1)]
+    const remaining = tabs.filter((t) => t.id !== id)
+    if (id === activeTabId && remaining.length > 0) {
       removeTab(id)
-      navigate(next.id)
+      navigate(remaining[0].id)
     } else {
       removeTab(id)
     }
+  }
+
+  function closeBatch(ids: string[]) {
+    const idSet = new Set(ids)
+    const remaining = tabs.filter((t) => !idSet.has(t.id))
+    removeTabs(ids)
+    if (activeTabId && idSet.has(activeTabId) && remaining.length > 0) {
+      navigate(remaining[0].id)
+    }
+  }
+
+  function handleCloseLeft(id: string) {
+    const idx = tabs.findIndex((t) => t.id === id)
+    if (idx <= 0) return
+    closeBatch(tabs.slice(0, idx).map((t) => t.id))
+  }
+
+  function handleCloseRight(id: string) {
+    const idx = tabs.findIndex((t) => t.id === id)
+    if (idx < 0 || idx === tabs.length - 1) return
+    closeBatch(tabs.slice(idx + 1).map((t) => t.id))
+  }
+
+  function handleCloseAll() {
+    if (!activeTabId) return
+    closeBatch(tabs.map((t) => t.id).filter((id) => id !== activeTabId))
   }
 
   return (
@@ -122,48 +152,80 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
             ref={containerRef}
             className='relative flex h-full w-max min-w-full'
           >
-            {tabs.map((tab) => {
+            {tabs.map((tab, index) => {
               const isActive = tab.id === activeTabId
+              const isFirst = index === 0
+              const isLast = index === tabs.length - 1
 
               return (
-                <div
-                  ref={(element) => {
-                    if (element) tabRefs.current.set(tab.id, element)
-                    else tabRefs.current.delete(tab.id)
-                  }}
-                  key={tab.id}
-                  data-tab-id={tab.id}
-                  data-slot='nav-tab-item'
-                  data-active={isActive ? 'true' : 'false'}
-                  className={cn(
-                    'group',
-                    'z-1 mb-0.75 flex w-30 shrink-0 cursor-pointer items-center gap-2 px-2 text-sm',
-                    'hover:bg-sidebar-accent data-[active=true]:hover:bg-transparent',
-                    'data-[active=false]:rounded-sm',
-                    'data-[active=true]:text-menu-accent-foreground'
-                  )}
-                  onClick={() => navigate(tab.id)}
-                >
-                  <AutoEllipsis
-                    text={tab.title}
-                    className='min-w-0 flex-1 select-none'
-                  />
-                  {tab.closable && tabs.length > 1 && (
-                    <span
-                      data-slot='nav-tab-close'
-                      className={cn(
-                        'flex-center size-4 rounded',
-                        'group-data-[active=true]:hover:bg-menu-accent'
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleClose(tab.id)
-                      }}
+                <ContextMenu key={tab.id}>
+                  <ContextMenuTrigger
+                    render={
+                      <div
+                        ref={(element) => {
+                          if (element) tabRefs.current.set(tab.id, element)
+                          else tabRefs.current.delete(tab.id)
+                        }}
+                        data-tab-id={tab.id}
+                        data-slot='nav-tab-item'
+                        data-active={isActive ? 'true' : 'false'}
+                        className={cn(
+                          'group',
+                          'z-1 mb-0.75 flex w-30 shrink-0 cursor-pointer items-center gap-2 px-2 text-sm',
+                          'hover:bg-sidebar-accent data-[active=true]:hover:bg-transparent',
+                          'data-[active=false]:rounded-sm',
+                          'data-[active=true]:text-menu-accent-foreground'
+                        )}
+                        onClick={() => navigate(tab.id)}
+                      />
+                    }
+                  >
+                    <AutoEllipsis
+                      text={tab.title}
+                      className='min-w-0 flex-1 select-none'
+                    />
+                    {tab.closable && tabs.length > 1 && (
+                      <span
+                        data-slot='nav-tab-close'
+                        className={cn(
+                          'flex-center size-4 rounded',
+                          'group-data-[active=true]:hover:bg-menu-accent'
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleClose(tab.id)
+                        }}
+                      >
+                        <X className='size-3' />
+                      </span>
+                    )}
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem
+                      disabled={tabs.length <= 1 || !tab.closable}
+                      onClick={() => handleClose(tab.id)}
                     >
-                      <X className='size-3' />
-                    </span>
-                  )}
-                </div>
+                      关闭
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      disabled={isFirst}
+                      onClick={() => handleCloseLeft(tab.id)}
+                    >
+                      关闭左侧标签页
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      disabled={isLast}
+                      onClick={() => handleCloseRight(tab.id)}
+                    >
+                      关闭右侧标签页
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onClick={handleCloseAll}>
+                      关闭全部标签页
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               )
             })}
 
