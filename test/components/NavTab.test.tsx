@@ -1033,4 +1033,42 @@ describe('NavTab', () => {
       screen.getByRole('menuitem', { name: '关闭右侧标签页' })
     ).toHaveAttribute('aria-disabled', 'true')
   })
+
+  it('非激活标签显示分割线，激活标签不显示', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+          defaultActiveTabId='2'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+    const tab3 = screen
+      .getByText('Tab 3')
+      .closest('[data-slot="nav-tab-item"]')!
+
+    const separator1 = tab1.querySelector('[data-slot="separator"]')
+    const separator3 = tab3.querySelector('[data-slot="separator"]')
+
+    expect(separator1).not.toBeNull()
+    expect(tab2.querySelector('[data-slot="separator"]')).toBeNull()
+    expect(separator3).not.toBeNull()
+    // 分割线在 tab 内部绝对定位，位于右边缘外侧 2px，高度 20px 垂直居中
+    expect(separator1).toHaveClass('absolute')
+    expect(separator1).toHaveClass('-right-0.5')
+    expect(separator1).toHaveClass('h-5')
+  })
 })

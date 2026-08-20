@@ -13,6 +13,7 @@ import {
   ContextMenuTrigger,
 } from '@/ui/ContextMenu'
 import { ScrollArea } from '@/ui/ScrollArea'
+import { Separator } from '@/ui/Separator'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
   const { tabs, activeTabId, removeTab, removeTabs } = useNavTab()
@@ -164,7 +165,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
         >
           <div
             ref={containerRef}
-            className='relative flex h-full w-max min-w-full'
+            className='relative flex h-full w-max min-w-full gap-1'
           >
             {tabs.map((tab, index) => {
               const isActive = tab.id === activeTabId
@@ -185,7 +186,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                         data-active={isActive ? 'true' : 'false'}
                         className={cn(
                           'group',
-                          'z-1 mb-0.75 flex w-30 shrink-0 cursor-pointer items-center gap-2 px-2 text-sm',
+                          'relative z-1 mb-0.75 flex w-30 shrink-0 cursor-pointer items-center gap-2 px-2 text-sm',
                           'hover:bg-sidebar-accent data-[active=true]:hover:bg-transparent',
                           'data-[active=false]:rounded-sm',
                           'data-[active=true]:text-menu-accent-foreground'
@@ -212,6 +213,12 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                       >
                         <X className='size-3' />
                       </span>
+                    )}
+                    {!isActive && (
+                      <Separator
+                        orientation='vertical'
+                        className='absolute top-1/2 -right-0.5 h-5 -translate-y-1/2'
+                      />
                     )}
                   </ContextMenuTrigger>
                   <ContextMenuContent>
