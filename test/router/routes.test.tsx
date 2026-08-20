@@ -49,6 +49,27 @@ describe('application routes', () => {
     })
   })
 
+  it('keeps 404 routes outside the application layout', () => {
+    const guard = routes[0]
+    const layout = guard.children?.find(
+      (route) => route.element === routes[0].children?.[0].element
+    )
+    const notFoundRoutes = guard.children?.filter(
+      (route) => route.id === '404-page' || route.id === '404-catch'
+    )
+
+    expect(layout?.children?.some((route) => route.id === '404-page')).toBe(
+      false
+    )
+    expect(layout?.children?.some((route) => route.id === '404-catch')).toBe(
+      false
+    )
+    expect(notFoundRoutes?.map((route) => route.id)).toEqual([
+      '404-page',
+      '404-catch',
+    ])
+  })
+
   it('filters routes recursively with the supplied permission checker', () => {
     const result = buildRouter(
       [
