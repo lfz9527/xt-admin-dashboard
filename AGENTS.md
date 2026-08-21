@@ -11,6 +11,7 @@
   - `src/hooks/`：通用 React hooks
   - `src/store/`：Zustand 状态
   - `src/service/`：HTTP 客户端与请求层
+  - `src/features/`：按业务领域划分的模块（如 `auth/`），模块内组织私有 `components/`、`hooks/`、`types.ts`、`constant.ts`
   - `src/styles/`：全局、Tailwind 与主题样式
   - `test/`：Vitest 测试
   - `vite.config/`：Vite 配置与插件
@@ -47,5 +48,6 @@
 - `src/service/` 下的接口函数**不得直接调用**，必须搭配 `src/hooks/useRequest` 使用；如有特殊情况必须直接调用，需添加注释说明原因或先询问用户。
 - UI 组件使用 Tailwind CSS v4 语义化主题变量（如 `bg-background`、`text-muted-foreground`、`border-border`、`text-destructive`），通过 `cn` 合并 className，并保持现有 `data-slot`、`data-invalid` 和 ARIA 状态约定。
 - 当需求需要使用 `src/ui/` 或 `src/components/` 下的组件时，必须先检查是否存在可复用组件；存在时优先复用，未找到时应先询问用户是否新增组件，不得直接决定实现方式。
+- 代码归属遵循「只被一个业务模块使用的代码放在对应 `src/features/<module>`；被两个及以上业务模块稳定复用后，再提升到全局目录（`src/components/`、`src/hooks/` 等）」。
 - 当前登录页是表单演示，未连接真实认证接口；不要将演示提交状态误作真实 token 或认证成功。
 - 运行单个测试使用 `pnpm exec vitest run test/<path>.test.tsx`；修改行为后至少运行相关测试、`pnpm lint` 和 `pnpm build`。
