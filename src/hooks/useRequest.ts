@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { type BusResponse } from '@/service/request'
 import type { HttpError } from '@/service/http/types'
 
 import { useLatest } from './useLatest'
@@ -8,7 +7,7 @@ import { useDebounceFn } from './useDebounceFn'
 
 export type ServiceFn<TData, TParams extends unknown[]> = (
   ...args: [...TParams, AbortSignal?]
-) => Promise<BusResponse<TData>>
+) => Promise<{ data: TData }>
 
 type UseRequestResult<TData, TParams extends unknown[]> = {
   data: TData | undefined

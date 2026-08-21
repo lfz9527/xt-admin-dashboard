@@ -1,5 +1,6 @@
 import { HttpClient } from './http'
 import type { HttpError, HttpResponse } from './http/types'
+import useAuthor from '@/store/useAuthor'
 
 export type BusResponse<T = unknown> = {
   code: number
@@ -8,11 +9,19 @@ export type BusResponse<T = unknown> = {
 }
 
 export const http = HttpClient.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 1000,
 })
 
-// 请求拦截
+// 请求拦截：注入鉴权头
 http.interceptors.request.use((config) => {
+  const token = useAuthor.getState().token
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    }
+  }
   return config
 })
 
