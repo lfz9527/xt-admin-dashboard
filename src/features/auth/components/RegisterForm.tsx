@@ -13,7 +13,7 @@ import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
 import AuthField from './AuthField'
-import { registerSchema, type RegisterValues } from './types'
+import { registerSchema, type RegisterValues } from '../types'
 
 type RegisterFormProps = {
   form: UseFormReturn<RegisterValues>

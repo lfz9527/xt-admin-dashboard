@@ -8,7 +8,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    email: z.string().email('请输入有效的邮箱'),
+    email: z.email('请输入有效的邮箱'),
     username: z.string().min(1, '请输入用户名'),
     code: z.string().min(1, '请输入验证码'),
     password: z.string().min(1, '请输入密码'),
@@ -21,7 +21,7 @@ export const registerSchema = z
 
 export const forgotPasswordSchema = z
   .object({
-    email: z.string().email('请输入有效的邮箱'),
+    email: z.email('请输入有效的邮箱'),
     code: z.string().min(1, '请输入验证码'),
     password: z.string().min(1, '请输入新密码'),
     confirmPassword: z.string().min(1, '请确认密码'),
@@ -34,4 +34,3 @@ export const forgotPasswordSchema = z
 export type LoginValues = z.infer<typeof loginSchema>
 export type RegisterValues = z.infer<typeof registerSchema>
 export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>
-export type Mode = 'login' | 'register' | 'forgot-password'

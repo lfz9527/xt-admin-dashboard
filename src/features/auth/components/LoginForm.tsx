@@ -12,7 +12,7 @@ import { Input } from '@/ui/Input'
 import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
-import { loginSchema, type LoginValues } from './types'
+import { loginSchema, type LoginValues } from '../types'
 
 type LoginFormProps = {
   form: UseFormReturn<LoginValues>

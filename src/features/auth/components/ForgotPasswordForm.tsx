@@ -14,7 +14,7 @@ import type { UseFormReturn } from 'react-hook-form'
 
 import AuthField from './AuthField'
 import sendVerificationCode from './sendVerificationCode'
-import { forgotPasswordSchema, type ForgotPasswordValues } from './types'
+import { forgotPasswordSchema, type ForgotPasswordValues } from '../types'
 
 type ForgotPasswordFormProps = {
   form: UseFormReturn<ForgotPasswordValues>

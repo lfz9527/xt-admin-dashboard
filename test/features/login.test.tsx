@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 
 import { EncryptionManager } from '@/utils/EncryptionManager'
-import LoginFeature from '@/features/login'
+import LoginFeature from '@/pages/login'
 import useAuthor from '@/store/useAuthor'
 
 const navigate = vi.hoisted(() => vi.fn())
