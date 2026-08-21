@@ -1,10 +1,19 @@
-import { Moon, Sun } from 'lucide-react'
-import { useMatches, useLocation } from 'react-router'
+import { LogOut, Moon, Sun } from 'lucide-react'
+import { useMatches, useLocation, useNavigate } from 'react-router'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
 import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
 import { Separator } from '@/ui/Separator'
+import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/DropdownMenu'
+import useAuthor from '@/store/useAuthor'
+import defaultAvatar from '@/assets/icon/default-avatar.svg'
 import type { RouteMeta } from '@/router/types'
 import routes from '@/router/routes'
 import { allowAllPermissions, routeToMenus } from '@/router/menu'
@@ -14,6 +23,9 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const isMobile = useIsMobile()
   const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
+  const navigate = useNavigate()
+  const setToken = useAuthor((state) => state.setToken)
+  const clearCredentials = useAuthor((state) => state.clearCredentials)
 
   const matches = useMatches()
   const { pathname } = useLocation()
@@ -29,6 +41,12 @@ export default function Header() {
     routeTitle,
     pathname
   )
+
+  const handleLogout = () => {
+    setToken('')
+    clearCredentials()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <header className='flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)'>
@@ -56,13 +74,34 @@ export default function Header() {
             </>
           )}
         </div>
-        <Button
-          variant='ghost'
-          size='icon-sm'
-          onClick={toggleTheme}
-        >
-          {theme === 'dark' ? <Sun /> : <Moon />}
-        </Button>
+        <div className='flex shrink-0 items-center gap-3'>
+          <div className='flex shrink-0 items-center gap-1'>
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              onClick={toggleTheme}
+            >
+              {theme === 'dark' ? <Sun /> : <Moon />}
+            </Button>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className='rounded-full outline-none'>
+              <Avatar className='cursor-pointer'>
+                <AvatarImage src={defaultAvatar} />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                variant='destructive'
+                onClick={handleLogout}
+              >
+                <LogOut />
+                退出
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   )
