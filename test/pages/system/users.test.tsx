@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { ProgressProvider } from '@bprogress/react'
 import { SidebarProvider } from '@/ui/Sidebar'
+import useAuthor from '@/store/useAuthor'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
@@ -22,6 +23,7 @@ beforeEach(() => {
   if (!Element.prototype.getAnimations) {
     Element.prototype.getAnimations = () => []
   }
+  useAuthor.setState({ token: 'test-token' })
 })
 
 import routes from '@/router/routes'

@@ -13,7 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/DropdownMenu'
 import useAuthor from '@/store/useAuthor'
+import { toast } from '@/ui/Toast'
 import defaultAvatar from '@/assets/icon/default-avatar.svg'
+import { useLogout } from '@/features/auth/hooks'
 import type { RouteMeta } from '@/router/types'
 import routes from '@/router/routes'
 import { allowAllPermissions, routeToMenus } from '@/router/menu'
@@ -24,8 +26,10 @@ export default function Header() {
   const isMobile = useIsMobile()
   const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
   const navigate = useNavigate()
+  const user = useAuthor((state) => state.user)
   const setToken = useAuthor((state) => state.setToken)
-  const clearCredentials = useAuthor((state) => state.clearCredentials)
+  const setUser = useAuthor((state) => state.setUser)
+  const { runAsync: runLogout } = useLogout()
 
   const matches = useMatches()
   const { pathname } = useLocation()
@@ -42,10 +46,15 @@ export default function Header() {
     pathname
   )
 
-  const handleLogout = () => {
-    setToken('')
-    clearCredentials()
-    navigate('/login', { replace: true })
+  const handleLogout = async () => {
+    try {
+      await runLogout()
+      setToken('')
+      setUser(null)
+      navigate('/login', { replace: true })
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
   }
 
   return (
@@ -87,8 +96,11 @@ export default function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger className='rounded-full outline-none'>
               <Avatar className='cursor-pointer'>
-                <AvatarImage src={defaultAvatar} />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage
+                  src={user?.avatar || defaultAvatar}
+                  alt={user?.nickname}
+                />
+                <AvatarFallback>{user?.nickname?.[0] ?? 'U'}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>

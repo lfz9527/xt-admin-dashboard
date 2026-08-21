@@ -8,10 +8,14 @@ import useAuthor from '@/store/useAuthor'
 
 const navigate = vi.hoisted(() => vi.fn())
 const toastSuccess = vi.hoisted(() => vi.fn())
+const toastError = vi.hoisted(() => vi.fn())
+const getCaptchaMock = vi.hoisted(() => vi.fn())
+const loginMock = vi.hoisted(() => vi.fn())
+const logoutMock = vi.hoisted(() => vi.fn())
 const encryptionManager = new EncryptionManager('xt-admin-dashboard-login-key')
 
 vi.mock('@/ui/Toast', () => ({
-  toast: { success: toastSuccess },
+  toast: { success: toastSuccess, error: toastError },
 }))
 
 vi.mock('react-router', async () => {
@@ -20,20 +24,43 @@ vi.mock('react-router', async () => {
   return { ...actual, useNavigate: () => navigate }
 })
 
-/** 从 SVG 中读取当前图形验证码文本 */
-function getCaptchaCode() {
-  return Array.from(document.querySelectorAll('[data-slot="captcha-text"]'))
-    .map((el) => el.textContent)
-    .join('')
+vi.mock('@/service/auth', () => ({
+  getCaptcha: getCaptchaMock,
+  login: loginMock,
+  logout: logoutMock,
+}))
+
+const mockUser = {
+  id: 1,
+  nickname: 'admin',
+  email: 'admin@example.com',
+  avatar: '',
+  gender: 0,
+  status: 0,
+  lastLoginTime: null,
 }
 
 describe('LoginFeature', () => {
   beforeEach(() => {
     navigate.mockReset()
     toastSuccess.mockReset()
-    sessionStorage.clear()
+    toastError.mockReset()
+    localStorage.clear()
+    getCaptchaMock.mockReset().mockResolvedValue({
+      data: {
+        captchaId: 'mock-captcha-id',
+        image: 'data:image/svg+xml;base64,mock',
+      },
+    })
+    loginMock.mockReset().mockResolvedValue({
+      data: { access_token: 'mock-access-token', user: mockUser },
+    })
+    logoutMock.mockReset().mockResolvedValue({
+      data: { message: '已退出登录' },
+    })
     useAuthor.setState({
       token: '',
+      user: null,
       account: '',
       encryptedPassword: '',
       remember: false,
@@ -80,10 +107,10 @@ describe('LoginFeature', () => {
     )
 
     expect(screen.getByText('登录管理后台')).toBeInTheDocument()
-    expect(screen.getByText('欢迎你的到来，请使用账号登录')).toBeInTheDocument()
-    expect(screen.getByLabelText('账号')).toHaveAttribute(
+    expect(screen.getByText('欢迎你的到来，请使用邮箱登录')).toBeInTheDocument()
+    expect(screen.getByLabelText(/账号\/邮箱/)).toHaveAttribute(
       'placeholder',
-      '请输入账号'
+      '请输入邮箱/账号'
     )
     expect(screen.getByLabelText('密码')).toHaveAttribute(
       'placeholder',
@@ -93,7 +120,7 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('button', { name: '登录' }))
 
     expect(await screen.findAllByRole('alert')).toHaveLength(3)
-    expect(screen.getByLabelText('账号')).toHaveAttribute(
+    expect(screen.getByLabelText(/账号\/邮箱/)).toHaveAttribute(
       'aria-invalid',
       'true'
     )
@@ -196,6 +223,77 @@ describe('LoginFeature', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
+  it('logs in with real auth service and stores token and user', async () => {
+    const user = userEvent.setup()
+    loginMock.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                data: { access_token: 'mock-access-token', user: mockUser },
+              }),
+            500
+          )
+        )
+    )
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => expect(getCaptchaMock).toHaveBeenCalled())
+
+    await user.type(screen.getByLabelText(/账号\/邮箱/), 'admin@example.com')
+    await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('验证码'), '1234')
+    await user.click(screen.getByRole('button', { name: '登录' }))
+
+    expect(screen.getByRole('button', { name: /登录中/ })).toBeDisabled()
+    await waitFor(
+      () => expect(navigate).toHaveBeenCalledWith('/', { replace: true }),
+      { timeout: 2000 }
+    )
+    expect(loginMock).toHaveBeenCalledWith(
+      {
+        email: 'admin@example.com',
+        password: 'password',
+        captchaId: 'mock-captcha-id',
+        captchaCode: '1234',
+      },
+      expect.any(AbortSignal)
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('登录成功')
+    expect(useAuthor.getState().token).toBe('mock-access-token')
+    expect(useAuthor.getState().user).toEqual(mockUser)
+  })
+
+  it('shows error and does not navigate when login fails', async () => {
+    const user = userEvent.setup()
+    loginMock.mockRejectedValue(new Error('验证码错误或已过期'))
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => expect(getCaptchaMock).toHaveBeenCalled())
+
+    await user.type(screen.getByLabelText(/账号\/邮箱/), 'admin@example.com')
+    await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('验证码'), 'wrong')
+    await user.click(screen.getByRole('button', { name: '登录' }))
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith('验证码错误或已过期')
+    )
+    expect(navigate).not.toHaveBeenCalled()
+    // 登录失败不刷新验证码，仅挂载时获取 1 次
+    expect(getCaptchaMock).toHaveBeenCalledTimes(1)
+    expect(useAuthor.getState().token).toBe('')
+  })
+
   it('stores encrypted credentials after submit', async () => {
     const user = userEvent.setup()
     render(
@@ -204,23 +302,22 @@ describe('LoginFeature', () => {
       </MemoryRouter>
     )
 
-    await user.type(screen.getByLabelText('账号'), 'admin')
+    await waitFor(() => expect(getCaptchaMock).toHaveBeenCalled())
+
+    await user.type(screen.getByLabelText(/账号\/邮箱/), 'admin@example.com')
     await user.type(screen.getByLabelText('密码'), 'password')
-    await user.type(screen.getByLabelText('验证码'), getCaptchaCode())
+    await user.type(screen.getByLabelText('验证码'), '1234')
     await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
     await user.click(screen.getByRole('button', { name: '登录' }))
 
-    expect(screen.getByRole('button', { name: /登录中/ })).toBeDisabled()
     await waitFor(
       () => expect(navigate).toHaveBeenCalledWith('/', { replace: true }),
       { timeout: 2000 }
     )
     expect(toastSuccess).toHaveBeenCalledWith('登录成功')
-    expect(useAuthor.getState().token).toMatch(/^mock-token-/)
+    expect(useAuthor.getState().token).toBe('mock-access-token')
 
-    const stored = JSON.parse(
-      sessionStorage.getItem('app-author') ?? '{}'
-    ).state
+    const stored = JSON.parse(localStorage.getItem('app-author') ?? '{}').state
     expect(stored.password).toBeUndefined()
     expect(stored.encryptedPassword).not.toContain('password')
     await expect(
@@ -228,27 +325,10 @@ describe('LoginFeature', () => {
     ).resolves.toBe('password')
   })
 
-  it('does not login when captcha is wrong', async () => {
-    const user = userEvent.setup()
-    render(
-      <MemoryRouter>
-        <LoginFeature />
-      </MemoryRouter>
-    )
-
-    await user.type(screen.getByLabelText('账号'), 'admin')
-    await user.type(screen.getByLabelText('密码'), 'password')
-    await user.type(screen.getByLabelText('验证码'), 'wrong')
-    await user.click(screen.getByRole('button', { name: '登录' }))
-
-    expect(await screen.findByText('验证码错误')).toBeInTheDocument()
-    expect(navigate).not.toHaveBeenCalled()
-  })
-
   it('fills saved credentials on load', async () => {
     const encryptedPassword = await encryptionManager.encrypt('password')
     useAuthor.setState({
-      account: 'admin',
+      account: 'admin@example.com',
       encryptedPassword,
       remember: true,
     })
@@ -260,7 +340,9 @@ describe('LoginFeature', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByLabelText('账号')).toHaveValue('admin')
+      expect(screen.getByLabelText(/账号\/邮箱/)).toHaveValue(
+        'admin@example.com'
+      )
       expect(screen.getByLabelText('密码')).toHaveValue('password')
     })
     expect(screen.getByRole('checkbox', { name: '记住账号密码' })).toBeChecked()
@@ -270,7 +352,7 @@ describe('LoginFeature', () => {
     const user = userEvent.setup()
     const encryptedPassword = await encryptionManager.encrypt('password')
     useAuthor.setState({
-      account: 'admin',
+      account: 'admin@example.com',
       encryptedPassword,
       remember: true,
     })
@@ -282,10 +364,12 @@ describe('LoginFeature', () => {
     )
 
     await waitFor(() =>
-      expect(screen.getByLabelText('账号')).toHaveValue('admin')
+      expect(screen.getByLabelText(/账号\/邮箱/)).toHaveValue(
+        'admin@example.com'
+      )
     )
     await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
-    await user.type(screen.getByLabelText('验证码'), getCaptchaCode())
+    await user.type(screen.getByLabelText('验证码'), '1234')
     await user.click(screen.getByRole('button', { name: '登录' }))
 
     await waitFor(

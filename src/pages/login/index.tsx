@@ -14,10 +14,11 @@ import {
   CardTitle,
 } from '@/ui/Card'
 
+import { MODE, type Mode } from '@/features/auth/constant'
 import ForgotPasswordForm from '@/features/auth/components/ForgotPasswordForm'
 import LoginForm from '@/features/auth/components/LoginForm'
 import RegisterForm from '@/features/auth/components/RegisterForm'
-import { MODE, type Mode } from '@/features/auth/constant'
+import { useCaptcha, useLogin } from '@/features/auth/hooks'
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -27,17 +28,16 @@ import {
   type RegisterValues,
 } from '@/features/auth/types'
 
-function createMockToken() {
-  return `mock-token-${Date.now()}`
-}
-
 export default function Login() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<Mode>(MODE.LOGIN)
   const setToken = useAuthor((state) => state.setToken)
+  const setUser = useAuthor((state) => state.setUser)
   const saveCredentials = useAuthor((state) => state.saveCredentials)
   const clearCredentials = useAuthor((state) => state.clearCredentials)
   const getCredentials = useAuthor((state) => state.getCredentials)
+  const { data: captchaData, refresh: refreshCaptcha } = useCaptcha()
+  const { runAsync: runLogin } = useLogin()
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { account: '', password: '', remember: false, captcha: '' },
@@ -67,12 +67,27 @@ export default function Login() {
   }, [loadCredentials])
 
   const onLoginSubmit = async (values: LoginValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    setToken(createMockToken())
-    if (values.remember) await saveCredentials(values.account, values.password)
-    else clearCredentials()
-    toast.success('登录成功')
-    navigate('/', { replace: true })
+    if (!captchaData) {
+      toast.error('验证码获取失败，请刷新后重试')
+      return
+    }
+    try {
+      const result = await runLogin({
+        email: values.account,
+        password: values.password,
+        captchaId: captchaData.captchaId,
+        captchaCode: values.captcha,
+      })
+      setToken(result.access_token)
+      setUser(result.user)
+      if (values.remember)
+        await saveCredentials(values.account, values.password)
+      else clearCredentials()
+      toast.success('登录成功')
+      navigate('/', { replace: true })
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
   }
 
   const onRegisterSubmit = async (_values: RegisterValues) => {
@@ -104,7 +119,7 @@ export default function Login() {
             </CardTitle>
             <CardDescription>
               {mode === MODE.LOGIN
-                ? '欢迎你的到来，请使用账号登录'
+                ? '欢迎你的到来，请使用邮箱登录'
                 : isRegister
                   ? '创建你的管理后台账号'
                   : '重置你的管理后台密码'}
@@ -118,6 +133,8 @@ export default function Login() {
               onSubmit={onLoginSubmit}
               onRegister={() => setMode(MODE.REGISTER)}
               onForgotPassword={() => setMode(MODE.FORGOT_PASSWORD)}
+              captchaImage={captchaData?.image ?? ''}
+              onRefreshCaptcha={refreshCaptcha}
             />
           ) : isRegister ? (
             <RegisterForm

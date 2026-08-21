@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const loginSchema = z.object({
-  account: z.string().min(1, '请输入账号'),
+  account: z.string().min(1, '请输入账号或邮箱'),
   password: z.string().min(1, '请输入密码'),
   remember: z.boolean(),
   captcha: z.string().min(1, '请输入验证码'),

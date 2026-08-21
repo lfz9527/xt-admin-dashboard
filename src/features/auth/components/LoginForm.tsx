@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Button } from '@/ui/Button'
 import { Checkbox } from '@/ui/Checkbox'
 import {
@@ -13,7 +12,7 @@ import { Input } from '@/ui/Input'
 import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
-import LoginCaptcha, { createCaptchaLayout } from './LoginCaptcha'
+import LoginCaptcha from './LoginCaptcha'
 import { loginSchema, type LoginValues } from '../types'
 
 type LoginFormProps = {
@@ -21,6 +20,8 @@ type LoginFormProps = {
   onSubmit: (values: LoginValues) => void | Promise<void>
   onRegister: () => void
   onForgotPassword: () => void
+  captchaImage: string
+  onRefreshCaptcha: () => void
 }
 
 export default function LoginForm({
@@ -28,20 +29,9 @@ export default function LoginForm({
   onSubmit,
   onRegister,
   onForgotPassword,
+  captchaImage,
+  onRefreshCaptcha,
 }: LoginFormProps) {
-  const [captcha, setCaptcha] = useState(createCaptchaLayout)
-
-  const refreshCaptcha = () => setCaptcha(createCaptchaLayout())
-
-  const handleSubmit = (values: LoginValues) => {
-    if (values.captcha !== captcha.code) {
-      form.setError('captcha', { message: '验证码错误' })
-      refreshCaptcha()
-      return
-    }
-    return onSubmit(values)
-  }
-
   return (
     <Form
       {...form}
@@ -49,19 +39,19 @@ export default function LoginForm({
     >
       <form
         className='flex flex-col gap-5'
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
           control={form.control}
           name='account'
           render={({ field }) => (
             <FormItem>
-              <FormLabel showRequired={false}>账号</FormLabel>
+              <FormLabel showRequired={false}>账号/邮箱</FormLabel>
               <FormControl>
                 <Input
                   {...field}
-                  autoComplete='username'
-                  placeholder='请输入账号'
+                  autoComplete='email'
+                  placeholder='请输入邮箱/账号'
                   className='h-10'
                 />
               </FormControl>
@@ -104,8 +94,8 @@ export default function LoginForm({
                   />
                 </FormControl>
                 <LoginCaptcha
-                  layout={captcha}
-                  onRefresh={refreshCaptcha}
+                  image={captchaImage}
+                  onRefresh={onRefreshCaptcha}
                 />
               </div>
               <FormMessage />

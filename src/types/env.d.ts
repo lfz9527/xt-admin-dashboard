@@ -4,6 +4,10 @@
 export interface ImportMetaEnv {
   // Auto generate by env-parse
   /**
+   * 后端接口地址（nest-practices 本地服务）
+   */
+  readonly VITE_API_BASE_URL: string
+  /**
    * 是否开启代码分析
    */
   readonly VITE_BUILD_ANALYZE: boolean
@@ -15,8 +19,4 @@ export interface ImportMetaEnv {
    * 是否在打包时生成 sourcemap
    */
   readonly VITE_BUILD_SOURCEMAP: boolean
-  /**
-   * 后端接口地址
-   */
-  readonly VITE_API_BASE_URL: string
 }

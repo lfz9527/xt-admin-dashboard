@@ -4,6 +4,7 @@ import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { SidebarProvider } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
+import useAuthor from '@/store/useAuthor'
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -22,6 +23,7 @@ beforeEach(() => {
   if (!Element.prototype.getAnimations) {
     Element.prototype.getAnimations = () => []
   }
+  useAuthor.setState({ token: 'test-token' })
 })
 
 import routes from '@/router/routes'

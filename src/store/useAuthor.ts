@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
+import type { AuthUser } from '@/service/auth'
 import { EncryptionManager } from '@/utils/EncryptionManager'
 
 import { logger } from './middleware/logger'
 
 type State = {
   token: string | number
+  user: AuthUser | null
   account: string
   encryptedPassword: string
   remember: boolean
@@ -14,6 +16,7 @@ type State = {
 
 type Action = {
   setToken: (token: State['token']) => void
+  setUser: (user: AuthUser | null) => void
   saveCredentials: (account: string, password: string) => Promise<void>
   clearCredentials: () => void
   getCredentials: () => Promise<
@@ -30,11 +33,15 @@ const useAuthor = create<State & Action>()(
       persist(
         (set, get) => ({
           token: '',
+          user: null,
           account: '',
           encryptedPassword: '',
           remember: false,
           setToken: (token: State['token']) => {
             set({ token })
+          },
+          setUser: (user: AuthUser | null) => {
+            set({ user })
           },
           saveCredentials: async (account, password) => {
             const encryptedPassword = await encryptionManager.encrypt(password)
@@ -63,7 +70,7 @@ const useAuthor = create<State & Action>()(
         }),
         {
           name: 'app-author',
-          storage: createJSONStorage(() => sessionStorage),
+          storage: createJSONStorage(() => localStorage),
         }
       )
     ),

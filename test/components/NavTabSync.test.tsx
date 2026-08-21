@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import useAuthor from '@/store/useAuthor'
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -17,6 +18,7 @@ beforeEach(() => {
   if (!Element.prototype.getAnimations) {
     Element.prototype.getAnimations = () => []
   }
+  useAuthor.setState({ token: 'test-token' })
 })
 
 import { act, render, waitFor } from '@testing-library/react'
