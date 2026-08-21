@@ -44,6 +44,7 @@
 - 表单依赖 `react-hook-form`、`zod` 和 `@hookform/resolvers`；通用表单桥接组件位于 `src/ui/Form/`，字段布局优先复用 `src/ui/Field/`。
 - 页面路由集中在 `src/router/routes.tsx`，页面通常通过 `Lazy(() => import(...))` 懒加载；新增或改动页面时同步检查路由元信息和对应测试。
 - HTTP 请求封装在 `src/service/`，状态管理使用 `src/store/` 的 Zustand；不要在页面组件中重复实现请求客户端或全局状态基础设施。
+- `src/service/` 下的接口函数**不得直接调用**，必须搭配 `src/hooks/useRequest` 使用；如有特殊情况必须直接调用，需添加注释说明原因或先询问用户。
 - UI 组件使用 Tailwind CSS v4 语义化主题变量（如 `bg-background`、`text-muted-foreground`、`border-border`、`text-destructive`），通过 `cn` 合并 className，并保持现有 `data-slot`、`data-invalid` 和 ARIA 状态约定。
 - 当需求需要使用 `src/ui/` 或 `src/components/` 下的组件时，必须先检查是否存在可复用组件；存在时优先复用，未找到时应先询问用户是否新增组件，不得直接决定实现方式。
 - 当前登录页是表单演示，未连接真实认证接口；不要将演示提交状态误作真实 token 或认证成功。
