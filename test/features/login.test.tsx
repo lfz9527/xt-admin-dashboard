@@ -20,6 +20,13 @@ vi.mock('react-router', async () => {
   return { ...actual, useNavigate: () => navigate }
 })
 
+/** 从 SVG 中读取当前图形验证码文本 */
+function getCaptchaCode() {
+  return Array.from(document.querySelectorAll('[data-slot="captcha-text"]'))
+    .map((el) => el.textContent)
+    .join('')
+}
+
 describe('LoginFeature', () => {
   beforeEach(() => {
     navigate.mockReset()
@@ -44,7 +51,7 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('button', { name: '注册账号' }))
 
     expect(screen.getByText('注册管理后台')).toBeInTheDocument()
-    expect(screen.getByLabelText('邮箱')).toBeInTheDocument()
+    expect(screen.getByLabelText(/邮箱/)).toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: '返回登录' })).toBeInTheDocument()
   })
@@ -60,7 +67,7 @@ describe('LoginFeature', () => {
     await user.click(screen.getByRole('button', { name: '忘记密码' }))
 
     expect(screen.getByText('忘记密码')).toBeInTheDocument()
-    expect(screen.getByLabelText('新密码')).toBeInTheDocument()
+    expect(screen.getByLabelText(/新密码/)).toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
   })
 
@@ -85,7 +92,7 @@ describe('LoginFeature', () => {
 
     await user.click(screen.getByRole('button', { name: '登录' }))
 
-    expect(await screen.findAllByRole('alert')).toHaveLength(2)
+    expect(await screen.findAllByRole('alert')).toHaveLength(3)
     expect(screen.getByLabelText('账号')).toHaveAttribute(
       'aria-invalid',
       'true'
@@ -109,9 +116,9 @@ describe('LoginFeature', () => {
 
     expect(await screen.findAllByRole('alert')).toHaveLength(5)
 
-    await user.type(screen.getByLabelText('邮箱'), 'invalid')
-    await user.type(screen.getByLabelText('密码'), 'password')
-    await user.type(screen.getByLabelText('确认密码'), 'different')
+    await user.type(screen.getByLabelText(/邮箱/), 'invalid')
+    await user.type(screen.getByPlaceholderText('请输入密码'), 'password')
+    await user.type(screen.getByLabelText(/确认密码/), 'different')
     await user.click(screen.getByRole('button', { name: '注册' }))
 
     expect(await screen.findByText('请输入有效的邮箱')).toBeInTheDocument()
@@ -131,9 +138,9 @@ describe('LoginFeature', () => {
 
     expect(await screen.findAllByRole('alert')).toHaveLength(4)
 
-    await user.type(screen.getByLabelText('邮箱'), 'invalid')
-    await user.type(screen.getByLabelText('新密码'), 'password')
-    await user.type(screen.getByLabelText('确认密码'), 'different')
+    await user.type(screen.getByLabelText(/邮箱/), 'invalid')
+    await user.type(screen.getByLabelText(/新密码/), 'password')
+    await user.type(screen.getByLabelText(/确认密码/), 'different')
     await user.click(screen.getByRole('button', { name: '重置密码' }))
 
     expect(await screen.findByText('请输入有效的邮箱')).toBeInTheDocument()
@@ -149,11 +156,11 @@ describe('LoginFeature', () => {
     )
 
     await user.click(screen.getByRole('button', { name: '注册账号' }))
-    await user.type(screen.getByLabelText('邮箱'), 'admin@example.com')
-    await user.type(screen.getByLabelText('用户名'), 'admin')
-    await user.type(screen.getByLabelText('验证码'), '1234')
-    await user.type(screen.getByLabelText('密码'), 'password')
-    await user.type(screen.getByLabelText('确认密码'), 'password')
+    await user.type(screen.getByLabelText(/邮箱/), 'admin@example.com')
+    await user.type(screen.getByLabelText(/用户名/), 'admin')
+    await user.type(screen.getByLabelText(/验证码/), '1234')
+    await user.type(screen.getByPlaceholderText('请输入密码'), 'password')
+    await user.type(screen.getByLabelText(/确认密码/), 'password')
     await user.click(screen.getByRole('button', { name: '注册' }))
 
     expect(screen.getByRole('button', { name: /注册中/ })).toBeDisabled()
@@ -174,10 +181,10 @@ describe('LoginFeature', () => {
     )
 
     await user.click(screen.getByRole('button', { name: '忘记密码' }))
-    await user.type(screen.getByLabelText('邮箱'), 'admin@example.com')
-    await user.type(screen.getByLabelText('验证码'), '1234')
-    await user.type(screen.getByLabelText('新密码'), 'password')
-    await user.type(screen.getByLabelText('确认密码'), 'password')
+    await user.type(screen.getByLabelText(/邮箱/), 'admin@example.com')
+    await user.type(screen.getByLabelText(/验证码/), '1234')
+    await user.type(screen.getByLabelText(/新密码/), 'password')
+    await user.type(screen.getByLabelText(/确认密码/), 'password')
     await user.click(screen.getByRole('button', { name: '重置密码' }))
 
     expect(screen.getByRole('button', { name: /重置中/ })).toBeDisabled()
@@ -199,6 +206,7 @@ describe('LoginFeature', () => {
 
     await user.type(screen.getByLabelText('账号'), 'admin')
     await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('验证码'), getCaptchaCode())
     await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
     await user.click(screen.getByRole('button', { name: '登录' }))
 
@@ -218,6 +226,23 @@ describe('LoginFeature', () => {
     await expect(
       encryptionManager.decrypt(stored.encryptedPassword)
     ).resolves.toBe('password')
+  })
+
+  it('does not login when captcha is wrong', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.type(screen.getByLabelText('账号'), 'admin')
+    await user.type(screen.getByLabelText('密码'), 'password')
+    await user.type(screen.getByLabelText('验证码'), 'wrong')
+    await user.click(screen.getByRole('button', { name: '登录' }))
+
+    expect(await screen.findByText('验证码错误')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('fills saved credentials on load', async () => {
@@ -260,6 +285,7 @@ describe('LoginFeature', () => {
       expect(screen.getByLabelText('账号')).toHaveValue('admin')
     )
     await user.click(screen.getByRole('checkbox', { name: '记住账号密码' }))
+    await user.type(screen.getByLabelText('验证码'), getCaptchaCode())
     await user.click(screen.getByRole('button', { name: '登录' }))
 
     await waitFor(

@@ -40,7 +40,7 @@ export default function Login() {
   const getCredentials = useAuthor((state) => state.getCredentials)
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { account: '', password: '', remember: false },
+    defaultValues: { account: '', password: '', remember: false, captcha: '' },
   })
   const registerForm = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),

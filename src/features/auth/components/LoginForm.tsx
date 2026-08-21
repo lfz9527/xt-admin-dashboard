@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '@/ui/Button'
 import { Checkbox } from '@/ui/Checkbox'
 import {
@@ -12,6 +13,7 @@ import { Input } from '@/ui/Input'
 import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
+import LoginCaptcha, { createCaptchaLayout } from './LoginCaptcha'
 import { loginSchema, type LoginValues } from '../types'
 
 type LoginFormProps = {
@@ -27,6 +29,19 @@ export default function LoginForm({
   onRegister,
   onForgotPassword,
 }: LoginFormProps) {
+  const [captcha, setCaptcha] = useState(createCaptchaLayout)
+
+  const refreshCaptcha = () => setCaptcha(createCaptchaLayout())
+
+  const handleSubmit = (values: LoginValues) => {
+    if (values.captcha !== captcha.code) {
+      form.setError('captcha', { message: '验证码错误' })
+      refreshCaptcha()
+      return
+    }
+    return onSubmit(values)
+  }
+
   return (
     <Form
       {...form}
@@ -34,7 +49,7 @@ export default function LoginForm({
     >
       <form
         className='flex flex-col gap-5'
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField
           control={form.control}
@@ -69,6 +84,30 @@ export default function LoginForm({
                   className='h-10'
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='captcha'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel showRequired={false}>验证码</FormLabel>
+              <div className='flex gap-2'>
+                <FormControl>
+                  <Input
+                    {...field}
+                    autoComplete='off'
+                    placeholder='请输入验证码'
+                    className='h-10'
+                  />
+                </FormControl>
+                <LoginCaptcha
+                  layout={captcha}
+                  onRefresh={refreshCaptcha}
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}

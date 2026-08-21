@@ -4,6 +4,7 @@ export const loginSchema = z.object({
   account: z.string().min(1, '请输入账号'),
   password: z.string().min(1, '请输入密码'),
   remember: z.boolean(),
+  captcha: z.string().min(1, '请输入验证码'),
 })
 
 export const registerSchema = z
