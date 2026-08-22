@@ -205,3 +205,51 @@ describe('DataTable 分页', () => {
     ).toHaveLength(2)
   })
 })
+
+describe('DataTable 排序', () => {
+  it('点击可排序表头触发 onSortingChange', () => {
+    const onSortingChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        sorting={[]}
+        onSortingChange={onSortingChange}
+      />
+    )
+    fireEvent.click(screen.getByText('姓名'))
+    expect(onSortingChange).toHaveBeenCalled()
+  })
+
+  it('排序状态为 asc 时展示升序图标', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        sorting={[{ id: 'name', desc: false }]}
+        onSortingChange={vi.fn()}
+      />
+    )
+    expect(
+      container.querySelector('[data-slot=table-head] svg')
+    ).toBeInTheDocument()
+  })
+
+  it('分页与排序可同时受控使用', () => {
+    const onChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        sorting={[{ id: 'name', desc: true }]}
+        onSortingChange={vi.fn()}
+        pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Go to next page'))
+    expect(onChange).toHaveBeenCalledWith(2, 10)
+  })
+})
