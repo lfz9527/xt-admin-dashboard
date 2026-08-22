@@ -1,71 +1,174 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Plus } from 'lucide-react'
 
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
+import DeleteRoleDialog from '@/features/role/components/DeleteRoleDialog'
+import RoleFormDialog from '@/features/role/components/RoleFormDialog'
+import { useRequest } from '@/hooks'
+import { getRoles, type RoleItem } from '@/service/roles'
+import { Button } from '@/ui/Button'
 
-// mock 角色数据：演示 DataTable 使用；接入真实接口后改为 useRequest 拉取
-const mockRoles = Array.from({ length: 35 }, (_, i) => ({
-  id: i + 1,
-  name: `角色${i + 1}`,
-  code: `ROLE_${i + 1}`,
-  enabled: i % 3 !== 0,
-  createdAt: `2026-08-${String((i % 28) + 1).padStart(2, '0')}`,
-}))
-
-type Role = (typeof mockRoles)[number]
-
-const columns: ColumnDef<DataTableFeatures, Role>[] = [
-  { accessorKey: 'name', header: '角色名称', enableSorting: true },
-  {
-    accessorKey: 'code',
-    header: '角色编码',
-    meta: { width: 140 },
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'enabled',
-    header: '状态',
-    meta: { align: 'center' },
-    cell: ({ getValue }) => (
-      <span className={getValue() ? 'text-primary' : 'text-muted-foreground'}>
-        {getValue() ? '启用' : '停用'}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'createdAt',
-    header: '创建时间',
-    meta: { align: 'center', width: 160 },
-    enableSorting: true,
-  },
-]
+function formatDateTime(iso: string) {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 export default function Roles() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [formOpen, setFormOpen] = useState(false)
+  /** 正在编辑的角色；null 为新增模式 */
+  const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
+  const { data, loading, error, run } = useRequest(getRoles, {
+    immediate: false,
+  })
 
-  const pageData = mockRoles.slice((page - 1) * pageSize, page * pageSize)
+  useEffect(() => {
+    run({ page, pageSize })
+  }, [page, pageSize, run])
+
+  // 删除后当前页变空且不是第 1 页时回退，避免停留在空页
+  useEffect(() => {
+    if (data && data.list.length === 0 && data.total > 0 && page > 1) {
+      setPage(1)
+    }
+  }, [data, page])
+
+  const columns = useMemo<ColumnDef<DataTableFeatures, RoleItem>[]>(
+    () => [
+      { accessorKey: 'name', header: '角色名称' },
+      {
+        accessorKey: 'roleKey',
+        header: '角色编码',
+        meta: { width: 140 },
+      },
+      {
+        accessorKey: 'status',
+        header: '状态',
+        meta: { align: 'center' },
+        cell: ({ getValue }) => {
+          // 后端约定：0=正常（启用）1=停用
+          const enabled = getValue() === 0
+          return (
+            <span
+              className={enabled ? 'text-primary' : 'text-muted-foreground'}
+            >
+              {enabled ? '启用' : '停用'}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: 'remark',
+        header: '备注',
+        cell: ({ getValue }) => {
+          const remark = getValue() as string
+          return remark ? (
+            remark
+          ) : (
+            <span className='text-muted-foreground'>-</span>
+          )
+        },
+      },
+      {
+        accessorKey: 'createdAt',
+        header: '创建时间',
+        meta: { align: 'center', width: 160 },
+        cell: ({ getValue }) => formatDateTime(getValue() as string),
+      },
+      {
+        id: 'actions',
+        header: '操作',
+        meta: { align: 'center', width: 110 },
+        cell: ({ row }) => (
+          <div className='flex justify-center gap-1'>
+            <Button
+              variant='ghost'
+              size='xs'
+              onClick={() => {
+                setEditingRole(row.original)
+                setFormOpen(true)
+              }}
+            >
+              编辑
+            </Button>
+            <Button
+              variant='ghost'
+              size='xs'
+              className='hover:text-destructive text-destructive'
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              删除
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    []
+  )
 
   return (
-    <DataTable
-      columns={columns}
-      data={pageData}
-      rowKey='id'
-      sorting={sorting}
-      onSortingChange={setSorting}
-      pagination={{
-        total: mockRoles.length,
-        page,
-        pageSize,
-        onChange: (nextPage, nextPageSize) => {
-          // 切换每页条数时回到第 1 页（业务决定，组件不干预）
-          const isSizeChanged = nextPageSize !== pageSize
-          setPage(isSizeChanged ? 1 : nextPage)
-          setPageSize(nextPageSize)
-        },
-      }}
-    />
+    <div className='flex flex-col gap-3'>
+      <div className='flex justify-end'>
+        <Button
+          onClick={() => {
+            setEditingRole(null)
+            setFormOpen(true)
+          }}
+        >
+          <Plus className='size-4' />
+          新增角色
+        </Button>
+      </div>
+      <DataTable
+        columns={columns}
+        data={data?.list ?? []}
+        rowKey='id'
+        loading={loading}
+        empty={
+          error ? (
+            <span className='text-destructive text-sm'>{error.message}</span>
+          ) : undefined
+        }
+        pagination={{
+          total: data?.total ?? 0,
+          page,
+          pageSize,
+          onChange: (nextPage, nextPageSize) => {
+            // 切换每页条数时回到第 1 页（业务决定，组件不干预）
+            const isSizeChanged = nextPageSize !== pageSize
+            setPage(isSizeChanged ? 1 : nextPage)
+            setPageSize(nextPageSize)
+          },
+        }}
+      />
+      <RoleFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        role={editingRole}
+        onSuccess={() => {
+          if (editingRole) {
+            // 编辑刷新当前页
+            run({ page, pageSize })
+          } else {
+            // 新角色按 sort 排序位置不定，回第 1 页并重新拉取
+            setPage(1)
+            run({ page: 1, pageSize })
+          }
+        }}
+      />
+      <DeleteRoleDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        role={deleteTarget}
+        onSuccess={() => run({ page, pageSize })}
+      />
+    </div>
   )
 }
