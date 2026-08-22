@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
-import { DataTable, type DataTableColumn } from '@/components/DataTable'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
+
+import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 
 // mock 角色数据：演示 DataTable 使用；接入真实接口后改为 useRequest 拉取
 const mockRoles = Array.from({ length: 35 }, (_, i) => ({
@@ -13,40 +15,40 @@ const mockRoles = Array.from({ length: 35 }, (_, i) => ({
 
 type Role = (typeof mockRoles)[number]
 
-const columns: DataTableColumn<Role>[] = [
-  { key: 'name', title: '角色名称', dataIndex: 'name' },
-  { key: 'code', title: '角色编码', dataIndex: 'code', width: 140 },
+const columns: ColumnDef<DataTableFeatures, Role>[] = [
+  { accessorKey: 'name', header: '角色名称' },
+  { accessorKey: 'code', header: '角色编码', meta: { width: 140 } },
   {
-    key: 'status',
-    title: '状态',
-    dataIndex: 'enabled',
-    align: 'center',
-    render: (value) => (
-      <span className={value ? 'text-primary' : 'text-muted-foreground'}>
-        {value ? '启用' : '停用'}
+    accessorKey: 'enabled',
+    header: '状态',
+    meta: { align: 'center' },
+    cell: ({ getValue }) => (
+      <span className={getValue() ? 'text-primary' : 'text-muted-foreground'}>
+        {getValue() ? '启用' : '停用'}
       </span>
     ),
   },
   {
-    key: 'createdAt',
-    title: '创建时间',
-    dataIndex: 'createdAt',
-    align: 'center',
-    width: 160,
+    accessorKey: 'createdAt',
+    header: '创建时间',
+    meta: { align: 'center', width: 160 },
   },
 ]
 
 export default function Roles() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [sorting, setSorting] = useState<SortingState>([])
 
   const pageData = mockRoles.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <DataTable
       columns={columns}
-      dataSource={pageData}
+      data={pageData}
       rowKey='id'
+      sorting={sorting}
+      onSortingChange={setSorting}
       pagination={{
         total: mockRoles.length,
         page,
