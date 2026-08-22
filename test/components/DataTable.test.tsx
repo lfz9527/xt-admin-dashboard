@@ -1,16 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import type { ColumnDef } from '@tanstack/react-table'
 
-import { DataTable, type DataTableColumn } from '@/components/DataTable'
+import { DataTable } from '@/components/DataTable'
 
 type User = { id: number; name: string; age: number }
 
-const columns: DataTableColumn<User>[] = [
-  { key: 'name', title: '姓名', dataIndex: 'name' },
-  { key: 'age', title: '年龄', dataIndex: 'age', align: 'center', width: 100 },
+const columns: ColumnDef<User>[] = [
+  { accessorKey: 'name', header: '姓名' },
+  { accessorKey: 'age', header: '年龄', meta: { align: 'center', width: 100 } },
   {
-    key: 'action',
-    title: '操作',
-    render: (_value, record) => `操作-${record.name}`,
+    id: 'action',
+    header: '操作',
+    cell: ({ row }) => `操作-${row.original.name}`,
   },
 ]
 
@@ -24,7 +25,7 @@ describe('DataTable', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
       />
     )
@@ -38,7 +39,7 @@ describe('DataTable', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
       />
     )
@@ -49,7 +50,7 @@ describe('DataTable', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey={(u) => `key-${u.id}`}
       />
     )
@@ -61,7 +62,7 @@ describe('DataTable', () => {
     const { container } = render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
       />
     )
@@ -76,7 +77,7 @@ describe('DataTable 加载态与空态', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         loading
       />
@@ -88,7 +89,7 @@ describe('DataTable 加载态与空态', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
       />
     )
@@ -99,7 +100,7 @@ describe('DataTable 加载态与空态', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={[]}
+        data={[]}
         rowKey='id'
       />
     )
@@ -110,7 +111,7 @@ describe('DataTable 加载态与空态', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={[]}
+        data={[]}
         rowKey='id'
         emptyText='没有数据'
       />
@@ -125,7 +126,7 @@ describe('DataTable 分页', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
       />
@@ -138,7 +139,7 @@ describe('DataTable 分页', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
       />
@@ -152,7 +153,7 @@ describe('DataTable 分页', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 42, page: 2, pageSize: 10, onChange }}
       />
@@ -166,7 +167,7 @@ describe('DataTable 分页', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
       />
@@ -180,7 +181,7 @@ describe('DataTable 分页', () => {
     render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 20, page: 2, pageSize: 10, onChange }}
       />
@@ -194,7 +195,7 @@ describe('DataTable 分页', () => {
     const { container } = render(
       <DataTable
         columns={columns}
-        dataSource={users}
+        data={users}
         rowKey='id'
         pagination={{ total: 100, page: 5, pageSize: 10, onChange }}
       />
