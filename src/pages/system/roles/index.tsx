@@ -16,8 +16,13 @@ const mockRoles = Array.from({ length: 35 }, (_, i) => ({
 type Role = (typeof mockRoles)[number]
 
 const columns: ColumnDef<DataTableFeatures, Role>[] = [
-  { accessorKey: 'name', header: '角色名称' },
-  { accessorKey: 'code', header: '角色编码', meta: { width: 140 } },
+  { accessorKey: 'name', header: '角色名称', enableSorting: true },
+  {
+    accessorKey: 'code',
+    header: '角色编码',
+    meta: { width: 140 },
+    enableSorting: true,
+  },
   {
     accessorKey: 'enabled',
     header: '状态',
@@ -32,6 +37,7 @@ const columns: ColumnDef<DataTableFeatures, Role>[] = [
     accessorKey: 'createdAt',
     header: '创建时间',
     meta: { align: 'center', width: 160 },
+    enableSorting: true,
   },
 ]
 

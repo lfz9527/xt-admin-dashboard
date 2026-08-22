@@ -6,7 +6,7 @@ import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 type User = { id: number; name: string; age: number }
 
 const columns: ColumnDef<DataTableFeatures, User>[] = [
-  { accessorKey: 'name', header: '姓名' },
+  { accessorKey: 'name', header: '姓名', enableSorting: true },
   { accessorKey: 'age', header: '年龄', meta: { align: 'center', width: 100 } },
   {
     id: 'action',
@@ -251,5 +251,20 @@ describe('DataTable 排序', () => {
     )
     fireEvent.click(screen.getByLabelText('Go to next page'))
     expect(onChange).toHaveBeenCalledWith(2, 10)
+  })
+
+  it('未开启排序的列点击不触发 onSortingChange', () => {
+    const onSortingChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        sorting={[]}
+        onSortingChange={onSortingChange}
+      />
+    )
+    fireEvent.click(screen.getByText('年龄'))
+    expect(onSortingChange).not.toHaveBeenCalled()
   })
 })

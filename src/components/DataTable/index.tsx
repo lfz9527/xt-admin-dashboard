@@ -4,6 +4,7 @@ import {
   rowSortingFeature,
   tableFeatures,
   useTable,
+  type Header,
   type PaginationState,
   type RowData,
 } from '@tanstack/react-table'
@@ -69,6 +70,13 @@ function getPageItems(
   return items
 }
 
+// 默认不开启排序：仅当列显式配置 enableSorting: true 时才可排序
+function canSortColumn<TData extends RowData>(
+  header: Header<DataTableFeatures, TData>
+) {
+  return header.column.columnDef.enableSorting === true
+}
+
 function DataTable<TData extends RowData>({
   columns,
   data,
@@ -132,13 +140,13 @@ function DataTable<TData extends RowData>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const meta = header.column.columnDef.meta
+                  const canSort = canSortColumn(header)
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
                         alignClassMap[meta?.align ?? 'left'],
-                        header.column.getCanSort() &&
-                          'cursor-pointer select-none'
+                        canSort && 'cursor-pointer select-none'
                       )}
                       style={
                         meta?.width !== undefined
@@ -146,22 +154,24 @@ function DataTable<TData extends RowData>({
                           : undefined
                       }
                       onClick={
-                        header.column.getCanSort()
+                        canSort
                           ? header.column.getToggleSortingHandler()
                           : undefined
                       }
                     >
-                      {header.isPlaceholder ? null : (
-                        <table.FlexRender header={header} />
-                      )}
-                      {header.column.getCanSort() &&
-                        (header.column.getIsSorted() === 'asc' ? (
-                          <ArrowUpIcon className='size-3.5' />
-                        ) : header.column.getIsSorted() === 'desc' ? (
-                          <ArrowDownIcon className='size-3.5' />
-                        ) : (
-                          <ChevronsUpDownIcon className='text-muted-foreground/50 size-3.5' />
-                        ))}
+                      <div className='inline-flex items-center gap-1'>
+                        {header.isPlaceholder ? null : (
+                          <table.FlexRender header={header} />
+                        )}
+                        {canSort &&
+                          (header.column.getIsSorted() === 'asc' ? (
+                            <ArrowUpIcon className='size-3.5' />
+                          ) : header.column.getIsSorted() === 'desc' ? (
+                            <ArrowDownIcon className='size-3.5' />
+                          ) : (
+                            <ChevronsUpDownIcon className='text-muted-foreground/50 size-3.5' />
+                          ))}
+                      </div>
                     </TableHead>
                   )
                 })}
