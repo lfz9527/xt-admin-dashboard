@@ -8,22 +8,17 @@ import {
   type PaginationState,
   type RowData,
 } from '@tanstack/react-table'
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ChevronDownIcon,
-  ChevronsUpDownIcon,
-} from 'lucide-react'
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
 
 import Loading from '@/components/Loading'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from '@/ui/DropdownMenu'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/Select'
 import {
   Pagination,
   PaginationContent,
@@ -242,37 +237,7 @@ function DataTable<TData extends RowData>({
         </div>
       )}
       {pagination && !isEmpty && (
-        <div className='flex items-center justify-between px-1 pt-3'>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm outline-none'
-              aria-label='每页条数'
-            >
-              {pagination.pageSize} 条/页
-              <ChevronDownIcon className='size-3.5' />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup
-                value={String(pagination.pageSize)}
-                onValueChange={(value) => {
-                  const nextSize = Number(value)
-                  if (nextSize !== pagination.pageSize) {
-                    // 是否重置页码由调用方在 onChange 中决定
-                    pagination.onChange(pagination.page, nextSize)
-                  }
-                }}
-              >
-                {pageSizeOptions.map((size) => (
-                  <DropdownMenuRadioItem
-                    key={size}
-                    value={String(size)}
-                  >
-                    {size} 条/页
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className='flex items-center justify-end gap-2 px-1 pt-3'>
           <Pagination className='justify-end'>
             <PaginationContent>
               <PaginationItem>
@@ -331,6 +296,33 @@ function DataTable<TData extends RowData>({
               </PaginationItem>
             </PaginationContent>
           </Pagination>
+          <Select
+            value={String(pagination.pageSize)}
+            onValueChange={(value) => {
+              const nextSize = Number(value)
+              if (nextSize !== pagination.pageSize) {
+                // 是否重置页码由调用方在 onChange 中决定
+                pagination.onChange(pagination.page, nextSize)
+              }
+            }}
+          >
+            <SelectTrigger
+              className='text-muted-foreground h-8 text-sm'
+              aria-label='每页条数'
+            >
+              <SelectValue>{pagination.pageSize} 条/页</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {pageSizeOptions.map((size) => (
+                <SelectItem
+                  key={size}
+                  value={String(size)}
+                >
+                  {size} 条/页
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
     </div>
