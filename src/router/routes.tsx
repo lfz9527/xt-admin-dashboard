@@ -17,11 +17,10 @@ const routes: AppRouteObject[] = [
             meta: { title: '首页', menuKey: 'home', icon: SquareTerminal },
           },
           {
-            path: '/system',
             meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
             children: [
               {
-                path: 'users',
+                path: '/system/users',
                 element: Lazy(() => import('@/pages/system/users')),
                 meta: {
                   title: '用户管理',
@@ -30,7 +29,7 @@ const routes: AppRouteObject[] = [
                 },
               },
               {
-                path: 'roles',
+                path: '/system/roles',
                 element: Lazy(() => import('@/pages/system/roles')),
                 meta: {
                   title: '角色管理',
