@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ColumnDef } from '@tanstack/react-table'
 
-import { DataTable } from '@/components/DataTable'
+import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 
 type User = { id: number; name: string; age: number }
 
-const columns: ColumnDef<User>[] = [
+const columns: ColumnDef<DataTableFeatures, User>[] = [
   { accessorKey: 'name', header: '姓名' },
   { accessorKey: 'age', header: '年龄', meta: { align: 'center', width: 100 } },
   {
@@ -113,7 +113,7 @@ describe('DataTable 加载态与空态', () => {
         columns={columns}
         data={[]}
         rowKey='id'
-        emptyText='没有数据'
+        empty={<span>没有数据</span>}
       />
     )
     expect(screen.getByText('没有数据')).toBeInTheDocument()

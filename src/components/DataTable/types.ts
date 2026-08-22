@@ -1,15 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import type { ColumnDef, RowData, SortingState } from '@tanstack/react-table'
 
-declare module '@tanstack/react-table' {
-  interface ColumnMeta<TData, TValue> {
-    /** 列宽，透传到 th/td 的 style.width */
-    width?: number | string
-    /** 对齐方式，默认 left */
-    align?: 'left' | 'center' | 'right'
-  }
-}
+import type { DataTableFeatures } from './index'
 
 export type DataTablePagination = {
   /** 数据总条数 */
@@ -22,13 +15,13 @@ export type DataTablePagination = {
   onChange: (page: number, pageSize: number) => void
 }
 
-export type DataTableProps<T = Global.AnyObj> = {
-  /** TanStack 原生列定义（accessorKey/cell/header 等） */
-  columns: ColumnDef<T>[]
+export type DataTableProps<TData extends RowData = Global.AnyObj> = {
+  /** TanStack 原生列定义（携带组件导出的 DataTableFeatures 泛型） */
+  columns: ColumnDef<DataTableFeatures, TData>[]
   /** 数据源 */
-  data: readonly T[]
+  data: readonly TData[]
   /** 行唯一标识：字段名或返回唯一值的函数，映射 TanStack getRowId */
-  rowKey: string | ((record: T) => string)
+  rowKey: string | ((record: TData) => string)
   /** 加载态，true 时表格区域叠加 Loading 遮罩 */
   loading?: boolean
   /** 空态插槽，缺省时内置 Empty + EmptyTitle「暂无数据」 */
