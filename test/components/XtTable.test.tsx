@@ -120,7 +120,7 @@ describe('XtTable 加载态与空态', () => {
 })
 
 describe('XtTable 分页', () => {
-  it('展示总条数与页码', () => {
+  it('展示页码', () => {
     const onChange = vi.fn()
     render(
       <XtTable
@@ -130,7 +130,6 @@ describe('XtTable 分页', () => {
         pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
       />
     )
-    expect(screen.getByText('共 42 条')).toBeInTheDocument()
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 

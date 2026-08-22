@@ -71,60 +71,63 @@ function XtTable<T = Global.AnyObj>({
       className={cn('relative', className)}
       style={style}
     >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((col) => (
-              <TableHead
-                key={col.key}
-                className={alignClassMap[col.align ?? 'left']}
-                style={
-                  col.width !== undefined ? { width: col.width } : undefined
-                }
-              >
-                {col.title}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isEmpty && !loading ? (
+      <div className='rounded-md border'>
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className='text-muted-foreground h-24 text-center'
-              >
-                {emptyText}
-              </TableCell>
+              {columns.map((col) => (
+                <TableHead
+                  key={col.key}
+                  className={alignClassMap[col.align ?? 'left']}
+                  style={
+                    col.width !== undefined ? { width: col.width } : undefined
+                  }
+                >
+                  {col.title}
+                </TableHead>
+              ))}
             </TableRow>
-          ) : (
-            dataSource.map((record, index) => (
-              <TableRow key={getRowKey(record)}>
-                {columns.map((col) => {
-                  const value = col.dataIndex
-                    ? (record as Record<string, unknown>)[col.dataIndex]
-                    : undefined
-                  return (
-                    <TableCell
-                      key={col.key}
-                      className={alignClassMap[col.align ?? 'left']}
-                      style={
-                        col.width !== undefined
-                          ? { width: col.width }
-                          : undefined
-                      }
-                    >
-                      {col.render
-                        ? col.render(value, record, index)
-                        : (value as ReactNode)}
-                    </TableCell>
-                  )
-                })}
+          </TableHeader>
+          <TableBody>
+            {isEmpty && !loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className='text-muted-foreground h-24 text-center'
+                >
+                  {emptyText}
+                </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              dataSource.map((record, index) => (
+                <TableRow key={getRowKey(record)}>
+                  {columns.map((col) => {
+                    const value = col.dataIndex
+                      ? (record as Record<string, unknown>)[col.dataIndex]
+                      : undefined
+                    return (
+                      <TableCell
+                        key={col.key}
+                        className={alignClassMap[col.align ?? 'left']}
+                        style={
+                          col.width !== undefined
+                            ? { width: col.width }
+                            : undefined
+                        }
+                      >
+                        {col.render
+                          ? col.render(value, record, index)
+                          : (value as ReactNode)}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
       {loading && (
         <div
           data-testid='xttable-loading'
@@ -134,11 +137,8 @@ function XtTable<T = Global.AnyObj>({
         </div>
       )}
       {pagination && !isEmpty && (
-        <div className='flex items-center justify-between px-1 pt-3'>
-          <span className='text-muted-foreground text-sm'>
-            共 {pagination.total} 条
-          </span>
-          <Pagination className='ml-auto'>
+        <div className='px-1 pt-3'>
+          <Pagination className='justify-end'>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious

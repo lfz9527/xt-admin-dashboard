@@ -9,7 +9,6 @@ describe('Roles page', () => {
     expect(screen.getByText('角色名称')).toBeInTheDocument()
     expect(screen.getByText('角色编码')).toBeInTheDocument()
     expect(screen.getByText('角色1')).toBeInTheDocument()
-    expect(screen.getByText('共 35 条')).toBeInTheDocument()
   })
 
   it('翻页后展示下一页数据', async () => {
