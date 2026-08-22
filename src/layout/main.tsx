@@ -11,7 +11,7 @@ export default function Main() {
         <NavTab />
       </section>
       {/* 内容区为唯一滚动区域 */}
-      <div className='min-h-0 flex-1 overflow-auto p-(--main-content-padding)'>
+      <div className='my-(--main-content-padding) min-h-0 flex-1 overflow-auto px-(--main-content-padding)'>
         <Outlet />
       </div>
     </div>

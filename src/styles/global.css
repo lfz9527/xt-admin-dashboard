@@ -147,3 +147,23 @@
     cursor: pointer;
   }
 }
+
+/* 全局滚动条样式参考 ui/ScrollArea：thumb 内缩 1px（p-px）、border 色、全圆角，宽度按需求 6px
+   必须放在 @layer 外：layer 内的 ::-webkit-scrollbar 无法覆盖 UA 默认滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  /* 透明描边配合 background-clip 模拟轨道 1px 内边距 */
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: var(--border);
+  background-clip: padding-box;
+}
