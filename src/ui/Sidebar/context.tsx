@@ -100,7 +100,8 @@ export function SidebarProvider({
           } as CSSProperties
         }
         className={cn(
-          'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
+          // h-svh 锁定视口高度，避免内容撑高导致文档整体滚动；滚动交给内容区
+          'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex h-svh w-full',
           className
         )}
         {...props}
