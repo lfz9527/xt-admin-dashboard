@@ -28,6 +28,8 @@ export type DataTableProps<TData extends RowData = Global.AnyObj> = {
   empty?: ReactNode
   /** 受控分页，传入即显示底部分页条 */
   pagination?: DataTablePagination
+  /** 每页条数可选项，默认 [10, 20, 50, 100]；切换时 onChange(page, newSize)，是否重置页码由调用方决定 */
+  pageSizeOptions?: number[]
   /** 受控排序状态 */
   sorting?: SortingState
   /** 排序变化回调，由调用方更新状态并重新拉取数据 */

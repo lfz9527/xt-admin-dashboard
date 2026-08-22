@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
@@ -203,6 +204,36 @@ describe('DataTable 分页', () => {
     expect(
       container.querySelectorAll('[data-slot=pagination-ellipsis]')
     ).toHaveLength(2)
+  })
+
+  it('展示每页条数选择器并切换触发 onChange', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
+      />
+    )
+    await user.click(screen.getByLabelText('每页条数'))
+    await user.click(await screen.findByText('20 条/页'))
+    expect(onChange).toHaveBeenCalledWith(1, 20)
+  })
+
+  it('每页条数可选项可通过 pageSizeOptions 自定义', () => {
+    const onChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        pageSizeOptions={[5, 15]}
+        pagination={{ total: 42, page: 1, pageSize: 5, onChange }}
+      />
+    )
+    expect(screen.getByText('5 条/页')).toBeInTheDocument()
   })
 })
 

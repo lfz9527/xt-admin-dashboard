@@ -8,9 +8,21 @@ import {
   type PaginationState,
   type RowData,
 } from '@tanstack/react-table'
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronDownIcon,
+  ChevronsUpDownIcon,
+} from 'lucide-react'
 
 import Loading from '@/components/Loading'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/ui/DropdownMenu'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import {
   Pagination,
@@ -84,6 +96,7 @@ function DataTable<TData extends RowData>({
   loading = false,
   empty,
   pagination,
+  pageSizeOptions = [10, 20, 50, 100],
   sorting,
   onSortingChange,
   className,
@@ -229,7 +242,37 @@ function DataTable<TData extends RowData>({
         </div>
       )}
       {pagination && !isEmpty && (
-        <div className='px-1 pt-3'>
+        <div className='flex items-center justify-between px-1 pt-3'>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm outline-none'
+              aria-label='每页条数'
+            >
+              {pagination.pageSize} 条/页
+              <ChevronDownIcon className='size-3.5' />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuRadioGroup
+                value={String(pagination.pageSize)}
+                onValueChange={(value) => {
+                  const nextSize = Number(value)
+                  if (nextSize !== pagination.pageSize) {
+                    // 是否重置页码由调用方在 onChange 中决定
+                    pagination.onChange(pagination.page, nextSize)
+                  }
+                }}
+              >
+                {pageSizeOptions.map((size) => (
+                  <DropdownMenuRadioItem
+                    key={size}
+                    value={String(size)}
+                  >
+                    {size} 条/页
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Pagination className='justify-end'>
             <PaginationContent>
               <PaginationItem>

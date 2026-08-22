@@ -16,12 +16,11 @@ const mockRoles = Array.from({ length: 35 }, (_, i) => ({
 type Role = (typeof mockRoles)[number]
 
 const columns: ColumnDef<DataTableFeatures, Role>[] = [
-  { accessorKey: 'name', header: '角色名称', enableSorting: true },
+  { accessorKey: 'name', header: '角色名称' },
   {
     accessorKey: 'code',
     header: '角色编码',
     meta: { width: 140 },
-    enableSorting: true,
   },
   {
     accessorKey: 'enabled',
@@ -37,7 +36,6 @@ const columns: ColumnDef<DataTableFeatures, Role>[] = [
     accessorKey: 'createdAt',
     header: '创建时间',
     meta: { align: 'center', width: 160 },
-    enableSorting: true,
   },
 ]
 
@@ -60,7 +58,9 @@ export default function Roles() {
         page,
         pageSize,
         onChange: (nextPage, nextPageSize) => {
-          setPage(nextPage)
+          // 切换每页条数时回到第 1 页（业务决定，组件不干预）
+          const isSizeChanged = nextPageSize !== pageSize
+          setPage(isSizeChanged ? 1 : nextPage)
           setPageSize(nextPageSize)
         },
       }}
