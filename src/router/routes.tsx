@@ -17,29 +17,7 @@ const routes: AppRouteObject[] = [
             meta: { title: '首页', menuKey: 'home', icon: SquareTerminal },
           },
           {
-            path: '/dashboard',
-            element: Lazy(() => import('@/pages/dashboard')),
-            meta: {
-              title: 'Dashboard',
-              menuKey: 'dashboard',
-              icon: LayoutDashboard,
-            },
-            children: [
-              {
-                path: 'overview',
-                element: Lazy(() => import('@/pages/dashboard/overview')),
-                meta: { title: '概览', menuKey: 'dashboard-overview' },
-              },
-              {
-                path: 'analytics',
-                element: Lazy(() => import('@/pages/dashboard/analytics')),
-                meta: { title: '分析', menuKey: 'dashboard-analytics' },
-              },
-            ],
-          },
-          {
             path: '/system',
-            element: Lazy(() => import('@/pages/system')),
             meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
             children: [
               {
@@ -50,17 +28,6 @@ const routes: AppRouteObject[] = [
                   menuKey: 'system-users',
                   icon: LayoutDashboard,
                 },
-                children: [
-                  {
-                    path: ':id',
-                    element: Lazy(() => import('@/pages/system/users/detail')),
-                    meta: {
-                      // title: '用户详情',
-                      menuKey: 'system-users',
-                      showInMenu: false,
-                    },
-                  },
-                ],
               },
               {
                 path: 'roles',
@@ -70,40 +37,6 @@ const routes: AppRouteObject[] = [
                   menuKey: 'system-roles',
                   icon: Settings2,
                 },
-                children: [
-                  {
-                    path: 'detail',
-                    element: Lazy(() => import('@/pages/system/roles/detail')),
-                    meta: {
-                      title: '角色管理详情',
-                      menuKey: 'system-roles',
-                      showInMenu: false,
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            path: '/level-one',
-            meta: {
-              title: '一级菜单',
-              menuKey: 'level-one',
-              icon: Settings2,
-            },
-            children: [
-              {
-                path: 'level-two',
-                meta: { title: '二级菜单', menuKey: 'level-two' },
-                children: [
-                  {
-                    path: 'level-three',
-                    element: Lazy(
-                      () => import('@/pages/level-one/level-two/level-three')
-                    ),
-                    meta: { title: '三级菜单', menuKey: 'level-three' },
-                  },
-                ],
               },
             ],
           },
