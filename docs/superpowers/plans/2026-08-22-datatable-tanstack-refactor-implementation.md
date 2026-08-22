@@ -1,44 +1,47 @@
-# DataTable 基于 TanStack Table 重构实现计划
+# DataTable 基于 TanStack Table v9 重构实现计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 将 `src/components/DataTable` 的表格引擎替换为 `@tanstack/react-table`，DOM 骨架继续使用 `src/ui/Table`，分页条使用 `src/ui/Pagination`，空态改用 `src/ui/Empty` 组合组件，并新增受控列排序能力。
+**Goal:** 将 `src/components/DataTable` 的表格引擎替换为 `@tanstack/react-table@9.1.2`（v9 全新 API），DOM 骨架使用 `src/ui/Table`，分页条使用 `src/ui/Pagination`，空态改用 `src/ui/Empty`，并新增受控列排序。
 
-**Architecture:** TanStack Table（headless）接管列渲染、排序、分页状态计算；DataTable 仍是纯展示层组件，数据/分页/排序状态均由调用方受控传入（`manualPagination` + `manualSorting`）。列配置直接使用 TanStack 原生 `ColumnDef<T>`。
+**Architecture:** v9 的 `useTable` + 显式 `features` 注册（rowSortingFeature/rowPaginationFeature/columnMeta 槽位），Pattern A 受控状态（`state` + `on*Change`），`table.FlexRender` 渲染模板。DataTable 仍为纯展示层，数据/分页/排序由调用方受控。
 
-**Tech Stack:** React 19、TypeScript、`@tanstack/react-table`（v8，headless）、Tailwind CSS v4 语义化主题变量、lucide-react 排序图标、Vitest + Testing Library、`@/` 路径别名。
+**Tech Stack:** React 19、TypeScript、`@tanstack/react-table@^9.1.2`、Tailwind CSS v4 语义化主题变量、lucide-react 排序图标、Vitest + Testing Library、`@/` 路径别名。
 
 ## Global Constraints
 
 - 跨目录导入使用 `@/*` 别名（`@/` 映射 `src/*`）。
 - UI 组件使用语义化主题变量（`bg-background`、`text-muted-foreground` 等）与 `cn` 合并类名，保持 `data-slot` 约定。
 - DataTable 为纯展示层组件：不内嵌请求逻辑、不调用 `useRequest`；数据获取与分页/排序状态由调用方受控传入。
-- 分页 `page` 为 1-based（调用方视角），内部映射 TanStack `pageIndex`（0-based）。
-- 空态使用 `src/ui/Empty` 组合组件（`Empty` + `EmptyHeader` + `EmptyTitle`），默认标题「暂无数据」；支持 `empty` 插槽自定义。
-- 提交信息使用中文，遵循 git-conventions：**每次 `git commit` 前必须通过 AskUserQuestion 让用户确认提交信息**，不可跳过；提交前逐个 `git add` 文件，禁止 `git add .`。
-- 单测运行命令：`pnpm exec vitest run test/components/DataTable.test.tsx`；全部完成后运行 `pnpm lint`、`pnpm build`、`pnpm test`。
-- 项目 TypeScript 开启 `noUnusedLocals`（`tsconfig.app.json`），ESLint 含 `no-duplicate-imports` 规则——同一模块的 value 与 type 导入合并为一行。
-- 不做行选择、列固定等高级特性（见 spec YAGNI 节）。
+- 分页 `page` 为 1-based（调用方视角），内部映射 TanStack `pageIndex`（0-based），`onChange` 回调再映射回 1-based。
+- v9 受控回调收到 `Updater<T> = T | ((old) => T)`，必须手动解析函数形式。
+- `features` 常量必须模块级定义，禁止在渲染内重建；`data`/`columns` 引用保持稳定。
+- 组件泛型约束 `TData extends RowData`（`RowData = Record<string, any> | Array<any>`）需写在每个中间类型上。
+- 空态使用 `src/ui/Empty` 组合组件，默认标题「暂无数据」；支持 `empty` 插槽。
+- 提交信息使用中文，遵循 git-conventions：**每次 `git commit` 前必须通过 AskUserQuestion 让用户确认提交信息**；提交前逐个 `git add`，禁止 `git add .`。
+- 单测命令：`pnpm exec vitest run test/components/DataTable.test.tsx`；全部完成后运行 `pnpm lint`、`pnpm build`、`pnpm test`。
+- 项目 TypeScript 开启 `noUnusedLocals`（tsconfig.app.json），ESLint 含 `no-duplicate-imports`——同一模块 value 与 type 导入合并为一行。
+- 不使用 `@tanstack/react-table/legacy`（官方标注仅临时迁移用）。
+- 不做行选择、列固定、排序后自动重置页码等高级特性（见 spec YAGNI 节）。
 
 ---
 
-### Task 1: 安装依赖并重写 types.ts
+### Task 1: 确认依赖并重写 types.ts
 
 **Files:**
 
-- Modify: `package.json`（新增 @tanstack/react-table）
-- Modify: `src/components/DataTable/types.ts`（删除 DataTableColumn，改 TanStack 接口）
-- Modify: `test/components/DataTable.test.tsx`（列定义改为 ColumnDef，保留渲染断言）
+- Modify: `src/components/DataTable/types.ts`（删 DataTableColumn，改 v9 接口）
+- Modify: `test/components/DataTable.test.tsx`（列定义改 v9 ColumnDef + TFeatures）
 
 **Interfaces:**
 
-- Consumes: `@tanstack/react-table` 的 `ColumnDef`、`SortingState` 类型
-- Produces: `DataTablePagination`（保留现有形状）、`DataTableProps<T>`（columns: ColumnDef<T>[]、data: readonly T[]、rowKey、loading、empty、pagination、sorting、onSortingChange、className、style）
+- Consumes: `@tanstack/react-table` 的 `ColumnDef`、`SortingState`、`RowData` 类型；`DataTableFeatures`（组件内部 features 类型，Task 2 定义后导出）
+- Produces: `DataTablePagination`（保留形状）、`DataTableProps<TData>`（columns: ColumnDef<DataTableFeatures, TData>[]、data: readonly TData[]、rowKey、loading、empty、pagination、sorting、onSortingChange、className、style）
 
-- [ ] **Step 1: 安装依赖**
+- [ ] **Step 1: 确认依赖版本**
 
-Run: `pnpm add @tanstack/react-table`
-Expected: `package.json` 的 dependencies 出现 `"@tanstack/react-table": "^8.x.x"`
+Run: `grep -n "tanstack" package.json`
+Expected: `"@tanstack/react-table": "^9.1.2"`（已安装，无需再装）
 
 - [ ] **Step 2: 重写 types.ts**
 
@@ -47,17 +50,9 @@ Expected: `package.json` 的 dependencies 出现 `"@tanstack/react-table": "^8.x
 ```ts
 import type { CSSProperties, ReactNode } from 'react'
 
-import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import type { ColumnDef, RowData, SortingState } from '@tanstack/react-table'
 
-declare module '@tanstack/react-table' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData, TValue> {
-    /** 列宽，透传到 th/td 的 style.width */
-    width?: number | string
-    /** 对齐方式，默认 left */
-    align?: 'left' | 'center' | 'right'
-  }
-}
+import type { DataTableFeatures } from './index'
 
 export type DataTablePagination = {
   /** 数据总条数 */
@@ -70,13 +65,13 @@ export type DataTablePagination = {
   onChange: (page: number, pageSize: number) => void
 }
 
-export type DataTableProps<T = Global.AnyObj> = {
-  /** TanStack 原生列定义（accessorKey/cell/header 等） */
-  columns: ColumnDef<T>[]
+export type DataTableProps<TData extends RowData = Global.AnyObj> = {
+  /** TanStack 原生列定义（携带组件导出的 DataTableFeatures 泛型） */
+  columns: ColumnDef<DataTableFeatures, TData>[]
   /** 数据源 */
-  data: readonly T[]
+  data: readonly TData[]
   /** 行唯一标识：字段名或返回唯一值的函数，映射 TanStack getRowId */
-  rowKey: string | ((record: T) => string)
+  rowKey: string | ((record: TData) => string)
   /** 加载态，true 时表格区域叠加 Loading 遮罩 */
   loading?: boolean
   /** 空态插槽，缺省时内置 Empty + EmptyTitle「暂无数据」 */
@@ -92,19 +87,21 @@ export type DataTableProps<T = Global.AnyObj> = {
 }
 ```
 
-- [ ] **Step 3: 更新测试文件顶部（列定义 + props 改名）**
+注意：`DataTableFeatures` 在 Task 2 的 index.tsx 中定义并导出（`export type DataTableFeatures = typeof features`），types.ts 从 './index' 导入它。Task 1 阶段该类型尚不存在会导致 tsc 报错——这是预期的（Task 2 补齐）。
 
-将 `test/components/DataTable.test.tsx` 顶部改为（保留 `columns` 定义的语义，但用 ColumnDef 写法）：
+- [ ] **Step 3: 更新测试文件顶部（v9 列定义）**
+
+将 `test/components/DataTable.test.tsx` 顶部改为：
 
 ```tsx
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ColumnDef } from '@tanstack/react-table'
 
-import { DataTable } from '@/components/DataTable'
+import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 
 type User = { id: number; name: string; age: number }
 
-const columns: ColumnDef<User>[] = [
+const columns: ColumnDef<DataTableFeatures, User>[] = [
   { accessorKey: 'name', header: '姓名' },
   { accessorKey: 'age', header: '年龄', meta: { align: 'center', width: 100 } },
   {
@@ -120,31 +117,31 @@ const users: User[] = [
 ]
 ```
 
-并将整个文件中所有 `<DataTable ... dataSource={...}` 改为 `<DataTable ... data={...}`（共 13 处）。
+并将整个文件中所有 `<DataTable ... dataSource={...}` 改为 `<DataTable ... data={...}`（共 14 处）；「支持自定义空态文案」用例的 `emptyText='没有数据'` 改为 `empty={<span>没有数据</span>}`（新接口）。
 
 - [ ] **Step 4: 运行测试确认失败**
 
 Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
-Expected: FAIL——列对齐/宽度用例（`text-center`、`width: 100px`）与自定义空态文案用例（`emptyText` 已不存在）失败，其余渲染用例报错（组件尚未支持新接口）。
+Expected: FAIL——`DataTableFeatures` 未定义（tsc 报错）或旧组件读取 `dataSource` 崩溃。符合 TDD RED 预期。
 
 - [ ] **Step 5: 提交（先 AskUserQuestion 向用户确认提交信息，确认后执行）**
 
 ```bash
-git add package.json pnpm-lock.yaml src/components/DataTable/types.ts test/components/DataTable.test.tsx
+git add src/components/DataTable/types.ts test/components/DataTable.test.tsx
 ```
 
 提交信息：
 
 ```
-feat: DataTable 接入 TanStack 列定义接口
+feat: DataTable 接入 TanStack v9 列定义接口
 
-- 新增 @tanstack/react-table 依赖，DataTableProps 改为原生 ColumnDef/data 接口
-- 列配置迁移为 accessorKey/cell 写法，测试同步改造
+- DataTableProps 改用 ColumnDef<DataTableFeatures, TData>/data 接口，列配置迁移为 accessorKey/cell 写法
+- 测试同步改造（emptyText 改为 empty 插槽）
 ```
 
 ---
 
-### Task 2: 重写 DataTable 主组件（TanStack 引擎 + 渲染 + 空态/加载态）
+### Task 2: 重写 DataTable 主组件（v9 引擎 + 渲染 + 空态/加载态）
 
 **Files:**
 
@@ -152,8 +149,8 @@ feat: DataTable 接入 TanStack 列定义接口
 
 **Interfaces:**
 
-- Consumes: Task 1 的 `DataTableProps<T>`；`@tanstack/react-table` 的 `useReactTable/getCoreRowModel/flexRender`；`src/ui/Table` 的 Table/TableHeader/TableBody/TableHead/TableRow/TableCell；`src/ui/Empty` 的 Empty/EmptyHeader/EmptyTitle；`src/components/Loading`（default export）；`cn`
-- Produces: `DataTable<T>`（具名导出，`export { DataTable }`），`export type { DataTablePagination, DataTableProps } from './types'`
+- Consumes: Task 1 的 `DataTableProps<TData>`；`@tanstack/react-table` 的 `useTable/tableFeatures/rowSortingFeature/rowPaginationFeature/metaHelper`；`src/ui/Table` 的 Table/TableHeader/TableBody/TableHead/TableRow/TableCell；`src/ui/Empty` 的 Empty/EmptyHeader/EmptyTitle；`src/components/Loading`（default export）；`cn`；lucide 排序图标
+- Produces: `DataTable<TData>`（具名导出）、`export type { DataTableFeatures }`（`typeof features`）、`export type { DataTablePagination, DataTableProps } from './types'`
 
 - [ ] **Step 1: 编写失败测试（空态插槽 + 加载态 + 基础渲染）**
 
@@ -209,7 +206,7 @@ describe('DataTable 加载态与空态', () => {
 })
 ```
 
-并保留「渲染表头与数据单元格」「render 优先于 dataIndex」「rowKey 支持函数形式」三个用例（Task 1 已改 `data`），但「列对齐与宽度映射到表头单元格」用例改为验证 `meta` 映射：
+「列对齐与宽度映射到表头单元格」用例改为验证 meta 映射：
 
 ```tsx
 it('列 meta 的 align 与 width 映射到表头单元格', () => {
@@ -229,19 +226,23 @@ it('列 meta 的 align 与 width 映射到表头单元格', () => {
 - [ ] **Step 2: 运行测试确认失败**
 
 Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
-Expected: FAIL——组件尚未实现 TanStack 渲染。
+Expected: FAIL——组件尚未实现 v9 渲染。
 
 - [ ] **Step 3: 实现主组件**
 
-覆盖 `src/components/DataTable/index.tsx`：
+覆盖 `src/components/DataTable/index.tsx`（完整代码，v9 API，已按研究文档验证）：
 
 ```tsx
-import type { ReactNode } from 'react'
-
 import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
+  metaHelper,
+  rowPaginationFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+  type ColumnDef,
+  type PaginationState,
+  type RowData,
+  type SortingState,
 } from '@tanstack/react-table'
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
 
@@ -268,6 +269,19 @@ import { cn } from '@/utils/common'
 
 import type { DataTableProps } from './types'
 
+// 模块级 features：必须稳定，禁止在渲染内重建
+// 服务端模式：不注册 sortedRowModel/paginatedRowModel，仅注册状态/API 特性
+const features = tableFeatures({
+  rowSortingFeature,
+  rowPaginationFeature,
+  columnMeta: metaHelper<{
+    align?: 'left' | 'center' | 'right'
+    width?: number | string
+  }>(),
+})
+
+export type DataTableFeatures = typeof features
+
 const alignClassMap: Record<string, string> = {
   left: 'text-left',
   center: 'text-center',
@@ -292,7 +306,7 @@ function getPageItems(
   return items
 }
 
-function DataTable<T = Global.AnyObj>({
+function DataTable<TData extends RowData>({
   columns,
   data,
   rowKey,
@@ -303,48 +317,45 @@ function DataTable<T = Global.AnyObj>({
   onSortingChange,
   className,
   style,
-}: DataTableProps<T>) {
+}: DataTableProps<TData>) {
   const isEmpty = data.length === 0
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
     : 0
 
-  const table = useReactTable({
-    data: [...data],
-    columns,
-    getRowId: (record) =>
-      typeof rowKey === 'function'
-        ? rowKey(record)
-        : String((record as Record<string, unknown>)[rowKey]),
-    state: {
-      ...(pagination
-        ? {
-            pagination: {
-              pageIndex: pagination.page - 1,
-              pageSize: pagination.pageSize,
-            },
-          }
-        : {}),
-      ...(sorting ? { sorting } : {}),
+  const table = useTable(
+    {
+      features,
+      columns,
+      data: [...data],
+      getRowId: (record) =>
+        typeof rowKey === 'function'
+          ? rowKey(record)
+          : String((record as Record<string, unknown>)[rowKey]),
+      manualSorting: true,
+      manualPagination: true,
+      pageCount: totalPages,
+      state: {
+        sorting: sorting ?? [],
+        pagination: pagination
+          ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
+          : { pageIndex: 0, pageSize: 10 },
+      },
+      onSortingChange: (updater) => {
+        const next =
+          typeof updater === 'function' ? updater(sorting ?? []) : updater
+        onSortingChange?.(next)
+      },
+      onPaginationChange: (updater) => {
+        const current: PaginationState = pagination
+          ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
+          : { pageIndex: 0, pageSize: 10 }
+        const next = typeof updater === 'function' ? updater(current) : updater
+        pagination?.onChange(next.pageIndex + 1, next.pageSize)
+      },
     },
-    manualPagination: true,
-    manualSorting: true,
-    onPaginationChange: (updater) => {
-      const next =
-        typeof updater === 'function'
-          ? updater(table.getState().pagination)
-          : updater
-      pagination?.onChange(next.pageIndex + 1, next.pageSize)
-    },
-    onSortingChange: (updater) => {
-      const next =
-        typeof updater === 'function'
-          ? updater(table.getState().sorting)
-          : updater
-      onSortingChange?.(next)
-    },
-    getCoreRowModel: getCoreRowModel(),
-  })
+    (state) => ({ sorting: state.sorting, pagination: state.pagination })
+  )
 
   return (
     <div
@@ -357,36 +368,29 @@ function DataTable<T = Global.AnyObj>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const align =
-                    (
-                      header.column.columnDef.meta as
-                        { align?: string } | undefined
-                    )?.align ?? 'left'
-                  const width = (
-                    header.column.columnDef.meta as
-                      { width?: number | string } | undefined
-                  )?.width
+                  const meta = header.column.columnDef.meta
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
-                        alignClassMap[align],
+                        alignClassMap[meta?.align ?? 'left'],
                         header.column.getCanSort() &&
                           'cursor-pointer select-none'
                       )}
-                      style={width !== undefined ? { width } : undefined}
+                      style={
+                        meta?.width !== undefined
+                          ? { width: meta.width }
+                          : undefined
+                      }
                       onClick={
                         header.column.getCanSort()
                           ? header.column.getToggleSortingHandler()
                           : undefined
                       }
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                      {header.isPlaceholder ? null : (
+                        <table.FlexRender header={header} />
+                      )}
                       {header.column.getCanSort() &&
                         (header.column.getIsSorted() === 'asc' ? (
                           <ArrowUpIcon className='size-3.5' />
@@ -420,26 +424,19 @@ function DataTable<T = Global.AnyObj>({
             ) : (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-                    const align =
-                      (
-                        cell.column.columnDef.meta as
-                          { align?: string } | undefined
-                      )?.align ?? 'left'
-                    const width = (
-                      cell.column.columnDef.meta as
-                        { width?: number | string } | undefined
-                    )?.width
+                  {row.getAllCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta
                     return (
                       <TableCell
                         key={cell.id}
-                        className={alignClassMap[align]}
-                        style={width !== undefined ? { width } : undefined}
+                        className={alignClassMap[meta?.align ?? 'left']}
+                        style={
+                          meta?.width !== undefined
+                            ? { width: meta.width }
+                            : undefined
+                        }
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        <table.FlexRender cell={cell} />
                       </TableCell>
                     )
                   })}
@@ -528,6 +525,8 @@ export { DataTable }
 export type { DataTablePagination, DataTableProps } from './types'
 ```
 
+注意：`table.FlexRender` 是 `ReactTable` 实例上的组件属性，直接以 `<table.FlexRender header={header} />` 使用；`header.column.columnDef.meta` 类型由 `columnMeta: metaHelper<...>()` 槽位推导，无需 cast。
+
 - [ ] **Step 4: 运行测试确认通过**
 
 Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
@@ -542,10 +541,10 @@ git add src/components/DataTable/index.tsx test/components/DataTable.test.tsx
 提交信息：
 
 ```
-feat: DataTable 主组件接入 TanStack 渲染引擎
+feat: DataTable 主组件接入 TanStack v9 渲染引擎
 
-- useReactTable 接管列渲染与状态，flexRender 渲染表头/单元格
-- 列 meta 支持 align/width 映射；可排序列渲染排序图标
+- useTable + tableFeatures 注册排序/分页特性与 columnMeta 槽位，导出 DataTableFeatures 类型
+- table.FlexRender 渲染表头/单元格，列 meta 支持 align/width 映射，可排序列渲染排序图标
 - 空态改用 ui/Empty 组合组件，支持 empty 插槽自定义
 ```
 
@@ -560,7 +559,7 @@ feat: DataTable 主组件接入 TanStack 渲染引擎
 
 **Interfaces:**
 
-- Consumes: Task 2 的 `DataTable<T>`；`SortingState` 类型
+- Consumes: Task 2 的 `DataTable<TData>`；`SortingState` 类型
 - Produces: 无新接口；验证 `sorting`/`onSortingChange` 受控行为与分页回归
 
 - [ ] **Step 1: 追加失败测试（受控排序）**
@@ -617,12 +616,12 @@ describe('DataTable 排序', () => {
 })
 ```
 
-注意：`姓名` 列必须可排序——`ColumnDef` 默认 `enableSorting` 为 true（`manualSorting` 下 `getCanSort()` 仍返回 true），无需额外配置。
+注意：`姓名` 列默认 `enableSorting` 为 true（v9 未注册 `enableSorting` 选项时默认启用），`getCanSort()` 返回 true，无需额外配置。
 
 - [ ] **Step 2: 运行测试确认通过**
 
 Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
-Expected: PASS——若「点击可排序表头」用例失败，检查 `TableHead` 的 `onClick` 是否被正确挂载（TanStack 的 `getToggleSortingHandler` 需要 `manualSorting` 下仍可用）。
+Expected: PASS——若「点击可排序表头」失败，检查 `TableHead` 的 `onClick` 是否挂载（v9 的 `getToggleSortingHandler` 在 `manualSorting` 下仍可用）。
 
 - [ ] **Step 3: 提交（先 AskUserQuestion 向用户确认提交信息，确认后执行）**
 
@@ -649,8 +648,8 @@ feat: DataTable 支持受控列排序
 
 **Interfaces:**
 
-- Consumes: Task 2/3 的 `DataTable<T>`、`ColumnDef<T>`
-- Produces: 无新接口；roles 页面迁移为 ColumnDef 写法并演示排序
+- Consumes: Task 2/3 的 `DataTable<TData>`、`DataTableFeatures`；`ColumnDef`、`SortingState`
+- Produces: 无新接口；roles 页面迁移为 v9 列定义并演示排序
 
 - [ ] **Step 1: 更新 roles 页面**
 
@@ -661,7 +660,7 @@ import { useState } from 'react'
 
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 
-import { DataTable } from '@/components/DataTable'
+import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 
 // mock 角色数据：演示 DataTable 使用；接入真实接口后改为 useRequest 拉取
 const mockRoles = Array.from({ length: 35 }, (_, i) => ({
@@ -674,7 +673,7 @@ const mockRoles = Array.from({ length: 35 }, (_, i) => ({
 
 type Role = (typeof mockRoles)[number]
 
-const columns: ColumnDef<Role>[] = [
+const columns: ColumnDef<DataTableFeatures, Role>[] = [
   { accessorKey: 'name', header: '角色名称' },
   { accessorKey: 'code', header: '角色编码', meta: { width: 140 } },
   {
@@ -736,9 +735,9 @@ git add src/pages/system/roles/index.tsx
 提交信息：
 
 ```
-feat: roles 页面迁移 TanStack 列定义并演示受控排序
+feat: roles 页面迁移 TanStack v9 列定义并演示受控排序
 
-- 列配置改为 accessorKey/cell 写法，状态列保留语义色渲染
+- 列配置改为 accessorKey/cell 写法（携带 DataTableFeatures 泛型），状态列保留语义色渲染
 - 新增 sorting 受控状态演示，与受控分页共存
 ```
 
