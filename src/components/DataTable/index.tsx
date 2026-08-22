@@ -20,9 +20,9 @@ import {
   TableRow,
 } from '@/ui/Table'
 
-import type { XtColumn, XtTableProps } from './types'
+import type { DataTableColumn, DataTableProps } from './types'
 
-const alignClassMap: Record<NonNullable<XtColumn['align']>, string> = {
+const alignClassMap: Record<NonNullable<DataTableColumn['align']>, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
@@ -46,7 +46,7 @@ function getPageItems(
   return items
 }
 
-function XtTable<T = Global.AnyObj>({
+function DataTable<T = Global.AnyObj>({
   columns,
   dataSource,
   rowKey,
@@ -55,7 +55,7 @@ function XtTable<T = Global.AnyObj>({
   pagination,
   className,
   style,
-}: XtTableProps<T>) {
+}: DataTableProps<T>) {
   const isEmpty = dataSource.length === 0
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
@@ -130,7 +130,7 @@ function XtTable<T = Global.AnyObj>({
 
       {loading && (
         <div
-          data-testid='xttable-loading'
+          data-testid='datatable-loading'
           className='bg-background/60 absolute inset-0 grid place-items-center'
         >
           <Loading />
@@ -202,5 +202,9 @@ function XtTable<T = Global.AnyObj>({
   )
 }
 
-export { XtTable }
-export type { XtColumn, XtPagination, XtTableProps } from './types'
+export { DataTable }
+export type {
+  DataTableColumn,
+  DataTablePagination,
+  DataTableProps,
+} from './types'

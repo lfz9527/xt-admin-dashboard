@@ -1,10 +1,10 @@
-# XtTable 数据驱动表格组件实现计划
+# DataTable 数据驱动表格组件实现计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 基于 `src/ui/Table` 封装数据驱动表格组件 `XtTable`（列配置 + 数据源渲染 + 加载态/空态 + 受控分页），放置于 `src/components/XtTable/`。
+**Goal:** 基于 `src/ui/Table` 封装数据驱动表格组件 `DataTable`（列配置 + 数据源渲染 + 加载态/空态 + 受控分页），放置于 `src/components/DataTable/`。
 
-**Architecture:** XtTable 为纯展示层组件，不发起请求；数据与分页状态由调用方通过 `useRequest` 受控传入。分页条复用 `src/ui/Pagination` 组合式组件，XtTable 负责计算页码序列（含省略号）与边界禁用。
+**Architecture:** DataTable 为纯展示层组件，不发起请求；数据与分页状态由调用方通过 `useRequest` 受控传入。分页条复用 `src/ui/Pagination` 组合式组件，DataTable 负责计算页码序列（含省略号）与边界禁用。
 
 **Tech Stack:** React 19、TypeScript、Tailwind CSS v4 语义化主题变量、Vitest + Testing Library、`@/` 路径别名。
 
@@ -14,37 +14,37 @@
 - UI 组件使用语义化主题变量（`bg-background`、`text-muted-foreground` 等）与 `cn` 合并类名，保持 `data-slot` 约定。
 - 提交信息使用中文，遵循 git-conventions：**每次 `git commit` 前必须通过 AskUserQuestion 让用户确认提交信息**，不可跳过；提交前逐个 `git add` 文件，禁止 `git add .`。
 - 每个 Task 完成后运行相关测试；全部完成后运行 `pnpm lint`、`pnpm build`、`pnpm test`。
-- 单测运行命令：`pnpm exec vitest run test/components/XtTable.test.tsx`。
+- 单测运行命令：`pnpm exec vitest run test/components/DataTable.test.tsx`。
 - 不新增需求外功能，不做行选择/排序/固定列等高级特性（见 spec YAGNI 节）。
 
 ---
 
-### Task 1: XtTable 基础渲染（types + 表头/表体 + render 优先级 + rowKey）
+### Task 1: DataTable 基础渲染（types + 表头/表体 + render 优先级 + rowKey）
 
 **Files:**
 
-- Create: `src/components/XtTable/types.ts`
-- Create: `src/components/XtTable/index.tsx`
-- Test: `test/components/XtTable.test.tsx`
+- Create: `src/components/DataTable/types.ts`
+- Create: `src/components/DataTable/index.tsx`
+- Test: `test/components/DataTable.test.tsx`
 
 **Interfaces:**
 
 - Consumes: `src/ui/Table` 的 `Table/TableHeader/TableBody/TableHead/TableRow/TableCell`（具名导出）
-- Produces: `XtTable<T>`（具名导出）、`XtColumn<T>`、`XtPagination`、`XtTableProps<T>`（从 `./types` 再导出）
+- Produces: `DataTable<T>`（具名导出）、`DataTableColumn<T>`、`DataTablePagination`、`DataTableProps<T>`（从 `./types` 再导出）
 
 - [ ] **Step 1: 编写失败测试（渲染列、dataIndex、render 优先级、rowKey、align/width）**
 
-创建 `test/components/XtTable.test.tsx`：
+创建 `test/components/DataTable.test.tsx`：
 
 ```tsx
 import { render, screen } from '@testing-library/react'
 
-import { XtTable } from '@/components/XtTable'
-import type { XtColumn } from '@/components/XtTable'
+import { DataTable } from '@/components/DataTable'
+import type { DataTableColumn } from '@/components/DataTable'
 
 type User = { id: number; name: string; age: number }
 
-const columns: XtColumn<User>[] = [
+const columns: DataTableColumn<User>[] = [
   { key: 'name', title: '姓名', dataIndex: 'name' },
   { key: 'age', title: '年龄', dataIndex: 'age', align: 'center', width: 100 },
   {
@@ -59,10 +59,10 @@ const users: User[] = [
   { id: 2, name: '李四', age: 20 },
 ]
 
-describe('XtTable', () => {
+describe('DataTable', () => {
   it('渲染表头与数据单元格', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -76,7 +76,7 @@ describe('XtTable', () => {
 
   it('render 优先于 dataIndex', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -87,7 +87,7 @@ describe('XtTable', () => {
 
   it('rowKey 支持函数形式', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey={(u) => `key-${u.id}`}
@@ -99,7 +99,7 @@ describe('XtTable', () => {
 
   it('列对齐与宽度映射到表头单元格', () => {
     const { container } = render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -114,17 +114,17 @@ describe('XtTable', () => {
 
 - [ ] **Step 2: 运行测试确认失败**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
-Expected: FAIL，报 `Cannot find module '@/components/XtTable'`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
+Expected: FAIL，报 `Cannot find module '@/components/DataTable'`
 
 - [ ] **Step 3: 创建类型定义**
 
-创建 `src/components/XtTable/types.ts`：
+创建 `src/components/DataTable/types.ts`：
 
 ```ts
 import type { CSSProperties, ReactNode } from 'react'
 
-export type XtColumn<T = Global.AnyObj> = {
+export type DataTableColumn<T = Global.AnyObj> = {
   /** 列唯一标识 */
   key: string
   /** 表头文案 */
@@ -139,7 +139,7 @@ export type XtColumn<T = Global.AnyObj> = {
   render?: (value: unknown, record: T, index: number) => ReactNode
 }
 
-export type XtPagination = {
+export type DataTablePagination = {
   /** 数据总条数 */
   total: number
   /** 当前页码，从 1 开始 */
@@ -150,8 +150,8 @@ export type XtPagination = {
   onChange: (page: number, pageSize: number) => void
 }
 
-export type XtTableProps<T = Global.AnyObj> = {
-  columns: XtColumn<T>[]
+export type DataTableProps<T = Global.AnyObj> = {
+  columns: DataTableColumn<T>[]
   dataSource: readonly T[]
   /** 行唯一标识：字段名或返回唯一值的函数 */
   rowKey: string | ((record: T) => string)
@@ -160,7 +160,7 @@ export type XtTableProps<T = Global.AnyObj> = {
   /** 空态文案，默认「暂无数据」 */
   emptyText?: ReactNode
   /** 传入即显示底部受控分页条 */
-  pagination?: XtPagination
+  pagination?: DataTablePagination
   className?: string
   style?: CSSProperties
 }
@@ -168,7 +168,7 @@ export type XtTableProps<T = Global.AnyObj> = {
 
 - [ ] **Step 4: 创建主组件（基础渲染）**
 
-创建 `src/components/XtTable/index.tsx`：
+创建 `src/components/DataTable/index.tsx`：
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -183,15 +183,15 @@ import {
   TableRow,
 } from '@/ui/Table'
 
-import type { XtColumn, XtTableProps } from './types'
+import type { DataTableColumn, DataTableProps } from './types'
 
-const alignClassMap: Record<NonNullable<XtColumn['align']>, string> = {
+const alignClassMap: Record<NonNullable<DataTableColumn['align']>, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
 }
 
-function XtTable<T = Global.AnyObj>({
+function DataTable<T = Global.AnyObj>({
   columns,
   dataSource,
   rowKey,
@@ -200,7 +200,7 @@ function XtTable<T = Global.AnyObj>({
   pagination,
   className,
   style,
-}: XtTableProps<T>) {
+}: DataTableProps<T>) {
   const isEmpty = dataSource.length === 0
 
   const getRowKey = (record: T) =>
@@ -271,27 +271,31 @@ function XtTable<T = Global.AnyObj>({
   )
 }
 
-export { XtTable }
-export type { XtColumn, XtPagination, XtTableProps } from './types'
+export { DataTable }
+export type {
+  DataTableColumn,
+  DataTablePagination,
+  DataTableProps,
+} from './types'
 ```
 
 - [ ] **Step 5: 运行测试确认通过**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
 Expected: PASS，4 个用例全部通过
 
 - [ ] **Step 6: 提交（先 AskUserQuestion 向用户确认提交信息，确认后执行）**
 
 ```bash
-git add src/components/XtTable/types.ts src/components/XtTable/index.tsx test/components/XtTable.test.tsx
+git add src/components/DataTable/types.ts src/components/DataTable/index.tsx test/components/DataTable.test.tsx
 ```
 
 提交信息：
 
 ```
-feat: 新增 XtTable 数据驱动表格基础渲染
+feat: 新增 DataTable 数据驱动表格基础渲染
 
-- 新增 XtColumn/XtPagination/XtTableProps 类型定义与 XtTable 主组件
+- 新增 DataTableColumn/DataTablePagination/DataTableProps 类型定义与 DataTable 主组件
 - 支持列配置渲染（dataIndex/render 优先级）、rowKey 字符串与函数两种形式
 - 列 align/width 映射到表头与单元格样式
 ```
@@ -302,46 +306,46 @@ feat: 新增 XtTable 数据驱动表格基础渲染
 
 **Files:**
 
-- Modify: `src/components/XtTable/index.tsx`（叠加 loading 遮罩，空态逻辑已在 Task 1 内置，需补测试）
-- Test: `test/components/XtTable.test.tsx`（追加用例）
+- Modify: `src/components/DataTable/index.tsx`（叠加 loading 遮罩，空态逻辑已在 Task 1 内置，需补测试）
+- Test: `test/components/DataTable.test.tsx`（追加用例）
 
 **Interfaces:**
 
-- Consumes: Task 1 的 `XtTable<T>`；`src/components/Loading`（default export）
-- Produces: 无新接口；`loading` 遮罩容器带 `data-testid='xttable-loading'`
+- Consumes: Task 1 的 `DataTable<T>`；`src/components/Loading`（default export）
+- Produces: 无新接口；`loading` 遮罩容器带 `data-testid='datatable-loading'`
 
 - [ ] **Step 1: 追加失败测试（loading 遮罩、空态默认/自定义文案）**
 
-在 `test/components/XtTable.test.tsx` 末尾追加：
+在 `test/components/DataTable.test.tsx` 末尾追加：
 
 ```tsx
-describe('XtTable 加载态与空态', () => {
+describe('DataTable 加载态与空态', () => {
   it('loading 为 true 时显示加载遮罩', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
         loading
       />
     )
-    expect(screen.getByTestId('xttable-loading')).toBeInTheDocument()
+    expect(screen.getByTestId('datatable-loading')).toBeInTheDocument()
   })
 
   it('loading 为 false 时不显示遮罩', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
       />
     )
-    expect(screen.queryByTestId('xttable-loading')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('datatable-loading')).not.toBeInTheDocument()
   })
 
   it('空数据显示默认空态文案', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={[]}
         rowKey='id'
@@ -352,7 +356,7 @@ describe('XtTable 加载态与空态', () => {
 
   it('支持自定义空态文案', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={[]}
         rowKey='id'
@@ -366,12 +370,12 @@ describe('XtTable 加载态与空态', () => {
 
 - [ ] **Step 2: 运行测试确认失败**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
-Expected: FAIL，`Unable to find an element by: [data-testid="xttable-loading"]`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
+Expected: FAIL，`Unable to find an element by: [data-testid="datatable-loading"]`
 
 - [ ] **Step 3: 实现 loading 遮罩**
 
-修改 `src/components/XtTable/index.tsx`：
+修改 `src/components/DataTable/index.tsx`：
 
 顶部导入处增加：
 
@@ -385,7 +389,7 @@ import Loading from '@/components/Loading'
 {
   loading && (
     <div
-      data-testid='xttable-loading'
+      data-testid='datatable-loading'
       className='bg-background/60 absolute inset-0 grid place-items-center'
     >
       <Loading />
@@ -396,19 +400,19 @@ import Loading from '@/components/Loading'
 
 - [ ] **Step 4: 运行测试确认通过**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
 Expected: PASS，全部用例通过
 
 - [ ] **Step 5: 提交（先 AskUserQuestion 向用户确认提交信息，确认后执行）**
 
 ```bash
-git add src/components/XtTable/index.tsx test/components/XtTable.test.tsx
+git add src/components/DataTable/index.tsx test/components/DataTable.test.tsx
 ```
 
 提交信息：
 
 ```
-feat: XtTable 支持加载遮罩与空态
+feat: DataTable 支持加载遮罩与空态
 
 - loading 时叠加 Loading 遮罩（复用 src/components/Loading），不清空表格内容
 - 空数据且非加载时显示跨列空态文案，支持 emptyText 自定义
@@ -420,24 +424,24 @@ feat: XtTable 支持加载遮罩与空态
 
 **Files:**
 
-- Modify: `src/components/XtTable/index.tsx`（分页条 + getPageItems 工具函数）
-- Test: `test/components/XtTable.test.tsx`（追加用例）
+- Modify: `src/components/DataTable/index.tsx`（分页条 + getPageItems 工具函数）
+- Test: `test/components/DataTable.test.tsx`（追加用例）
 
 **Interfaces:**
 
-- Consumes: Task 1 的 `XtTable<T>`/`XtPagination`；`src/ui/Pagination` 的 `Pagination/PaginationContent/PaginationEllipsis/PaginationItem/PaginationLink/PaginationNext/PaginationPrevious`
+- Consumes: Task 1 的 `DataTable<T>`/`DataTablePagination`；`src/ui/Pagination` 的 `Pagination/PaginationContent/PaginationEllipsis/PaginationItem/PaginationLink/PaginationNext/PaginationPrevious`
 - Produces: 模块内私有函数 `getPageItems(page: number, totalPages: number): (number | 'ellipsis')[]`（不导出）
 
 - [ ] **Step 1: 追加失败测试（总数展示、翻页触发 onChange、边界禁用、省略号）**
 
-在 `test/components/XtTable.test.tsx` 末尾追加：
+在 `test/components/DataTable.test.tsx` 末尾追加：
 
 ```tsx
-describe('XtTable 分页', () => {
+describe('DataTable 分页', () => {
   it('展示总条数与页码', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -451,7 +455,7 @@ describe('XtTable 分页', () => {
   it('点击下一页触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -465,7 +469,7 @@ describe('XtTable 分页', () => {
   it('点击页码触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -479,7 +483,7 @@ describe('XtTable 分页', () => {
   it('首页时上一页不触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -493,7 +497,7 @@ describe('XtTable 分页', () => {
   it('末页时下一页不触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -507,7 +511,7 @@ describe('XtTable 分页', () => {
   it('页码较多时折叠为省略号', () => {
     const onChange = vi.fn()
     const { container } = render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -529,12 +533,12 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 - [ ] **Step 2: 运行测试确认失败**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
 Expected: FAIL，`Unable to find an element by: [data-testid=...]` 或找不到「共 42 条」
 
 - [ ] **Step 3: 实现分页条与页码序列**
 
-修改 `src/components/XtTable/index.tsx`：
+修改 `src/components/DataTable/index.tsx`：
 
 顶部导入处增加：
 
@@ -648,19 +652,19 @@ const totalPages = pagination
 
 - [ ] **Step 4: 运行测试确认通过**
 
-Run: `pnpm exec vitest run test/components/XtTable.test.tsx`
+Run: `pnpm exec vitest run test/components/DataTable.test.tsx`
 Expected: PASS，全部用例通过
 
 - [ ] **Step 5: 提交（先 AskUserQuestion 向用户确认提交信息，确认后执行）**
 
 ```bash
-git add src/components/XtTable/index.tsx test/components/XtTable.test.tsx
+git add src/components/DataTable/index.tsx test/components/DataTable.test.tsx
 ```
 
 提交信息：
 
 ```
-feat: XtTable 集成受控分页条
+feat: DataTable 集成受控分页条
 
 - 复用 src/ui/Pagination 组合式组件，分页状态由调用方受控
 - 内置 getPageItems 页码序列计算，>7 页时折叠省略号

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-import { XtTable, type XtColumn } from '@/components/XtTable'
+import { DataTable, type DataTableColumn } from '@/components/DataTable'
 
-// mock 角色数据：演示 XtTable 使用；接入真实接口后改为 useRequest 拉取
+// mock 角色数据：演示 DataTable 使用；接入真实接口后改为 useRequest 拉取
 const mockRoles = Array.from({ length: 35 }, (_, i) => ({
   id: i + 1,
   name: `角色${i + 1}`,
@@ -13,7 +13,7 @@ const mockRoles = Array.from({ length: 35 }, (_, i) => ({
 
 type Role = (typeof mockRoles)[number]
 
-const columns: XtColumn<Role>[] = [
+const columns: DataTableColumn<Role>[] = [
   { key: 'name', title: '角色名称', dataIndex: 'name' },
   { key: 'code', title: '角色编码', dataIndex: 'code', width: 140 },
   {
@@ -43,7 +43,7 @@ export default function Roles() {
   const pageData = mockRoles.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <XtTable
+    <DataTable
       columns={columns}
       dataSource={pageData}
       rowKey='id'

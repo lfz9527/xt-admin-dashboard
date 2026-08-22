@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-export type XtColumn<T = Global.AnyObj> = {
+export type DataTableColumn<T = Global.AnyObj> = {
   /** 列唯一标识 */
   key: string
   /** 表头文案 */
@@ -15,7 +15,7 @@ export type XtColumn<T = Global.AnyObj> = {
   render?: (value: unknown, record: T, index: number) => ReactNode
 }
 
-export type XtPagination = {
+export type DataTablePagination = {
   /** 数据总条数 */
   total: number
   /** 当前页码，从 1 开始 */
@@ -26,8 +26,8 @@ export type XtPagination = {
   onChange: (page: number, pageSize: number) => void
 }
 
-export type XtTableProps<T = Global.AnyObj> = {
-  columns: XtColumn<T>[]
+export type DataTableProps<T = Global.AnyObj> = {
+  columns: DataTableColumn<T>[]
   dataSource: readonly T[]
   /** 行唯一标识：字段名或返回唯一值的函数 */
   rowKey: string | ((record: T) => string)
@@ -36,7 +36,7 @@ export type XtTableProps<T = Global.AnyObj> = {
   /** 空态文案，默认「暂无数据」 */
   emptyText?: ReactNode
   /** 传入即显示底部受控分页条 */
-  pagination?: XtPagination
+  pagination?: DataTablePagination
   className?: string
   style?: CSSProperties
 }

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { XtTable, type XtColumn } from '@/components/XtTable'
+import { DataTable, type DataTableColumn } from '@/components/DataTable'
 
 type User = { id: number; name: string; age: number }
 
-const columns: XtColumn<User>[] = [
+const columns: DataTableColumn<User>[] = [
   { key: 'name', title: '姓名', dataIndex: 'name' },
   { key: 'age', title: '年龄', dataIndex: 'age', align: 'center', width: 100 },
   {
@@ -19,10 +19,10 @@ const users: User[] = [
   { id: 2, name: '李四', age: 20 },
 ]
 
-describe('XtTable', () => {
+describe('DataTable', () => {
   it('渲染表头与数据单元格', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -36,7 +36,7 @@ describe('XtTable', () => {
 
   it('render 优先于 dataIndex', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -47,7 +47,7 @@ describe('XtTable', () => {
 
   it('rowKey 支持函数形式', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey={(u) => `key-${u.id}`}
@@ -59,7 +59,7 @@ describe('XtTable', () => {
 
   it('列对齐与宽度映射到表头单元格', () => {
     const { container } = render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -71,33 +71,33 @@ describe('XtTable', () => {
   })
 })
 
-describe('XtTable 加载态与空态', () => {
+describe('DataTable 加载态与空态', () => {
   it('loading 为 true 时显示加载遮罩', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
         loading
       />
     )
-    expect(screen.getByTestId('xttable-loading')).toBeInTheDocument()
+    expect(screen.getByTestId('datatable-loading')).toBeInTheDocument()
   })
 
   it('loading 为 false 时不显示遮罩', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
       />
     )
-    expect(screen.queryByTestId('xttable-loading')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('datatable-loading')).not.toBeInTheDocument()
   })
 
   it('空数据显示默认空态文案', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={[]}
         rowKey='id'
@@ -108,7 +108,7 @@ describe('XtTable 加载态与空态', () => {
 
   it('支持自定义空态文案', () => {
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={[]}
         rowKey='id'
@@ -119,11 +119,11 @@ describe('XtTable 加载态与空态', () => {
   })
 })
 
-describe('XtTable 分页', () => {
+describe('DataTable 分页', () => {
   it('展示页码', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -136,7 +136,7 @@ describe('XtTable 分页', () => {
   it('点击下一页触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -150,7 +150,7 @@ describe('XtTable 分页', () => {
   it('点击页码触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -164,7 +164,7 @@ describe('XtTable 分页', () => {
   it('首页时上一页不触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -178,7 +178,7 @@ describe('XtTable 分页', () => {
   it('末页时下一页不触发 onChange', () => {
     const onChange = vi.fn()
     render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'
@@ -192,7 +192,7 @@ describe('XtTable 分页', () => {
   it('页码较多时折叠为省略号', () => {
     const onChange = vi.fn()
     const { container } = render(
-      <XtTable
+      <DataTable
         columns={columns}
         dataSource={users}
         rowKey='id'

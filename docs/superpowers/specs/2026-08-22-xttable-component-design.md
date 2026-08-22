@@ -1,18 +1,18 @@
-# XtTable 数据驱动表格组件设计
+# DataTable 数据驱动表格组件设计
 
 **日期**: 2026-08-22
 **状态**: 已确认
 
 ## 概述
 
-基于 `src/ui/Table` 基础表格结构，封装一个数据驱动（列配置 + 数据源驱动渲染）的业务表格组件 `XtTable`，放置于 `src/components/XtTable/`。表格本身不发起请求，数据获取、loading、分页状态均由调用方通过 `useRequest` 管理（符合 `src/service` 接口必须搭配 `useRequest` 使用的项目约定），通过 props 受控传入。
+基于 `src/ui/Table` 基础表格结构，封装一个数据驱动（列配置 + 数据源驱动渲染）的业务表格组件 `DataTable`，放置于 `src/components/DataTable/`。表格本身不发起请求，数据获取、loading、分页状态均由调用方通过 `useRequest` 管理（符合 `src/service` 接口必须搭配 `useRequest` 使用的项目约定），通过 props 受控传入。
 
 ## 组件接口
 
-### XtColumn（列配置）
+### DataTableColumn（列配置）
 
 ```ts
-export type XtColumn<T = Global.AnyObj> = {
+export type DataTableColumn<T = Global.AnyObj> = {
   /** 列唯一标识 */
   key: string
   /** 表头文案 */
@@ -28,10 +28,10 @@ export type XtColumn<T = Global.AnyObj> = {
 }
 ```
 
-### XtPagination（受控分页）
+### DataTablePagination（受控分页）
 
 ```ts
-export type XtPagination = {
+export type DataTablePagination = {
   /** 数据总条数 */
   total: number
   /** 当前页码，从 1 开始 */
@@ -43,11 +43,11 @@ export type XtPagination = {
 }
 ```
 
-### XtTableProps
+### DataTableProps
 
 ```ts
-export type XtTableProps<T = Global.AnyObj> = {
-  columns: XtColumn<T>[]
+export type DataTableProps<T = Global.AnyObj> = {
+  columns: DataTableColumn<T>[]
   dataSource: readonly T[]
   /** 行唯一标识：字段名或返回唯一值的函数 */
   rowKey: string | ((record: T) => string)
@@ -56,7 +56,7 @@ export type XtTableProps<T = Global.AnyObj> = {
   /** 空态文案，默认「暂无数据」 */
   emptyText?: ReactNode
   /** 传入即显示底部受控分页条 */
-  pagination?: XtPagination
+  pagination?: DataTablePagination
   className?: string
   style?: React.CSSProperties
 }
@@ -68,15 +68,15 @@ export type XtTableProps<T = Global.AnyObj> = {
 2. **表体**：遍历 `dataSource`，每行以 `rowKey` 生成 key；每个单元格优先调用 `column.render(value, record, index)`，否则取 `record[column.dataIndex]` 渲染。
 3. **加载态**：`loading` 为 true 时在表格外层容器叠加居中 `Loading` 遮罩（复用 `src/components/Loading`），不清空表格内容。
 4. **空态**：`dataSource` 为空且非 loading 时，在 `TableBody` 内渲染一行跨列（`colSpan={columns.length}`）的 `TableCell`，内容为 `emptyText`（默认「暂无数据」）。
-5. **分页条**：`pagination` props 存在时，在表格底部渲染受控分页条。复用 `src/ui/Pagination` 组合式组件（无状态，仅提供骨架）：XtTable 负责根据 `total/page/pageSize` 计算总页数与页码序列（含首末页与省略号），组装 `Pagination/PaginationContent/PaginationItem/PaginationLink/PaginationNext/PaginationPrevious` 并调用 `onChange(newPage, pageSize)`；首页/末页时禁用对应翻页按钮，当前页 `isActive`。
+5. **分页条**：`pagination` props 存在时，在表格底部渲染受控分页条。复用 `src/ui/Pagination` 组合式组件（无状态，仅提供骨架）：DataTable 负责根据 `total/page/pageSize` 计算总页数与页码序列（含首末页与省略号），组装 `Pagination/PaginationContent/PaginationItem/PaginationLink/PaginationNext/PaginationPrevious` 并调用 `onChange(newPage, pageSize)`；首页/末页时禁用对应翻页按钮，当前页 `isActive`。
 
 ## 文件结构
 
 ```
-src/components/XtTable/
+src/components/DataTable/
 ├── index.tsx   # 主组件（分页条复用 src/ui/Pagination）
-└── types.ts    # XtColumn / XtPagination / XtTableProps
-test/components/XtTable.test.tsx   # 单元测试
+└── types.ts    # DataTableColumn / DataTablePagination / DataTableProps
+test/components/DataTable.test.tsx   # 单元测试
 ```
 
 ## 测试要点
