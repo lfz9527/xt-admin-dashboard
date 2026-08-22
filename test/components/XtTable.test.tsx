@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import { XtTable, type XtColumn } from '@/components/XtTable'
 
@@ -116,5 +116,92 @@ describe('XtTable 加载态与空态', () => {
       />
     )
     expect(screen.getByText('没有数据')).toBeInTheDocument()
+  })
+})
+
+describe('XtTable 分页', () => {
+  it('展示总条数与页码', () => {
+    const onChange = vi.fn()
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
+      />
+    )
+    expect(screen.getByText('共 42 条')).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
+  it('点击下一页触发 onChange', () => {
+    const onChange = vi.fn()
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Go to next page'))
+    expect(onChange).toHaveBeenCalledWith(2, 10)
+  })
+
+  it('点击页码触发 onChange', () => {
+    const onChange = vi.fn()
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 42, page: 2, pageSize: 10, onChange }}
+      />
+    )
+    fireEvent.click(screen.getByText('3'))
+    expect(onChange).toHaveBeenCalledWith(3, 10)
+  })
+
+  it('首页时上一页不触发 onChange', () => {
+    const onChange = vi.fn()
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 42, page: 1, pageSize: 10, onChange }}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Go to previous page'))
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('末页时下一页不触发 onChange', () => {
+    const onChange = vi.fn()
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 20, page: 2, pageSize: 10, onChange }}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Go to next page'))
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('页码较多时折叠为省略号', () => {
+    const onChange = vi.fn()
+    const { container } = render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        pagination={{ total: 100, page: 5, pageSize: 10, onChange }}
+      />
+    )
+    expect(
+      container.querySelectorAll('[data-slot=pagination-ellipsis]')
+    ).toHaveLength(2)
   })
 })
