@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import Loading from '@/components/Loading'
 import { cn } from '@/utils/common'
 import {
   Table,
@@ -93,6 +94,14 @@ function XtTable<T = Global.AnyObj>({
           )}
         </TableBody>
       </Table>
+      {loading && (
+        <div
+          data-testid='xttable-loading'
+          className='bg-background/60 absolute inset-0 grid place-items-center'
+        >
+          <Loading />
+        </div>
+      )}
     </div>
   )
 }

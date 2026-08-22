@@ -70,3 +70,51 @@ describe('XtTable', () => {
     expect(th).toHaveStyle({ width: '100px' })
   })
 })
+
+describe('XtTable 加载态与空态', () => {
+  it('loading 为 true 时显示加载遮罩', () => {
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+        loading
+      />
+    )
+    expect(screen.getByTestId('xttable-loading')).toBeInTheDocument()
+  })
+
+  it('loading 为 false 时不显示遮罩', () => {
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={users}
+        rowKey='id'
+      />
+    )
+    expect(screen.queryByTestId('xttable-loading')).not.toBeInTheDocument()
+  })
+
+  it('空数据显示默认空态文案', () => {
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={[]}
+        rowKey='id'
+      />
+    )
+    expect(screen.getByText('暂无数据')).toBeInTheDocument()
+  })
+
+  it('支持自定义空态文案', () => {
+    render(
+      <XtTable
+        columns={columns}
+        dataSource={[]}
+        rowKey='id'
+        emptyText='没有数据'
+      />
+    )
+    expect(screen.getByText('没有数据')).toBeInTheDocument()
+  })
+})
