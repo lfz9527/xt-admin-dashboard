@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { LayoutDashboard, Settings2, SquareTerminal } from 'lucide-react'
+import { House, LayoutDashboard, Settings2 } from 'lucide-react'
 import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { SidebarProvider } from '@/ui/Sidebar'
@@ -55,7 +55,7 @@ describe('Menus', () => {
       'level-two',
       'level-three',
     ])
-    expect(menus[0]).toMatchObject({ key: 'home', icon: SquareTerminal })
+    expect(menus[0]).toMatchObject({ key: 'home', icon: House })
     expect(menus[1]).toMatchObject({
       key: 'dashboard',
       icon: LayoutDashboard,
