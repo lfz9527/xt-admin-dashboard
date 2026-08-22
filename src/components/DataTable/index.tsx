@@ -1,6 +1,16 @@
-import type { ReactNode } from 'react'
+import {
+  metaHelper,
+  rowPaginationFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+  type PaginationState,
+  type RowData,
+} from '@tanstack/react-table'
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
 
 import Loading from '@/components/Loading'
+import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import {
   Pagination,
   PaginationContent,
@@ -10,7 +20,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/ui/Pagination'
-import { cn } from '@/utils/common'
 import {
   Table,
   TableBody,
@@ -19,10 +28,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/ui/Table'
+import { cn } from '@/utils/common'
 
-import type { DataTableColumn, DataTableProps } from './types'
+import type { DataTableProps } from './types'
 
-const alignClassMap: Record<NonNullable<DataTableColumn['align']>, string> = {
+// 模块级 features：必须稳定，禁止在渲染内重建
+// 服务端模式：不注册 sortedRowModel/paginatedRowModel，仅注册状态/API 特性
+const features = tableFeatures({
+  rowSortingFeature,
+  rowPaginationFeature,
+  columnMeta: metaHelper<{
+    align?: 'left' | 'center' | 'right'
+    width?: number | string
+  }>(),
+})
+
+export type DataTableFeatures = typeof features
+
+const alignClassMap: Record<string, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
@@ -46,25 +69,56 @@ function getPageItems(
   return items
 }
 
-function DataTable<T = Global.AnyObj>({
+function DataTable<TData extends RowData>({
   columns,
-  dataSource,
+  data,
   rowKey,
   loading = false,
-  emptyText = '暂无数据',
+  empty,
   pagination,
+  sorting,
+  onSortingChange,
   className,
   style,
-}: DataTableProps<T>) {
-  const isEmpty = dataSource.length === 0
+}: DataTableProps<TData>) {
+  const isEmpty = data.length === 0
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
     : 0
 
-  const getRowKey = (record: T) =>
-    typeof rowKey === 'function'
-      ? rowKey(record)
-      : String((record as Record<string, unknown>)[rowKey])
+  const table = useTable(
+    {
+      features,
+      columns,
+      data: [...data],
+      getRowId: (record) =>
+        typeof rowKey === 'function'
+          ? rowKey(record)
+          : String((record as Record<string, unknown>)[rowKey]),
+      manualSorting: true,
+      manualPagination: true,
+      pageCount: totalPages,
+      state: {
+        sorting: sorting ?? [],
+        pagination: pagination
+          ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
+          : { pageIndex: 0, pageSize: 10 },
+      },
+      onSortingChange: (updater) => {
+        const next =
+          typeof updater === 'function' ? updater(sorting ?? []) : updater
+        onSortingChange?.(next)
+      },
+      onPaginationChange: (updater) => {
+        const current: PaginationState = pagination
+          ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
+          : { pageIndex: 0, pageSize: 10 }
+        const next = typeof updater === 'function' ? updater(current) : updater
+        pagination?.onChange(next.pageIndex + 1, next.pageSize)
+      },
+    },
+    (state) => ({ sorting: state.sorting, pagination: state.pagination })
+  )
 
   return (
     <div
@@ -74,50 +128,78 @@ function DataTable<T = Global.AnyObj>({
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHead
-                  key={col.key}
-                  className={alignClassMap[col.align ?? 'left']}
-                  style={
-                    col.width !== undefined ? { width: col.width } : undefined
-                  }
-                >
-                  {col.title}
-                </TableHead>
-              ))}
-            </TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const meta = header.column.columnDef.meta
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        alignClassMap[meta?.align ?? 'left'],
+                        header.column.getCanSort() &&
+                          'cursor-pointer select-none'
+                      )}
+                      style={
+                        meta?.width !== undefined
+                          ? { width: meta.width }
+                          : undefined
+                      }
+                      onClick={
+                        header.column.getCanSort()
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
+                    >
+                      {header.isPlaceholder ? null : (
+                        <table.FlexRender header={header} />
+                      )}
+                      {header.column.getCanSort() &&
+                        (header.column.getIsSorted() === 'asc' ? (
+                          <ArrowUpIcon className='size-3.5' />
+                        ) : header.column.getIsSorted() === 'desc' ? (
+                          <ArrowDownIcon className='size-3.5' />
+                        ) : (
+                          <ChevronsUpDownIcon className='text-muted-foreground/50 size-3.5' />
+                        ))}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
             {isEmpty && !loading ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className='text-muted-foreground h-24 text-center'
+                  className='h-24 p-0 text-center'
                 >
-                  {emptyText}
+                  {empty ?? (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyTitle>暂无数据</EmptyTitle>
+                      </EmptyHeader>
+                    </Empty>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
-              dataSource.map((record, index) => (
-                <TableRow key={getRowKey(record)}>
-                  {columns.map((col) => {
-                    const value = col.dataIndex
-                      ? (record as Record<string, unknown>)[col.dataIndex]
-                      : undefined
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getAllCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta
                     return (
                       <TableCell
-                        key={col.key}
-                        className={alignClassMap[col.align ?? 'left']}
+                        key={cell.id}
+                        className={alignClassMap[meta?.align ?? 'left']}
                         style={
-                          col.width !== undefined
-                            ? { width: col.width }
+                          meta?.width !== undefined
+                            ? { width: meta.width }
                             : undefined
                         }
                       >
-                        {col.render
-                          ? col.render(value, record, index)
-                          : (value as ReactNode)}
+                        <table.FlexRender cell={cell} />
                       </TableCell>
                     )
                   })}
@@ -203,8 +285,4 @@ function DataTable<T = Global.AnyObj>({
 }
 
 export { DataTable }
-export type {
-  DataTableColumn,
-  DataTablePagination,
-  DataTableProps,
-} from './types'
+export type { DataTablePagination, DataTableProps } from './types'

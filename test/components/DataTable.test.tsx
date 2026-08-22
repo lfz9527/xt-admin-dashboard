@@ -58,7 +58,7 @@ describe('DataTable', () => {
     expect(screen.getByText('李四')).toBeInTheDocument()
   })
 
-  it('列对齐与宽度映射到表头单元格', () => {
+  it('列 meta 的 align 与 width 映射到表头单元格', () => {
     const { container } = render(
       <DataTable
         columns={columns}
@@ -107,7 +107,7 @@ describe('DataTable 加载态与空态', () => {
     expect(screen.getByText('暂无数据')).toBeInTheDocument()
   })
 
-  it('支持自定义空态文案', () => {
+  it('支持 empty 插槽自定义空态', () => {
     render(
       <DataTable
         columns={columns}
