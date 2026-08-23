@@ -88,7 +88,6 @@ export default function Roles() {
           <div className='flex justify-center gap-1'>
             <Button
               variant='ghost'
-              size='xs'
               onClick={() => {
                 setEditingRole(row.original)
                 setFormOpen(true)
@@ -98,7 +97,6 @@ export default function Roles() {
             </Button>
             <Button
               variant='ghost'
-              size='xs'
               className='hover:text-destructive text-destructive'
               onClick={() => setDeleteTarget(row.original)}
             >
