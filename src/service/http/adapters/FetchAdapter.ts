@@ -23,6 +23,7 @@ export class FetchAdapter implements HttpAdapter {
 
     // 超时控制
     let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let combinedSignal = signal
 
     if (timeout) {
       const controller = new AbortController()
@@ -35,6 +36,7 @@ export class FetchAdapter implements HttpAdapter {
       if (signal) {
         signal.addEventListener('abort', () => controller.abort())
       }
+      combinedSignal = controller.signal
     }
 
     // 列化请求体
@@ -45,7 +47,7 @@ export class FetchAdapter implements HttpAdapter {
         method,
         headers,
         body,
-        // signal: combinedSignal,
+        signal: combinedSignal,
         cache,
       })
 
