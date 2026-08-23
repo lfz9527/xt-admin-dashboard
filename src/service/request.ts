@@ -15,7 +15,7 @@ const CODE = {
 
 export const http = HttpClient.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 1000,
+  timeout: 10000,
 })
 
 // 请求拦截：注入鉴权头

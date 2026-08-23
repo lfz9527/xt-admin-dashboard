@@ -16,10 +16,11 @@ export class HttpErrorCls extends Error implements HttpError {
       statusText?: string
       config?: RequestConfig
       response?: HttpResponse
+      name?: string
     } = {}
   ) {
     super(message)
-    this.name = 'HttpError'
+    this.name = options?.name ?? 'HttpError'
     this.status = options.status
     this.statusText = options.statusText
     this.config = options.config

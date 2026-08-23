@@ -83,12 +83,10 @@ export class FetchAdapter implements HttpAdapter {
       }
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId)
-      let err = error
 
-      if (error.name !== 'HttpError') {
-        // fetch 自己的报错需要处理
-        err = new HttpErrorCls('HttpError')
-      }
+      const err = new HttpErrorCls(error?.message ?? 'HttpError', {
+        name: error?.name,
+      })
 
       if (err.name === 'AbortError') {
         if (timedOut && timeout) {
