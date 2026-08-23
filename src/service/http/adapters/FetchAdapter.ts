@@ -1,9 +1,5 @@
-import type {
-  HttpAdapter,
-  HttpResponse,
-  RequestConfig,
-  HttpError,
-} from '../types'
+import type { HttpAdapter, HttpResponse, RequestConfig } from '../types'
+import { HttpErrorCls } from '../HttpError'
 
 /**
  * 默认 Fetch 适配器
@@ -27,7 +23,6 @@ export class FetchAdapter implements HttpAdapter {
 
     // 超时控制
     let timeoutId: ReturnType<typeof setTimeout> | undefined
-    let combinedSignal = signal
 
     if (timeout) {
       const controller = new AbortController()
@@ -40,7 +35,6 @@ export class FetchAdapter implements HttpAdapter {
       if (signal) {
         signal.addEventListener('abort', () => controller.abort())
       }
-      combinedSignal = controller.signal
     }
 
     // 列化请求体
@@ -51,17 +45,18 @@ export class FetchAdapter implements HttpAdapter {
         method,
         headers,
         body,
-        signal: combinedSignal,
+        // signal: combinedSignal,
         cache,
       })
+
       if (timeoutId) clearTimeout(timeoutId)
       // 解析响应体
       const response = await this.parseResponse<T>(raw, responseType)
 
       if (!raw.ok) {
-        const err = new Error(
+        const err = new HttpErrorCls(
           `HTTP Error ${raw.status}: ${raw.statusText}`
-        ) as HttpError
+        )
         err.status = raw.status
         err.statusText = raw.statusText
         err.config = config
@@ -84,9 +79,15 @@ export class FetchAdapter implements HttpAdapter {
         config,
         raw,
       }
-    } catch (error) {
+    } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId)
-      const err = error as HttpError
+      let err = error
+
+      if (error.name !== 'HttpError') {
+        // fetch 自己的报错需要处理
+        err = new HttpErrorCls('HttpError')
+      }
+
       if (err.name === 'AbortError') {
         if (timedOut && timeout) {
           err.isTimeout = true

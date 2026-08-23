@@ -5,6 +5,9 @@ export { InterceptorManager } from './InterceptorManager'
 // 适配器
 export { FetchAdapter } from './adapters/FetchAdapter'
 
+// 错误类
+export { HttpErrorCls } from './HttpError'
+
 // 类型
 export type {
   HttpClientConfig,
