@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ColumnDef } from '@tanstack/react-table'
+import { vi } from 'vitest'
 
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 
@@ -34,6 +35,79 @@ describe('DataTable', () => {
     expect(screen.getByText('年龄')).toBeInTheDocument()
     expect(screen.getByText('张三')).toBeInTheDocument()
     expect(screen.getByText('18')).toBeInTheDocument()
+  })
+
+  it('支持 title 渲染在表格上方', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        title='用户列表'
+      />
+    )
+    const title = screen.getByText('用户列表')
+    expect(title).toBeInTheDocument()
+    const table = screen.getByRole('table')
+    // title 在表格之前（DOM 顺序更靠前）
+    expect(
+      title.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('未配置 title 时不渲染标题', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+      />
+    )
+    expect(screen.queryByText('用户列表')).not.toBeInTheDocument()
+  })
+
+  it('配置 onRefresh 时显示刷新按钮，点击触发回调', () => {
+    const onRefresh = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        onRefresh={onRefresh}
+      />
+    )
+    const refreshBtn = screen.getByRole('button', { name: '刷新' })
+    expect(refreshBtn).toBeInTheDocument()
+    fireEvent.click(refreshBtn)
+    expect(onRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('未配置 onRefresh 时不显示刷新按钮', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+      />
+    )
+    expect(
+      screen.queryByRole('button', { name: '刷新' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('toolRender 自定义内容与默认刷新按钮共存', () => {
+    const onRefresh = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        toolRender={() => <button type='button'>导出</button>}
+        onRefresh={onRefresh}
+      />
+    )
+    expect(screen.getByRole('button', { name: '导出' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '刷新' })).toBeInTheDocument()
   })
 
   it('render 优先于 dataIndex', () => {
@@ -84,6 +158,38 @@ describe('DataTable 加载态与空态', () => {
       />
     )
     expect(screen.getByTestId('datatable-loading')).toBeInTheDocument()
+  })
+
+  it('loading 遮罩只覆盖表格容器，表头浮于遮罩之上', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        loading
+      />
+    )
+    const overlay = screen.getByTestId('datatable-loading')
+    // 遮罩位于表格边框容器内（不覆盖标题/分页等外层区域）
+    expect(overlay.parentElement?.className).toContain('rounded-md')
+    // 表头带背景色与 z-index，视觉上不被遮罩覆盖
+    const thead = screen.getAllByRole('rowgroup')[0]
+    expect(thead.className).toContain('bg-background')
+    expect(thead.className).toContain('z-10')
+  })
+
+  it('数据为空且 loading 时表格容器有最小高度', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={[]}
+        rowKey='id'
+        loading
+      />
+    )
+    // 遮罩父容器（表格边框容器）带 min-h，保证空数据时遮罩有覆盖区域
+    const overlay = screen.getByTestId('datatable-loading')
+    expect(overlay.parentElement?.className).toContain('min-h-50')
   })
 
   it('loading 为 false 时不显示遮罩', () => {

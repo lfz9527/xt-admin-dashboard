@@ -25,7 +25,7 @@ export default function Roles() {
   /** 正在编辑的角色；null 为新增模式 */
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
-  const { data, loading, error, run, mutate } = useRequest(getRoles, {
+  const { data, loading, error, run, mutate, refresh } = useRequest(getRoles, {
     immediate: false,
   })
   const { runAsync: updateStatusAsync, loading: updateStatusLoading } =
@@ -80,7 +80,7 @@ export default function Roles() {
 
   const columns = useMemo<ColumnDef<DataTableFeatures, RoleItem>[]>(
     () => [
-      { accessorKey: 'name', header: '角色名称' },
+      { accessorKey: 'name', header: '角色名称', meta: { width: 120 } },
       {
         accessorKey: 'roleKey',
         header: '角色编码',
@@ -89,7 +89,7 @@ export default function Roles() {
       {
         accessorKey: 'status',
         header: '状态',
-        meta: { align: 'center' },
+        meta: { align: 'center', width: 80 },
         cell: ({ row }) => {
           // 后端约定：0=正常（启用）1=停用
           const role = row.original
@@ -152,21 +152,23 @@ export default function Roles() {
 
   return (
     <div className='flex flex-col gap-3'>
-      <div className='flex justify-end'>
-        <Button
-          onClick={() => {
-            setEditingRole(null)
-            setFormOpen(true)
-          }}
-        >
-          <Plus className='size-4' />
-          新增角色
-        </Button>
-      </div>
       <DataTable
         columns={columns}
         data={data?.list ?? []}
         rowKey='id'
+        title='角色列表'
+        toolRender={() => (
+          <Button
+            onClick={() => {
+              setEditingRole(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus className='size-4' />
+            新增角色
+          </Button>
+        )}
+        onRefresh={refresh}
         loading={loading}
         empty={
           error ? (

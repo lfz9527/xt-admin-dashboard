@@ -8,9 +8,15 @@ import {
   type PaginationState,
   type RowData,
 } from '@tanstack/react-table'
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronsUpDownIcon,
+  RefreshCwIcon,
+} from 'lucide-react'
 
 import Loading from '@/components/Loading'
+import { Button } from '@/ui/Button'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import {
   Select,
@@ -88,6 +94,9 @@ function DataTable<TData extends RowData>({
   columns,
   data,
   rowKey,
+  title,
+  toolRender,
+  onRefresh,
   loading = false,
   empty,
   pagination,
@@ -141,9 +150,39 @@ function DataTable<TData extends RowData>({
       className={cn('relative', className)}
       style={style}
     >
-      <div className='rounded-md border'>
+      {(title || toolRender || onRefresh) && (
+        <div className='my-4 flex items-center justify-between'>
+          {title && (
+            <div className='cn-font-heading text-base leading-snug font-medium'>
+              {title}
+            </div>
+          )}
+          {(toolRender || onRefresh) && (
+            <div className='flex items-center gap-2'>
+              {toolRender?.()}
+              {onRefresh && (
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label='刷新'
+                  onClick={onRefresh}
+                >
+                  <RefreshCwIcon className='size-4' />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      <div
+        className={cn(
+          'relative rounded-md border',
+          // 加载中数据可能为空（首屏/刷新），给容器最小高度保证遮罩有覆盖区域
+          loading && 'min-h-50'
+        )}
+      >
         <Table>
-          <TableHeader>
+          <TableHeader className='bg-background relative z-10'>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -226,16 +265,15 @@ function DataTable<TData extends RowData>({
             )}
           </TableBody>
         </Table>
+        {loading && (
+          <div
+            data-testid='datatable-loading'
+            className='bg-background/60 absolute inset-0 grid place-items-center'
+          >
+            <Loading />
+          </div>
+        )}
       </div>
-
-      {loading && (
-        <div
-          data-testid='datatable-loading'
-          className='bg-background/60 absolute inset-0 grid place-items-center'
-        >
-          <Loading />
-        </div>
-      )}
       {pagination && !isEmpty && (
         <div className='flex items-center justify-end gap-2 px-1 pt-3'>
           <Pagination className='justify-end'>

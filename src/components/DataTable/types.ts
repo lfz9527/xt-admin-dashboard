@@ -22,6 +22,12 @@ export type DataTableProps<TData extends RowData = Global.AnyObj> = {
   data: readonly TData[]
   /** 行唯一标识：字段名或返回唯一值的函数，映射 TanStack getRowId */
   rowKey: string | ((record: TData) => string)
+  /** 表格标题，渲染在表格上方左侧 */
+  title?: ReactNode
+  /** 表格上方右侧自定义渲染（与默认刷新按钮共存） */
+  toolRender?: () => ReactNode
+  /** 配置后表格上方右侧显示默认刷新按钮，点击仅调用该回调 */
+  onRefresh?: () => void
   /** 加载态，true 时表格区域叠加 Loading 遮罩 */
   loading?: boolean
   /** 空态插槽，缺省时内置 Empty + EmptyTitle「暂无数据」 */
