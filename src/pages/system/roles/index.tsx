@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { ColumnDef } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
@@ -7,8 +7,10 @@ import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 import DeleteRoleDialog from '@/features/role/components/DeleteRoleDialog'
 import RoleFormDialog from '@/features/role/components/RoleFormDialog'
 import { useRequest } from '@/hooks'
-import { getRoles, type RoleItem } from '@/service/roles'
+import { getRoles, updateRole, type RoleItem } from '@/service/roles'
 import { Button } from '@/ui/Button'
+import { Switch } from '@/ui/Switch'
+import { toast } from '@/ui/Toast'
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)
@@ -23,9 +25,42 @@ export default function Roles() {
   /** 正在编辑的角色；null 为新增模式 */
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
-  const { data, loading, error, run } = useRequest(getRoles, {
+  const { data, loading, error, run, mutate } = useRequest(getRoles, {
     immediate: false,
   })
+  const { runAsync: updateStatusAsync, loading: updateStatusLoading } =
+    useRequest(updateRole, {
+      immediate: false,
+    })
+
+  // 行内切换启用/停用：先乐观更新本地列表，接口失败时回滚
+  const handleStatusChange = useCallback(
+    async (role: RoleItem, checked: boolean) => {
+      const nextStatus = checked ? 0 : 1
+      const prevStatus = role.status
+      const applyStatus = (status: number) =>
+        mutate((prev) => ({
+          ...(prev ?? { list: [], total: 0 }),
+          list: (prev?.list ?? []).map((item) =>
+            item.id === role.id ? { ...item, status } : item
+          ),
+        }))
+      applyStatus(nextStatus)
+      try {
+        // 列表返回的 id 为字符串，需转数字
+        await updateStatusAsync({
+          id: Number(role.id),
+          name: role.name,
+          status: nextStatus,
+        })
+        toast.success('状态更新成功')
+      } catch (err) {
+        applyStatus(prevStatus)
+        toast.error((err as Error).message)
+      }
+    },
+    [mutate, updateStatusAsync]
+  )
 
   useEffect(() => {
     run({ page, pageSize })
@@ -50,15 +85,16 @@ export default function Roles() {
         accessorKey: 'status',
         header: '状态',
         meta: { align: 'center' },
-        cell: ({ getValue }) => {
+        cell: ({ row }) => {
           // 后端约定：0=正常（启用）1=停用
-          const enabled = getValue() === 0
+          const role = row.original
           return (
-            <span
-              className={enabled ? 'text-primary' : 'text-muted-foreground'}
-            >
-              {enabled ? '启用' : '停用'}
-            </span>
+            <Switch
+              aria-label='切换状态'
+              checked={role.status === 0}
+              loading={updateStatusLoading}
+              onCheckedChange={(checked) => handleStatusChange(role, checked)}
+            />
           )
         },
       },
@@ -106,7 +142,7 @@ export default function Roles() {
         ),
       },
     ],
-    []
+    [handleStatusChange, updateStatusLoading]
   )
 
   return (

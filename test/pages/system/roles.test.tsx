@@ -10,6 +10,13 @@ import {
 } from '@/service/roles'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const toastSuccess = vi.hoisted(() => vi.fn())
+const toastError = vi.hoisted(() => vi.fn())
+
+vi.mock('@/ui/Toast', () => ({
+  toast: { success: toastSuccess, error: toastError },
+}))
+
 vi.mock('@/service/roles', () => ({
   getRoles: vi.fn(),
   createRole: vi.fn(),
@@ -24,7 +31,8 @@ const mockedDeleteRole = vi.mocked(deleteRole)
 
 const roleList: RoleListResult['list'] = [
   {
-    id: 1,
+    // 后端列表返回字符串 id，接口入参需转数字
+    id: '1' as unknown as number,
     name: '管理员',
     roleKey: 'admin',
     status: 0,
@@ -34,7 +42,7 @@ const roleList: RoleListResult['list'] = [
     updatedAt: '2026-08-01T08:30:00.000Z',
   },
   {
-    id: 2,
+    id: '2' as unknown as number,
     name: '运营',
     roleKey: 'operator',
     status: 1,
@@ -50,6 +58,8 @@ beforeEach(() => {
   mockedCreateRole.mockReset()
   mockedUpdateRole.mockReset()
   mockedDeleteRole.mockReset()
+  toastSuccess.mockReset()
+  toastError.mockReset()
   mockedGetRoles.mockResolvedValue({
     res: {} as never,
     data: { list: roleList, total: 12 },
@@ -69,11 +79,51 @@ describe('Roles page', () => {
     )
   })
 
-  it('status 映射：0 显示启用、1 显示停用', async () => {
+  it('status 映射：0 为开启、1 为关闭', async () => {
     render(<Roles />)
     await screen.findByText('管理员')
-    expect(screen.getByText('启用')).toBeInTheDocument()
-    expect(screen.getByText('停用')).toBeInTheDocument()
+    const switches = screen.getAllByRole('switch')
+    // 管理员 status=0（开启）、运营 status=1（关闭）
+    expect(switches[0]).toBeChecked()
+    expect(switches[1]).not.toBeChecked()
+  })
+
+  it('点击 Switch 切换状态：调用 updateRole 并更新列表', async () => {
+    mockedUpdateRole.mockResolvedValue({
+      res: {} as never,
+      data: { ...roleList[0], status: 1 },
+    } as never)
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getAllByRole('switch')[0])
+
+    await waitFor(() => {
+      expect(mockedUpdateRole).toHaveBeenCalledWith(
+        { id: 1, name: '管理员', status: 1 },
+        expect.any(AbortSignal)
+      )
+    })
+    // 乐观更新：列表状态立即变为关闭
+    await waitFor(() => {
+      expect(screen.getAllByRole('switch')[0]).not.toBeChecked()
+    })
+    expect(toastSuccess).toHaveBeenCalledWith('状态更新成功')
+  })
+
+  it('切换状态失败：回滚状态并提示错误', async () => {
+    mockedUpdateRole.mockRejectedValue(new Error('网络异常'))
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getAllByRole('switch')[0])
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('switch')[0]).toBeChecked()
+    })
+    expect(toastError).toHaveBeenCalledWith('网络异常')
   })
 
   it('翻页后以新页码请求', async () => {
