@@ -1,6 +1,14 @@
-import type { ReactNode } from 'react'
-import { CheckCircle2Icon, InfoIcon, XCircleIcon } from 'lucide-react'
+import { cn } from '@/utils/common'
+import {
+  CheckCircle2Icon,
+  InfoIcon,
+  XCircleIcon,
+  CircleAlert,
+} from 'lucide-react'
 import { Toaster as Sonner, toast as sonnerToast } from 'sonner'
+import Loading from '@/components/Loading'
+
+const IconCls = 'size-4 shrink-0'
 
 /**
  * sonner 封装（antd message 风格）：
@@ -14,50 +22,38 @@ function Toaster() {
     <Sonner
       position='top-center'
       offset={72}
-      toastOptions={{
-        unstyled: true,
-        classNames: {
-          toast:
-            'flex items-center gap-2 rounded-md bg-popover px-4 py-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10',
-        },
+      expand={true}
+      duration={2000}
+      icons={{
+        success: (
+          <CheckCircle2Icon className={cn(IconCls, 'text-emerald-500')} />
+        ),
+        info: <InfoIcon className={cn(IconCls, 'text-sky-500')} />,
+        warning: (
+          <CircleAlert
+            color='#fbb936'
+            className={cn(IconCls)}
+          />
+        ),
+        error: <XCircleIcon className={cn(IconCls, 'text-red-500')} />,
+        loading: (
+          <Loading
+            className={cn(IconCls)}
+            size={16}
+          />
+        ),
       }}
     />
   )
 }
 
-/** 渲染单条 toast：容器样式 + 彩色图标 + 文字（sonner custom 需要传入渲染函数） */
-function renderToast(icon: ReactNode, message: string) {
-  return () => (
-    <div className='flex items-center gap-2'>
-      {icon}
-      <span>{message}</span>
-    </div>
-  )
-}
-
 /** 仿 antd message 的轻量调用对象 */
 export const toast = {
-  success: (message: string) =>
-    sonnerToast.custom(
-      renderToast(
-        <CheckCircle2Icon className='size-4 shrink-0 text-emerald-500' />,
-        message
-      )
-    ),
-  error: (message: string) =>
-    sonnerToast.custom(
-      renderToast(
-        <XCircleIcon className='size-4 shrink-0 text-red-500' />,
-        message
-      )
-    ),
-  info: (message: string) =>
-    sonnerToast.custom(
-      renderToast(
-        <InfoIcon className='size-4 shrink-0 text-sky-500' />,
-        message
-      )
-    ),
+  success: (message: string) => sonnerToast.success(message),
+  error: (message: string) => sonnerToast.error(message),
+  info: (message: string) => sonnerToast.info(message),
+  loading: (message: string) => sonnerToast.loading(message),
+  warning: (message: string) => sonnerToast.warning(message),
 }
 
 export { Toaster }
