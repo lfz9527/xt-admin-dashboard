@@ -1,11 +1,12 @@
 import { LogOut, Moon, Sun } from 'lucide-react'
-import { useMatches, useLocation, useNavigate } from 'react-router'
+import { useMatches, useLocation } from 'react-router'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
 import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
 import { Separator } from '@/ui/Separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
+import { authLogout } from '@/service/request'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,10 +26,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const isMobile = useIsMobile()
   const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
-  const navigate = useNavigate()
   const user = useAuthor((state) => state.user)
-  const setToken = useAuthor((state) => state.setToken)
-  const setUser = useAuthor((state) => state.setUser)
   const { runAsync: runLogout } = useLogout()
 
   const matches = useMatches()
@@ -49,9 +47,7 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await runLogout()
-      setToken('')
-      setUser(null)
-      navigate('/login', { replace: true })
+      authLogout()
     } catch (err) {
       toast.error((err as Error).message)
     }

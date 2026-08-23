@@ -1,11 +1,16 @@
 import { HttpClient } from './http'
 import type { HttpError, HttpResponse } from './http/types'
 import useAuthor from '@/store/useAuthor'
+import router from '@/router'
 
 export type BusResponse<T = unknown> = {
   code: number
   data: T
   message: string
+}
+
+const CODE = {
+  AUTHCODE: 401,
 }
 
 export const http = HttpClient.create({
@@ -46,6 +51,15 @@ http.interceptors.response.use(unwrapResponse)
 
 // 错误拦截：统一处理
 http.interceptors.error.use(async (err: HttpError) => {
-  console.log('err===', err.status)
+  // 401 未授权：清除凭证并重定向到登录页
+  if (err.status === CODE.AUTHCODE) {
+    authLogout()
+  }
   throw err
 })
+
+export function authLogout() {
+  useAuthor.getState().setToken('')
+  useAuthor.getState().setUser(null)
+  router.navigate('/login', { replace: true })
+}
