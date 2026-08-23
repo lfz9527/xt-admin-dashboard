@@ -32,6 +32,8 @@ export default function Roles() {
     useRequest(updateRole, {
       immediate: false,
     })
+  /** 正在切换状态的角色 id（仅该行显示 loading） */
+  const [switchingId, setSwitchingId] = useState<RoleItem['id'] | null>(null)
 
   // 行内切换启用/停用：先乐观更新本地列表，接口失败时回滚
   const handleStatusChange = useCallback(
@@ -46,6 +48,7 @@ export default function Roles() {
           ),
         }))
       applyStatus(nextStatus)
+      setSwitchingId(role.id)
       try {
         // 列表返回的 id 为字符串，需转数字
         await updateStatusAsync({
@@ -57,6 +60,8 @@ export default function Roles() {
       } catch (err) {
         applyStatus(prevStatus)
         toast.error((err as Error).message)
+      } finally {
+        setSwitchingId(null)
       }
     },
     [mutate, updateStatusAsync]
@@ -92,7 +97,7 @@ export default function Roles() {
             <Switch
               aria-label='切换状态'
               checked={role.status === 0}
-              loading={updateStatusLoading}
+              loading={updateStatusLoading && switchingId === role.id}
               onCheckedChange={(checked) => handleStatusChange(role, checked)}
             />
           )
@@ -142,7 +147,7 @@ export default function Roles() {
         ),
       },
     ],
-    [handleStatusChange, updateStatusLoading]
+    [handleStatusChange, updateStatusLoading, switchingId]
   )
 
   return (

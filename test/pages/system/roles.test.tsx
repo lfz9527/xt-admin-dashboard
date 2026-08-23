@@ -126,6 +126,40 @@ describe('Roles page', () => {
     expect(toastError).toHaveBeenCalledWith('网络异常')
   })
 
+  it('切换中仅被操作的行显示 loading', async () => {
+    let resolveUpdate!: (value: never) => void
+    mockedUpdateRole.mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpdate = resolve as (value: never) => void
+      }) as never
+    )
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getAllByRole('switch')[0])
+
+    // 请求挂起期间：第 1 行（被操作）禁用并显示加载，第 2 行不受影响
+    await waitFor(() => {
+      expect(screen.getAllByRole('switch')[0]).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      )
+    })
+    expect(screen.getAllByRole('switch')[1]).not.toHaveAttribute(
+      'aria-disabled'
+    )
+    expect(screen.getAllByRole('switch')[1]).not.toBeDisabled()
+
+    // 请求完成后 loading 清除
+    resolveUpdate({} as never)
+    await waitFor(() => {
+      expect(screen.getAllByRole('switch')[0]).not.toHaveAttribute(
+        'aria-disabled'
+      )
+    })
+  })
+
   it('翻页后以新页码请求', async () => {
     const user = userEvent.setup()
     render(<Roles />)
