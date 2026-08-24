@@ -42,6 +42,29 @@ export function login(data: LoginParams, signal?: AbortSignal) {
   return http.post<LoginResult>('/auth/login', data, { signal })
 }
 
+/** 发送注册验证码（无需鉴权） */
+export function sendRegisterCode(
+  data: { email: string },
+  signal?: AbortSignal
+) {
+  return http.post<{ message: string }>('/auth/send-register-code', data, {
+    signal,
+  })
+}
+
+/** 注册（无需鉴权），成功后仅创建账号，需跳转登录页 */
+export function register(
+  data: {
+    email: string
+    nickname: string
+    password: string
+    emailCode: string
+  },
+  signal?: AbortSignal
+) {
+  return http.post<{ message: string }>('/auth/register', data, { signal })
+}
+
 /** 登出（需鉴权） */
 export function logout(signal?: AbortSignal) {
   return http.post<{ message: string }>('/auth/logout', undefined, { signal })

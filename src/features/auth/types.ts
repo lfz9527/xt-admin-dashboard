@@ -10,9 +10,9 @@ export const loginSchema = z.object({
 export const registerSchema = z
   .object({
     email: z.email('请输入有效的邮箱'),
-    username: z.string().min(1, '请输入用户名'),
-    code: z.string().min(1, '请输入验证码'),
-    password: z.string().min(1, '请输入密码'),
+    nickname: z.string().min(1, '请输入昵称'),
+    emailCode: z.string().regex(/^\d{6}$/, '请输入 6 位数字验证码'),
+    password: z.string().min(6, '密码最少 6 个字符'),
     confirmPassword: z.string().min(1, '请确认密码'),
   })
   .refine((values) => values.password === values.confirmPassword, {

@@ -12,6 +12,8 @@ const toastError = vi.hoisted(() => vi.fn())
 const getCaptchaMock = vi.hoisted(() => vi.fn())
 const loginMock = vi.hoisted(() => vi.fn())
 const logoutMock = vi.hoisted(() => vi.fn())
+const sendRegisterCodeMock = vi.hoisted(() => vi.fn())
+const registerMock = vi.hoisted(() => vi.fn())
 const encryptionManager = new EncryptionManager('xt-admin-dashboard-login-key')
 
 vi.mock('@/ui/Toast', () => ({
@@ -28,6 +30,8 @@ vi.mock('@/service/auth', () => ({
   getCaptcha: getCaptchaMock,
   login: loginMock,
   logout: logoutMock,
+  sendRegisterCode: sendRegisterCodeMock,
+  register: registerMock,
 }))
 
 const mockUser = {
@@ -57,6 +61,12 @@ describe('LoginFeature', () => {
     })
     logoutMock.mockReset().mockResolvedValue({
       data: { message: '已退出登录' },
+    })
+    sendRegisterCodeMock.mockReset().mockResolvedValue({
+      data: { message: '验证码已发送' },
+    })
+    registerMock.mockReset().mockResolvedValue({
+      data: { message: '注册成功' },
     })
     useAuthor.setState({
       token: '',
@@ -176,6 +186,12 @@ describe('LoginFeature', () => {
 
   it('completes registration and returns to login mode without navigating', async () => {
     const user = userEvent.setup()
+    registerMock.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: { message: '注册成功' } }), 500)
+        )
+    )
     render(
       <MemoryRouter>
         <LoginFeature />
@@ -184,8 +200,8 @@ describe('LoginFeature', () => {
 
     await user.click(screen.getByRole('button', { name: '注册账号' }))
     await user.type(screen.getByLabelText(/邮箱/), 'admin@example.com')
-    await user.type(screen.getByLabelText(/用户名/), 'admin')
-    await user.type(screen.getByLabelText(/验证码/), '1234')
+    await user.type(screen.getByLabelText(/昵称/), 'admin')
+    await user.type(screen.getByLabelText(/验证码/), '123456')
     await user.type(screen.getByPlaceholderText('请输入密码'), 'password')
     await user.type(screen.getByLabelText(/确认密码/), 'password')
     await user.click(screen.getByRole('button', { name: '注册' }))
@@ -195,8 +211,61 @@ describe('LoginFeature', () => {
       () => expect(screen.getByText('登录管理后台')).toBeInTheDocument(),
       { timeout: 2000 }
     )
+    expect(registerMock).toHaveBeenCalledWith(
+      {
+        email: 'admin@example.com',
+        nickname: 'admin',
+        password: 'password',
+        emailCode: '123456',
+      },
+      expect.any(AbortSignal)
+    )
     expect(toastSuccess).toHaveBeenCalledWith('注册成功，请登录')
     expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('sends register verification code via real service and starts countdown', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '注册账号' }))
+    await user.type(screen.getByLabelText(/邮箱/), 'admin@example.com')
+    await user.click(screen.getByRole('button', { name: '获取验证码' }))
+
+    await waitFor(() =>
+      expect(sendRegisterCodeMock).toHaveBeenCalledWith(
+        { email: 'admin@example.com' },
+        expect.any(AbortSignal)
+      )
+    )
+    expect(toastSuccess).toHaveBeenCalledWith('验证码已发送')
+    expect(screen.getByRole('button', { name: /后重新获取/ })).toBeDisabled()
+  })
+
+  it('shows error and stays on register when registration fails', async () => {
+    const user = userEvent.setup()
+    registerMock.mockRejectedValue(new Error('该邮箱已注册'))
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: '注册账号' }))
+    await user.type(screen.getByLabelText(/邮箱/), 'admin@example.com')
+    await user.type(screen.getByLabelText(/昵称/), 'admin')
+    await user.type(screen.getByLabelText(/验证码/), '123456')
+    await user.type(screen.getByPlaceholderText('请输入密码'), 'password')
+    await user.type(screen.getByLabelText(/确认密码/), 'password')
+    await user.click(screen.getByRole('button', { name: '注册' }))
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('该邮箱已注册'))
+    expect(screen.getByText('注册管理后台')).toBeInTheDocument()
+    expect(screen.queryByText('登录管理后台')).not.toBeInTheDocument()
   })
 
   it('completes password recovery and returns to login mode without navigating', async () => {

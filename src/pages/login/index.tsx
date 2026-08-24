@@ -18,7 +18,12 @@ import { MODE, type Mode } from '@/features/auth/constant'
 import ForgotPasswordForm from '@/features/auth/components/ForgotPasswordForm'
 import LoginForm from '@/features/auth/components/LoginForm'
 import RegisterForm from '@/features/auth/components/RegisterForm'
-import { useCaptcha, useLogin } from '@/features/auth/hooks'
+import {
+  useCaptcha,
+  useLogin,
+  useRegister,
+  useSendRegisterCode,
+} from '@/features/auth/hooks'
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -38,6 +43,8 @@ export default function Login() {
   const getCredentials = useAuthor((state) => state.getCredentials)
   const { data: captchaData, refresh: refreshCaptcha } = useCaptcha()
   const { runAsync: runLogin } = useLogin()
+  const { runAsync: runRegister } = useRegister()
+  const { runAsync: runSendCode } = useSendRegisterCode()
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { account: '', password: '', remember: false, captcha: '' },
@@ -46,8 +53,8 @@ export default function Login() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
-      username: '',
-      code: '',
+      nickname: '',
+      emailCode: '',
       password: '',
       confirmPassword: '',
     },
@@ -90,10 +97,30 @@ export default function Login() {
     }
   }
 
-  const onRegisterSubmit = async (_values: RegisterValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    toast.success('注册成功，请登录')
-    setMode(MODE.LOGIN)
+  const onRegisterSubmit = async (values: RegisterValues) => {
+    try {
+      await runRegister({
+        email: values.email,
+        nickname: values.nickname,
+        password: values.password,
+        emailCode: values.emailCode,
+      })
+      toast.success('注册成功，请登录')
+      setMode(MODE.LOGIN)
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
+  }
+
+  const onSendCode = async (email: string) => {
+    try {
+      const result = await runSendCode({ email })
+      toast.success(result.message)
+      return true
+    } catch (err) {
+      toast.error((err as Error).message)
+      return false
+    }
   }
 
   const onForgotPasswordSubmit = async (_values: ForgotPasswordValues) => {
@@ -141,6 +168,7 @@ export default function Login() {
               form={registerForm}
               onSubmit={onRegisterSubmit}
               onBackToLogin={() => setMode(MODE.LOGIN)}
+              onSendCode={onSendCode}
             />
           ) : (
             <ForgotPasswordForm
