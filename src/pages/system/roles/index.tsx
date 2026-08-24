@@ -80,6 +80,7 @@ export default function Roles() {
 
   const columns = useMemo<ColumnDef<DataTableFeatures, RoleItem>[]>(
     () => [
+      { accessorKey: 'id', header: 'ID', meta: { align: 'center', width: 80 } },
       { accessorKey: 'name', header: '角色名称', meta: { width: 120 } },
       {
         accessorKey: 'roleKey',
