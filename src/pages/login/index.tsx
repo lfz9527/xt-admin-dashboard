@@ -2,9 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
+import { Moon, Sun } from 'lucide-react'
 
 import Logo from '@/components/Logo'
+import { useTheme } from '@/hooks'
 import useAuthor from '@/store/useAuthor'
+import { Button } from '@/ui/Button'
 import { toast } from '@/ui/Toast'
 import {
   Card,
@@ -36,6 +39,7 @@ import {
 export default function Login() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<Mode>(MODE.LOGIN)
+  const { theme, toggleTheme } = useTheme()
   const setToken = useAuthor((state) => state.setToken)
   const setUser = useAuthor((state) => state.setUser)
   const saveCredentials = useAuthor((state) => state.saveCredentials)
@@ -132,7 +136,16 @@ export default function Login() {
   const isRegister = mode === MODE.REGISTER
 
   return (
-    <main className='bg-muted/30 flex min-h-dvh items-center justify-center px-4 py-6 sm:py-8'>
+    <main className='bg-muted/30 relative flex min-h-dvh items-center justify-center px-4 py-6 sm:py-8'>
+      <Button
+        variant='ghost'
+        size='icon-sm'
+        aria-label='切换主题'
+        className='absolute top-4 right-4'
+        onClick={(event) => toggleTheme(event)}
+      >
+        {theme === 'dark' ? <Sun /> : <Moon />}
+      </Button>
       <Card className='w-full max-w-md gap-5 rounded-2xl py-6 shadow-xl shadow-black/5 sm:py-8'>
         <CardHeader className='items-center px-6 text-center sm:px-8'>
           <Logo />
