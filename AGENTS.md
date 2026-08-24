@@ -22,6 +22,7 @@
 
 - `pnpm dev`：启动开发服务器
 - `pnpm build`：TypeScript 构建检查并执行 Vite 生产构建
+- `pnpm compile`：TypeScript 编译与类型检查（不执行 Vite 打包）
 - `pnpm lint`：运行 ESLint
 - `pnpm lint:fix`：自动修复 ESLint 问题
 - `pnpm lint-stylelint`：检查 CSS/SCSS/Less
@@ -37,7 +38,7 @@
 - 样式优先沿用 Tailwind 与现有 CSS 变量/主题体系；修改布局或导航时检查对应组件测试与响应式表现。
 - 表单字段排列遵循必填项在前、非必填项在后的顺序；非必填字段在 `FormLabel` 上用 `showRequired={false}` 显式声明。
 - 错误边界与全局错误处理集中在 `src/components/ErrorBoundary/`，不要绕过既有错误处理直接添加全局兜底。
-- 修改行为后优先补充或更新 `test/` 中对应的 Vitest/Testing Library 测试，并至少运行相关测试与 `pnpm lint`（测试验证阶段不执行 `pnpm build`）。
+- 修改行为后优先补充或更新 `test/` 中对应的 Vitest/Testing Library 测试；测试验证阶段只需运行 `pnpm lint` 与 `pnpm compile`，不执行 `pnpm build`。
 
 ## 注意事项
 
@@ -50,4 +51,4 @@
 - UI 组件使用 Tailwind CSS v4 语义化主题变量（如 `bg-background`、`text-muted-foreground`、`border-border`、`text-destructive`），通过 `cn` 合并 className，并保持现有 `data-slot`、`data-invalid` 和 ARIA 状态约定。
 - 当需求需要使用 `src/ui/` 或 `src/components/` 下的组件时，必须先检查是否存在可复用组件；存在时优先复用，未找到时应先询问用户是否新增组件，不得直接决定实现方式。
 - 代码归属遵循「只被一个业务模块使用的代码放在对应 `src/features/<module>`；被两个及以上业务模块稳定复用后，再提升到全局目录（`src/components/`、`src/hooks/` 等）」。
-- 运行单个测试使用 `pnpm exec vitest run test/<path>.test.tsx`；修改行为后至少运行相关测试和 `pnpm lint`，不执行 `pnpm build`。
+- 运行单个测试使用 `pnpm exec vitest run test/<path>.test.tsx`；修改行为后至少运行相关测试和 `pnpm lint` 与 `pnpm compile`，不执行 `pnpm build`。
