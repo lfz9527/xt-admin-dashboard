@@ -1,5 +1,5 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react'
-import { Link, useMatches } from 'react-router'
+import { Link, useLocation, useMatches } from 'react-router'
 import { Collapse } from '@/components/Collapse'
 import {
   SidebarGroup,
@@ -34,12 +34,16 @@ function hasActiveDescendant(item: MenuItem, activeKey: string): boolean {
 type TreeProps = {
   item: MenuItem
   menuKey: string
+  pathname: string
   level: number
 }
 
-function Tree({ item, menuKey, level }: TreeProps) {
-  const { key, children = [] } = item
-  const isActive = menuKey === key
+function Tree({ item, menuKey, pathname, level }: TreeProps) {
+  const { key, children = [], path } = item
+  // 精确匹配菜单 path 才点亮背景；menuKey 仅用于展开所在分组
+  const isActive = pathname === path
+  // 子路径页面（如用户详情 /system/users/1）仅文字高亮，不点亮背景
+  const isChildActive = !!path && pathname.startsWith(`${path}/`)
   const isDefaultOpen = hasActiveDescendant(item, menuKey)
 
   const style = useMemo(
@@ -61,7 +65,10 @@ function Tree({ item, menuKey, level }: TreeProps) {
         className={cn(
           MenuItemCls,
           !isActive && MenuItemHoverCls,
-          isActive && `${MenuItemActiveCls} font-bold`
+          isActive && `${MenuItemActiveCls} font-bold`,
+          !isActive &&
+            isChildActive &&
+            'text-menu-accent-foreground hover:text-menu-accent-foreground'
         )}
       >
         <Link
@@ -109,6 +116,7 @@ function Tree({ item, menuKey, level }: TreeProps) {
               key={subItem.key}
               item={subItem}
               menuKey={menuKey}
+              pathname={pathname}
               level={level + 1}
             />
           ))}
@@ -120,6 +128,7 @@ function Tree({ item, menuKey, level }: TreeProps) {
 
 export default function Menus() {
   const matches = useMatches()
+  const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
   const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
@@ -132,6 +141,7 @@ export default function Menus() {
               key={item.key}
               item={item}
               menuKey={menuKey}
+              pathname={pathname}
               level={0}
             />
           )

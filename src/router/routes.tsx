@@ -1,4 +1,5 @@
 import { House, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { Outlet } from 'react-router'
 import type { AppRouteObject } from './types'
 import { Lazy } from '@/components/LazyImport'
 import BasicGuard from './guards/BasicGuard'
@@ -21,12 +22,32 @@ const routes: AppRouteObject[] = [
             children: [
               {
                 path: '/system/users',
-                element: Lazy(() => import('@/pages/system/users')),
+                element: <Outlet />,
                 meta: {
                   title: '用户管理',
                   menuKey: 'system-users',
                   icon: Users,
                 },
+                children: [
+                  {
+                    path: '',
+                    element: Lazy(() => import('@/pages/system/users')),
+                    meta: {
+                      title: '用户管理',
+                      menuKey: 'system-users',
+                      showInMenu: false,
+                    },
+                  },
+                  {
+                    path: ':id',
+                    element: Lazy(() => import('@/pages/system/users/detail')),
+                    meta: {
+                      title: '用户详情',
+                      menuKey: 'system-users',
+                      showInMenu: false,
+                    },
+                  },
+                ],
               },
               {
                 path: '/system/roles',

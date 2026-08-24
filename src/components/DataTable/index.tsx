@@ -176,7 +176,7 @@ function DataTable<TData extends RowData>({
       )}
       <div
         className={cn(
-          'relative rounded-md border',
+          'relative overflow-hidden rounded-md border',
           // 加载中数据可能为空（首屏/刷新），给容器最小高度保证遮罩有覆盖区域
           loading && 'min-h-50'
         )}
