@@ -19,20 +19,14 @@ type RegisterFormProps = {
   form: UseFormReturn<RegisterValues>
   onSubmit: (values: RegisterValues) => void | Promise<void>
   onBackToLogin: () => void
-}
-
-const MOCK_SEND_CODE_DELAY = 10_000 // 调试用模拟接口，等待 10 秒后返回发送成功
-
-function sendVerificationCode(email: string) {
-  return new Promise<boolean>((resolve) => {
-    setTimeout(() => resolve(Boolean(email)), MOCK_SEND_CODE_DELAY)
-  })
+  onSendCode: (email: string) => Promise<boolean>
 }
 
 export default function RegisterForm({
   form,
   onSubmit,
   onBackToLogin,
+  onSendCode,
 }: RegisterFormProps) {
   return (
     <Form
@@ -45,10 +39,10 @@ export default function RegisterForm({
       >
         <AuthField
           form={form}
-          name='username'
-          label='用户名'
-          placeholder='请输入用户名'
-          autoComplete='username'
+          name='nickname'
+          label='昵称'
+          placeholder='请输入昵称'
+          autoComplete='nickname'
         />
         <AuthField
           form={form}
@@ -59,7 +53,7 @@ export default function RegisterForm({
         />
         <FormField
           control={form.control}
-          name='code'
+          name='emailCode'
           render={({ field }) => (
             <FormItem>
               <FormLabel>验证码</FormLabel>
@@ -75,7 +69,7 @@ export default function RegisterForm({
                 <VerificationCodeButton
                   variant='outline'
                   className='h-10'
-                  onSend={() => sendVerificationCode(form.getValues('email'))}
+                  onSend={() => onSendCode(form.getValues('email'))}
                 />
               </div>
               <FormMessage />
