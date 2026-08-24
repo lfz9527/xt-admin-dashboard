@@ -1,9 +1,11 @@
 import {
+  flexRender,
   metaHelper,
   rowPaginationFeature,
   rowSortingFeature,
   tableFeatures,
   useTable,
+  type Cell,
   type Header,
   type PaginationState,
   type RowData,
@@ -88,6 +90,18 @@ function canSortColumn<TData extends RowData>(
   header: Header<DataTableFeatures, TData>
 ) {
   return header.column.columnDef.enableSorting === true
+}
+
+// 直接调用 cell 渲染函数获取渲染结果，便于空值占位判断；
+// 不可用 flexRender（其为函数时创建 React 元素，返回恒 truthy 无法判空）
+function renderCellContent<TData extends RowData, TValue>(
+  cell: Cell<DataTableFeatures, TData, TValue>
+) {
+  const def = cell.column.columnDef.cell
+  if (typeof def === 'function') {
+    return def(cell.getContext())
+  }
+  return flexRender(def, cell.getContext())
 }
 
 function DataTable<TData extends RowData>({
@@ -256,7 +270,10 @@ function DataTable<TData extends RowData>({
                             : undefined
                         }
                       >
-                        <table.FlexRender cell={cell} />
+                        {/* cell 渲染结果为 null/undefined/空字符串时展示默认占位 */}
+                        {renderCellContent(cell) || (
+                          <span className='text-muted-foreground'>-</span>
+                        )}
                       </TableCell>
                     )
                   })}

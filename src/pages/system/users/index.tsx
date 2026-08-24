@@ -141,8 +141,9 @@ export default function Users() {
         header: '登录 IP',
         meta: { align: 'center', width: 130 },
         cell: ({ getValue }) => {
+          // 空值（undefined/null/空字符串）由 DataTable 统一渲染默认占位
           const ip = getValue() as UserItem['lastLoginIp']
-          return ip ? ip : <span className='text-muted-foreground'>-</span>
+          return ip
         },
       },
       {
