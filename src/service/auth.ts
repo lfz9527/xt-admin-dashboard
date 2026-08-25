@@ -57,6 +57,23 @@ export function register(
   return http.post<{ message: string }>('/auth/register', data, { signal })
 }
 
+/** 发送重置验证码（无需鉴权），邮箱未注册也返回成功，不暴露账号是否注册 */
+export function sendResetCode(data: { email: string }, signal?: AbortSignal) {
+  return http.post<{ message: string }>('/auth/send-reset-code', data, {
+    signal,
+  })
+}
+
+/** 重置密码（无需鉴权），成功后该账号所有已登录设备被强制下线 */
+export function resetPassword(
+  data: { email: string; emailCode: string; password: string },
+  signal?: AbortSignal
+) {
+  return http.post<{ message: string }>('/auth/reset-password', data, {
+    signal,
+  })
+}
+
 /** 登出（需鉴权） */
 export function logout(signal?: AbortSignal) {
   return http.post<{ message: string }>('/auth/logout', undefined, { signal })

@@ -13,19 +13,20 @@ import { Spinner } from '@/ui/Spinner'
 import type { UseFormReturn } from 'react-hook-form'
 
 import AuthField from './AuthField'
-import sendVerificationCode from './sendVerificationCode'
 import { forgotPasswordSchema, type ForgotPasswordValues } from '../types'
 
 type ForgotPasswordFormProps = {
   form: UseFormReturn<ForgotPasswordValues>
   onSubmit: (values: ForgotPasswordValues) => void | Promise<void>
   onBackToLogin: () => void
+  onSendCode: (email: string) => Promise<boolean>
 }
 
 export default function ForgotPasswordForm({
   form,
   onSubmit,
   onBackToLogin,
+  onSendCode,
 }: ForgotPasswordFormProps) {
   return (
     <Form
@@ -61,7 +62,7 @@ export default function ForgotPasswordForm({
                 <VerificationCodeButton
                   variant='outline'
                   className='h-10'
-                  onSend={() => sendVerificationCode(form.getValues('email'))}
+                  onSend={() => onSendCode(form.getValues('email'))}
                 />
               </div>
               <FormMessage />

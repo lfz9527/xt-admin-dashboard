@@ -25,7 +25,9 @@ import {
   useCaptcha,
   useLogin,
   useRegister,
+  useResetPassword,
   useSendRegisterCode,
+  useSendResetCode,
 } from '@/features/auth/hooks'
 import {
   forgotPasswordSchema,
@@ -49,6 +51,8 @@ export default function Login() {
   const { runAsync: runLogin } = useLogin()
   const { runAsync: runRegister } = useRegister()
   const { runAsync: runSendCode } = useSendRegisterCode()
+  const { runAsync: runSendResetCode } = useSendResetCode()
+  const { runAsync: runResetPassword } = useResetPassword()
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { account: '', password: '', remember: false, captcha: '' },
@@ -127,10 +131,29 @@ export default function Login() {
     }
   }
 
-  const onForgotPasswordSubmit = async (_values: ForgotPasswordValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    toast.success('密码重置成功，请登录')
-    setMode(MODE.LOGIN)
+  const onSendResetCode = async (email: string) => {
+    try {
+      const result = await runSendResetCode({ email })
+      toast.success(result.message)
+      return true
+    } catch (err) {
+      toast.error((err as Error).message)
+      return false
+    }
+  }
+
+  const onForgotPasswordSubmit = async (values: ForgotPasswordValues) => {
+    try {
+      await runResetPassword({
+        email: values.email,
+        emailCode: values.code,
+        password: values.password,
+      })
+      toast.success('密码重置成功，请登录')
+      setMode(MODE.LOGIN)
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
   }
 
   const isRegister = mode === MODE.REGISTER
@@ -188,6 +211,7 @@ export default function Login() {
               form={forgotPasswordForm}
               onSubmit={onForgotPasswordSubmit}
               onBackToLogin={() => setMode(MODE.LOGIN)}
+              onSendCode={onSendResetCode}
             />
           )}
         </CardContent>
