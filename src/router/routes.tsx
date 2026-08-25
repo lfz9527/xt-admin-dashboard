@@ -3,6 +3,7 @@ import { Outlet } from 'react-router'
 import type { AppRouteObject } from './types'
 import { Lazy } from '@/components/LazyImport'
 import BasicGuard from './guards/BasicGuard'
+import PermissionGuard from './guards/PermissionGuard'
 import Layout from '@/layout'
 
 const routes: AppRouteObject[] = [
@@ -10,53 +11,64 @@ const routes: AppRouteObject[] = [
     element: <BasicGuard />,
     children: [
       {
-        element: <Layout />,
+        element: <PermissionGuard />,
         children: [
           {
-            path: '/',
-            element: Lazy(() => import('@/pages/home')),
-            meta: { title: '首页', menuKey: 'home', icon: House },
-          },
-          {
-            meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
+            element: <Layout />,
             children: [
               {
-                path: '/system/users',
-                element: <Outlet />,
-                meta: {
-                  title: '用户管理',
-                  menuKey: 'system-users',
-                  icon: Users,
-                },
+                path: '/',
+                element: Lazy(() => import('@/pages/home')),
+                meta: { title: '首页', menuKey: 'home', icon: House },
+              },
+              {
+                meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
                 children: [
                   {
-                    path: '',
-                    element: Lazy(() => import('@/pages/system/users')),
+                    path: '/system/users',
+                    element: <Outlet />,
                     meta: {
                       title: '用户管理',
                       menuKey: 'system-users',
-                      showInMenu: false,
+                      icon: Users,
+                      // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
+                      permission: 'admin',
                     },
+                    children: [
+                      {
+                        path: '',
+                        element: Lazy(() => import('@/pages/system/users')),
+                        meta: {
+                          title: '用户管理',
+                          menuKey: 'system-users',
+                          showInMenu: false,
+                        },
+                      },
+                      {
+                        path: ':id',
+                        element: Lazy(
+                          () => import('@/pages/system/users/detail')
+                        ),
+                        meta: {
+                          title: '用户详情',
+                          menuKey: 'system-users',
+                          showInMenu: false,
+                        },
+                      },
+                    ],
                   },
                   {
-                    path: ':id',
-                    element: Lazy(() => import('@/pages/system/users/detail')),
+                    path: '/system/roles',
+                    element: Lazy(() => import('@/pages/system/roles')),
                     meta: {
-                      title: '用户详情',
-                      menuKey: 'system-users',
-                      showInMenu: false,
+                      title: '角色管理',
+                      menuKey: 'system-roles',
+                      icon: ShieldCheck,
+                      // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
+                      permission: 'admin',
                     },
                   },
                 ],
-              },
-              {
-                path: '/system/roles',
-                element: Lazy(() => import('@/pages/system/roles')),
-                meta: {
-                  title: '角色管理',
-                  menuKey: 'system-roles',
-                  icon: ShieldCheck,
-                },
               },
             ],
           },
