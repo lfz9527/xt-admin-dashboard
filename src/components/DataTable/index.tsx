@@ -1,4 +1,5 @@
 import {
+  columnPinningFeature,
   flexRender,
   metaHelper,
   rowPaginationFeature,
@@ -53,6 +54,7 @@ import type { DataTableProps } from './types'
 const features = tableFeatures({
   rowSortingFeature,
   rowPaginationFeature,
+  columnPinningFeature,
   columnMeta: metaHelper<{
     align?: 'left' | 'center' | 'right'
     width?: number | string
@@ -117,6 +119,7 @@ function DataTable<TData extends RowData>({
   pageSizeOptions = [10, 20, 50, 100],
   sorting,
   onSortingChange,
+  frozenColumns,
   className,
   style,
 }: DataTableProps<TData>) {
@@ -142,6 +145,10 @@ function DataTable<TData extends RowData>({
         pagination: pagination
           ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
           : { pageIndex: 0, pageSize: 10 },
+        columnPinning: {
+          start: frozenColumns?.start ?? [],
+          end: frozenColumns?.end ?? [],
+        },
       },
       onSortingChange: (updater) => {
         const next =
@@ -156,8 +163,40 @@ function DataTable<TData extends RowData>({
         pagination?.onChange(next.pageIndex + 1, next.pageSize)
       },
     },
-    (state) => ({ sorting: state.sorting, pagination: state.pagination })
+    (state) => ({
+      sorting: state.sorting,
+      pagination: state.pagination,
+      columnPinning: state.columnPinning,
+    })
   )
+
+  // 冻结列 sticky 偏移：start 区从左到右、end 区从右到左累加列宽；
+  // 宽度取 meta.width，仅累加 number 类型（string 宽度无法精确求和）
+  const pinnedOffsets: Record<string, { left?: number; right?: number }> = {}
+  let startWidth = 0
+  for (const col of table.getStartVisibleLeafColumns()) {
+    pinnedOffsets[col.id] = { left: startWidth }
+    const width = col.columnDef.meta?.width
+    if (typeof width === 'number') startWidth += width
+  }
+  let endWidth = 0
+  for (const col of [...table.getEndVisibleLeafColumns()].reverse()) {
+    pinnedOffsets[col.id] = { ...pinnedOffsets[col.id], right: endWidth }
+    const width = col.columnDef.meta?.width
+    if (typeof width === 'number') endWidth += width
+  }
+
+  // 冻结单元格定位样式：position sticky + 偏移 + z-index（盖住滚动经过的普通单元格）
+  const getPinnedStyle = (columnId: string) => {
+    const offset = pinnedOffsets[columnId]
+    if (!offset) return undefined
+    return {
+      position: 'sticky' as const,
+      zIndex: 10,
+      left: offset.left,
+      right: offset.right,
+    }
+  }
 
   return (
     <div
@@ -202,18 +241,21 @@ function DataTable<TData extends RowData>({
                 {headerGroup.headers.map((header) => {
                   const meta = header.column.columnDef.meta
                   const canSort = canSortColumn(header)
+                  const pinnedStyle = getPinnedStyle(header.column.id)
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(
                         alignClassMap[meta?.align ?? 'left'],
-                        canSort && 'cursor-pointer select-none'
+                        canSort && 'cursor-pointer select-none',
+                        // 冻结列需要不透明背景，避免横向滚动时透出被覆盖列的内容
+                        pinnedStyle && 'bg-background'
                       )}
-                      style={
-                        meta?.width !== undefined
-                          ? { width: meta.width }
-                          : undefined
-                      }
+                      style={{
+                        width:
+                          meta?.width !== undefined ? meta.width : undefined,
+                        ...pinnedStyle,
+                      }}
                       onClick={
                         canSort
                           ? header.column.getToggleSortingHandler()
@@ -260,15 +302,19 @@ function DataTable<TData extends RowData>({
                 <TableRow key={row.id}>
                   {row.getAllCells().map((cell) => {
                     const meta = cell.column.columnDef.meta
+                    const pinnedStyle = getPinnedStyle(cell.column.id)
                     return (
                       <TableCell
                         key={cell.id}
-                        className={alignClassMap[meta?.align ?? 'left']}
-                        style={
-                          meta?.width !== undefined
-                            ? { width: meta.width }
-                            : undefined
-                        }
+                        className={cn(
+                          alignClassMap[meta?.align ?? 'left'],
+                          pinnedStyle && 'bg-background'
+                        )}
+                        style={{
+                          width:
+                            meta?.width !== undefined ? meta.width : undefined,
+                          ...pinnedStyle,
+                        }}
                       >
                         {/* cell 渲染结果为 null/undefined/空字符串时展示默认占位 */}
                         {renderCellContent(cell) || (

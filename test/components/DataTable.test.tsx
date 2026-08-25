@@ -405,3 +405,102 @@ describe('DataTable 排序', () => {
     expect(onSortingChange).not.toHaveBeenCalled()
   })
 })
+
+describe('DataTable 冻结列', () => {
+  // 冻结列偏移依赖 number 类型 meta.width，此处显式配置以验证累加
+  const frozenColumns: ColumnDef<DataTableFeatures, User>[] = [
+    { accessorKey: 'name', header: '姓名', meta: { width: 120 } },
+    { accessorKey: 'age', header: '年龄', meta: { width: 100 } },
+    {
+      id: 'action',
+      header: '操作',
+      cell: ({ row }) => `操作-${row.original.name}`,
+    },
+  ]
+
+  it('start 冻结列表头与单元格带 sticky 定位与背景色', () => {
+    const { container } = render(
+      <DataTable
+        columns={frozenColumns}
+        data={users}
+        rowKey='id'
+        frozenColumns={{ start: ['name'] }}
+      />
+    )
+    const nameTh = container.querySelector('th:nth-child(1)')
+    expect(nameTh).toHaveStyle({
+      position: 'sticky',
+      left: '0px',
+      zIndex: '10',
+    })
+    expect(nameTh).toHaveClass('bg-background')
+    const nameTd = container.querySelector('tbody td:nth-child(1)')
+    expect(nameTd).toHaveStyle({ position: 'sticky', left: '0px' })
+    expect(nameTd).toHaveClass('bg-background')
+    // 未冻结列不带 sticky 定位
+    const ageTh = container.querySelector('th:nth-child(2)')
+    expect(ageTh).not.toHaveStyle({ position: 'sticky' })
+  })
+
+  it('左侧多列冻结时偏移累加前列宽度', () => {
+    const { container } = render(
+      <DataTable
+        columns={frozenColumns}
+        data={users}
+        rowKey='id'
+        frozenColumns={{ start: ['name', 'age'] }}
+      />
+    )
+    const nameTh = container.querySelector('th:nth-child(1)')
+    expect(nameTh).toHaveStyle({ left: '0px' })
+    const ageTh = container.querySelector('th:nth-child(2)')
+    expect(ageTh).toHaveStyle({ left: '120px' })
+    const ageTd = container.querySelector('tbody td:nth-child(2)')
+    expect(ageTd).toHaveStyle({ left: '120px' })
+  })
+
+  it('end 多列冻结时偏移从右往左累加', () => {
+    const { container } = render(
+      <DataTable
+        columns={frozenColumns}
+        data={users}
+        rowKey='id'
+        frozenColumns={{ end: ['name', 'age'] }}
+      />
+    )
+    // end 冻结列被移到表格末尾，DOM 列序变为 [action, name, age]
+    const ageTh = container.querySelector('th:nth-child(3)')
+    expect(ageTh).toHaveStyle({ position: 'sticky', right: '0px' })
+    const nameTh = container.querySelector('th:nth-child(2)')
+    expect(nameTh).toHaveStyle({ right: '100px' })
+  })
+
+  it('start 与 end 冻结列可同时配置', () => {
+    const { container } = render(
+      <DataTable
+        columns={frozenColumns}
+        data={users}
+        rowKey='id'
+        frozenColumns={{ start: ['name'], end: ['action'] }}
+      />
+    )
+    // start 列移到最前、end 列移到末尾，DOM 列序为 [name, age, action]
+    const nameTh = container.querySelector('th:nth-child(1)')
+    expect(nameTh).toHaveStyle({ position: 'sticky', left: '0px' })
+    const actionTh = container.querySelector('th:nth-child(3)')
+    expect(actionTh).toHaveStyle({ position: 'sticky', right: '0px' })
+  })
+
+  it('未配置 frozenColumns 时无 sticky 定位', () => {
+    const { container } = render(
+      <DataTable
+        columns={frozenColumns}
+        data={users}
+        rowKey='id'
+      />
+    )
+    expect(container.querySelector('[data-slot=table-head]')).not.toHaveStyle({
+      position: 'sticky',
+    })
+  })
+})

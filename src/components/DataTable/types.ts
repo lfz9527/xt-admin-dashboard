@@ -40,6 +40,8 @@ export type DataTableProps<TData extends RowData = Global.AnyObj> = {
   sorting?: SortingState
   /** 排序变化回调，由调用方更新状态并重新拉取数据 */
   onSortingChange?: (sorting: SortingState) => void
+  /** 冻结列配置：start 为左侧冻结列 id 列表，end 为右侧冻结列 id 列表；冻结列需配置 number 类型的 meta.width 以保证偏移计算 */
+  frozenColumns?: { start?: string[]; end?: string[] }
   className?: string
   style?: CSSProperties
 }
