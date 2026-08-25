@@ -15,6 +15,7 @@
   - `src/styles/`：全局、Tailwind 与主题样式
   - `test/`：Vitest 测试
   - `vite.config/`：Vite 配置与插件
+- 后端接口文档（前端对接用）：`../nest-practices/api-docs.md`
 
 ## 常用命令
 
