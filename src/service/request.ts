@@ -61,5 +61,6 @@ http.interceptors.error.use(async (err: HttpError) => {
 export function authLogout() {
   useAuthor.getState().setToken('')
   useAuthor.getState().setUser(null)
+  useAuthor.getState().setRoleKey(null)
   router.navigate('/login', { replace: true })
 }
