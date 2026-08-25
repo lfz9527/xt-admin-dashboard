@@ -9,7 +9,7 @@ describe('Collapse', () => {
 
   it('默认收起，content 不可见', () => {
     render(<Collapse title='标题A'>内容A</Collapse>)
-    expect(screen.queryByText('内容A')).not.toBeInTheDocument()
+    expect(screen.getByText('内容A')).not.toBeVisible()
   })
 
   it('点击 title 展开，content 可见', () => {
@@ -22,7 +22,7 @@ describe('Collapse', () => {
     render(<Collapse title='标题A'>内容A</Collapse>)
     fireEvent.click(screen.getByText('标题A'))
     fireEvent.click(screen.getByText('标题A'))
-    expect(screen.queryByText('内容A')).not.toBeInTheDocument()
+    expect(screen.getByText('内容A')).not.toBeVisible()
   })
 
   it('defaultOpen 初始展开', () => {
@@ -46,7 +46,7 @@ describe('Collapse', () => {
         内容A
       </Collapse>
     )
-    expect(screen.queryByText('内容A')).not.toBeInTheDocument()
+    expect(screen.getByText('内容A')).not.toBeVisible()
 
     rerender(
       <Collapse
@@ -84,7 +84,7 @@ describe('Collapse', () => {
       </Collapse>
     )
     fireEvent.click(screen.getByText('标题A'))
-    expect(screen.queryByText('内容A')).not.toBeInTheDocument()
+    expect(screen.getByText('内容A')).not.toBeVisible()
   })
 
   it('disabled + defaultOpen 禁止收起', () => {

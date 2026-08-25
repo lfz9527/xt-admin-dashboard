@@ -22,30 +22,24 @@ const findRoute = (
 }
 
 describe('application routes', () => {
-  it('nests hidden user detail under the users route with a relative path', () => {
-    const system = findRoute(routes, (route) => route.path === '/system')
-    const users = system?.children?.find((route) => route.path === 'users')
+  it('nests hidden user detail under the users route', () => {
+    const users = findRoute(routes, (route) => route.path === '/system/users')
     const detail = users?.children?.find((route) => route.path === ':id')
 
     expect(detail).toBeDefined()
     expect(detail?.path).toBe(':id')
     expect(detail?.meta).toEqual({
+      title: '用户详情',
       menuKey: 'system-users',
       showInMenu: false,
     })
     expect(detail?.element).toBeDefined()
   })
 
-  it('nests role detail under the roles route and keeps it hidden from menus', () => {
-    const system = findRoute(routes, (route) => route.path === '/system')
-    const roles = system?.children?.find((route) => route.path === 'roles')
-    const detail = roles?.children?.find((route) => route.path === 'detail')
+  it('keeps roles route as a leaf without a hidden detail route', () => {
+    const roles = findRoute(routes, (route) => route.path === '/system/roles')
 
-    expect(detail?.meta).toEqual({
-      title: '角色管理详情',
-      menuKey: 'system-roles',
-      showInMenu: false,
-    })
+    expect(roles?.children).toBeUndefined()
   })
 
   it('does not expose standalone registration or recovery routes', () => {

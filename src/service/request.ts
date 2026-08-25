@@ -1,7 +1,6 @@
 import { HttpClient } from './http'
 import type { HttpError, HttpResponse } from './http/types'
 import useAuthor from '@/store/useAuthor'
-import router from '@/router'
 
 export type BusResponse<T = unknown> = {
   code: number
@@ -62,5 +61,8 @@ export function authLogout() {
   useAuthor.getState().setToken('')
   useAuthor.getState().setUser(null)
   useAuthor.getState().setRoleKey(null)
-  router.navigate('/login', { replace: true })
+  // 动态导入：顶层静态导入会与 router/routes/页面组件形成加载期循环依赖
+  import('@/router').then(({ default: router }) => {
+    router.navigate('/login', { replace: true })
+  })
 }

@@ -109,7 +109,7 @@ describe('useMenuBreadcrumb', () => {
     )
 
     expect(result.current).toEqual([
-      { label: '系统管理', href: '/system' },
+      { label: '系统管理', href: undefined },
       { label: '用户管理', href: '/system/users' },
       { label: '123', href: undefined },
     ])
@@ -126,7 +126,7 @@ describe('useMenuBreadcrumb', () => {
     )
 
     expect(result.current).toEqual([
-      { label: '系统管理', href: '/system' },
+      { label: '系统管理', href: undefined },
       { label: '角色管理', href: '/system/roles' },
       { label: '角色管理详情', href: undefined },
     ])

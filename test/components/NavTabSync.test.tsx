@@ -7,7 +7,39 @@ vi.hoisted(() => {
   }
 })
 
+const userInfo = vi.hoisted(() => ({
+  id: '1',
+  nickname: 'admin',
+  email: 'admin@example.com',
+  avatar: '',
+  gender: 0,
+  status: 0,
+  lastLoginTime: null,
+  roleId: 1,
+  role: { id: 1, name: '管理员', roleKey: 'admin' },
+  createdAt: '2026-08-01T06:00:00.000Z',
+  updatedAt: '2026-08-01T06:00:00.000Z',
+}))
+
+vi.mock('@/service/users', () => ({
+  getUserInfo: vi.fn().mockResolvedValue({ data: userInfo }),
+  getUsers: vi.fn().mockResolvedValue({ data: { list: [], total: 0 } }),
+  getUser: vi.fn().mockResolvedValue({ data: userInfo }),
+  createUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  updateUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  deleteUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+}))
+
+vi.mock('@/service/roles', () => ({
+  getRoles: vi.fn().mockResolvedValue({ data: { list: [], total: 0 } }),
+  getRole: vi.fn().mockResolvedValue({ data: null }),
+  createRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  updateRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  deleteRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+}))
+
 beforeEach(() => {
+  localStorage.clear()
   if (!window.ResizeObserver) {
     window.ResizeObserver = class {
       observe() {}
@@ -18,7 +50,7 @@ beforeEach(() => {
   if (!Element.prototype.getAnimations) {
     Element.prototype.getAnimations = () => []
   }
-  useAuthor.setState({ token: 'test-token' })
+  useAuthor.setState({ token: 'test-token', roleKey: 'admin' })
 })
 
 import { act, render, waitFor } from '@testing-library/react'
@@ -57,15 +89,13 @@ describe('NavTabSync', () => {
     expect(tabItem('/')?.getAttribute('data-active')).toBe('true')
 
     await act(async () => {
-      await router.navigate('/dashboard/overview')
+      await router.navigate('/system/users')
     })
 
     await waitFor(() => {
-      expect(tabItem('/dashboard/overview')?.textContent).toContain('概览')
+      expect(tabItem('/system/users')?.textContent).toContain('用户管理')
     })
-    expect(tabItem('/dashboard/overview')?.getAttribute('data-active')).toBe(
-      'true'
-    )
+    expect(tabItem('/system/users')?.getAttribute('data-active')).toBe('true')
     expect(tabItem('/')?.getAttribute('data-active')).toBe('false')
   })
 
@@ -115,10 +145,10 @@ describe('NavTabSync', () => {
       expect(tabItem('/')).not.toBeNull()
     })
     await act(async () => {
-      await router.navigate('/dashboard/analytics')
+      await router.navigate('/system/roles')
     })
     await waitFor(() => {
-      expect(tabItem('/dashboard/analytics')?.textContent).toContain('分析')
+      expect(tabItem('/system/roles')?.textContent).toContain('角色管理')
     })
 
     const homeTab = tabItem('/')

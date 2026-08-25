@@ -18,6 +18,7 @@ function sizeToStyle(size: number | string) {
 export default function Loading({ className, size = 24, ...props }: Props) {
   return (
     <div
+      role='status'
       className={cn('flex-center text-primary relative', className)}
       style={{ ...sizeToStyle(size), ...props.style }}
       {...props}
