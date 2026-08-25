@@ -138,7 +138,7 @@ export default function Users() {
       },
       {
         accessorKey: 'lastLoginIp',
-        header: '登录 IP',
+        header: '最后登录IP',
         meta: { align: 'center', width: 130 },
         cell: ({ getValue }) => {
           // 空值（undefined/null/空字符串）由 DataTable 统一渲染默认占位
@@ -207,6 +207,7 @@ export default function Users() {
         )}
         onRefresh={refresh}
         loading={loading}
+        frozenColumns={{ end: ['actions'] }}
         empty={
           error ? (
             <span className='text-destructive text-sm'>{error.message}</span>

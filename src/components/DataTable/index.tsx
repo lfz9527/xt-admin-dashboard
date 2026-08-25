@@ -246,6 +246,7 @@ function DataTable<TData extends RowData>({
                     <TableHead
                       key={header.id}
                       className={cn(
+                        'whitespace-nowrap',
                         alignClassMap[meta?.align ?? 'left'],
                         canSort && 'cursor-pointer select-none',
                         // 冻结列需要不透明背景，避免横向滚动时透出被覆盖列的内容

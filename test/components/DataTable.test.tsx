@@ -145,6 +145,19 @@ describe('DataTable', () => {
     expect(th).toHaveClass('text-center')
     expect(th).toHaveStyle({ width: '100px' })
   })
+
+  it('表头单元格不换行', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+      />
+    )
+    expect(container.querySelector('[data-slot=table-head]')).toHaveClass(
+      'whitespace-nowrap'
+    )
+  })
 })
 
 describe('DataTable 加载态与空态', () => {
