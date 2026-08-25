@@ -411,6 +411,39 @@ describe('LoginFeature', () => {
     expect(useAuthor.getState().user).toEqual(mockUser)
   })
 
+  it('trims whitespace from inputs before submit', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => expect(getCaptchaMock).toHaveBeenCalled())
+
+    await user.type(
+      screen.getByLabelText(/账号\/邮箱/),
+      '  admin@example.com  '
+    )
+    await user.type(screen.getByLabelText('密码'), '  password  ')
+    await user.type(screen.getByLabelText('验证码'), ' 1234 ')
+    await user.click(screen.getByRole('button', { name: '登录' }))
+
+    await waitFor(
+      () => expect(navigate).toHaveBeenCalledWith('/', { replace: true }),
+      { timeout: 2000 }
+    )
+    expect(loginMock).toHaveBeenCalledWith(
+      {
+        email: 'admin@example.com',
+        password: 'password',
+        captchaId: 'mock-captcha-id',
+        captchaCode: '1234',
+      },
+      expect.any(AbortSignal)
+    )
+  })
+
   it('shows error and does not navigate when login fails', async () => {
     const user = userEvent.setup()
     loginMock.mockRejectedValue(new Error('验证码错误或已过期'))

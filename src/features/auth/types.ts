@@ -1,19 +1,22 @@
 import { z } from 'zod'
 
 export const loginSchema = z.object({
-  account: z.string().min(1, '请输入账号或邮箱'),
-  password: z.string().min(1, '请输入密码'),
+  account: z.string().trim().min(1, '请输入账号或邮箱'),
+  password: z.string().trim().min(1, '请输入密码'),
   remember: z.boolean(),
-  captcha: z.string().min(1, '请输入验证码'),
+  captcha: z.string().trim().min(1, '请输入验证码'),
 })
 
 export const registerSchema = z
   .object({
-    email: z.email('请输入有效的邮箱'),
-    nickname: z.string().min(1, '请输入昵称'),
-    emailCode: z.string().regex(/^\d{6}$/, '请输入 6 位数字验证码'),
-    password: z.string().min(6, '密码最少 6 个字符'),
-    confirmPassword: z.string().min(1, '请确认密码'),
+    email: z.string().trim().pipe(z.email('请输入有效的邮箱')),
+    nickname: z.string().trim().min(1, '请输入昵称'),
+    emailCode: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, '请输入 6 位数字验证码'),
+    password: z.string().trim().min(6, '密码最少 6 个字符'),
+    confirmPassword: z.string().trim().min(1, '请确认密码'),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ['confirmPassword'],
@@ -22,10 +25,13 @@ export const registerSchema = z
 
 export const forgotPasswordSchema = z
   .object({
-    email: z.email('请输入有效的邮箱'),
-    code: z.string().regex(/^\d{6}$/, '请输入 6 位数字验证码'),
-    password: z.string().min(6, '密码最少 6 个字符'),
-    confirmPassword: z.string().min(1, '请确认密码'),
+    email: z.string().trim().pipe(z.email('请输入有效的邮箱')),
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, '请输入 6 位数字验证码'),
+    password: z.string().trim().min(6, '密码最少 6 个字符'),
+    confirmPassword: z.string().trim().min(1, '请确认密码'),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ['confirmPassword'],
