@@ -113,3 +113,11 @@ export function updateUser(data: UpdateUserParams, signal?: AbortSignal) {
 export function deleteUser(id: number, signal?: AbortSignal) {
   return http.post<null>('/users/delete', { id }, { signal })
 }
+
+/** 当前登录用户完整信息（含角色），结构同用户列表项 */
+export type UserInfo = UserItem
+
+/** 获取当前登录用户信息（需鉴权） */
+export function getUserInfo(signal?: AbortSignal) {
+  return http.get<UserInfo>('/users/me', { signal })
+}

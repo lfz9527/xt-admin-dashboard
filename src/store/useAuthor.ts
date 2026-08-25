@@ -9,6 +9,7 @@ import { logger } from './middleware/logger'
 type State = {
   token: string | number
   user: AuthUser | null
+  roleKey: string | null
   account: string
   encryptedPassword: string
   remember: boolean
@@ -17,6 +18,7 @@ type State = {
 type Action = {
   setToken: (token: State['token']) => void
   setUser: (user: AuthUser | null) => void
+  setRoleKey: (roleKey: string | null) => void
   saveCredentials: (account: string, password: string) => Promise<void>
   clearCredentials: () => void
   getCredentials: () => Promise<
@@ -34,6 +36,7 @@ const useAuthor = create<State & Action>()(
         (set, get) => ({
           token: '',
           user: null,
+          roleKey: null,
           account: '',
           encryptedPassword: '',
           remember: false,
@@ -42,6 +45,9 @@ const useAuthor = create<State & Action>()(
           },
           setUser: (user: AuthUser | null) => {
             set({ user })
+          },
+          setRoleKey: (roleKey: string | null) => {
+            set({ roleKey })
           },
           saveCredentials: async (account, password) => {
             const encryptedPassword = await encryptionManager.encrypt(password)
