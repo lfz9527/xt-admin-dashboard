@@ -100,7 +100,7 @@ describe('Roles page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateRole).toHaveBeenCalledWith(
-        { id: '1', name: '管理员', status: 1 },
+        { id: 1, name: '管理员', status: 1 },
         expect.any(AbortSignal)
       )
     })
@@ -225,7 +225,7 @@ describe('Roles page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateRole).toHaveBeenCalledWith(
-        { id: '1', name: '超级管理员', status: 0, remark: '系统内置角色' },
+        { id: 1, name: '超级管理员', status: 0, remark: '系统内置角色' },
         expect.any(AbortSignal)
       )
     })
@@ -251,10 +251,7 @@ describe('Roles page', () => {
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteRole).toHaveBeenCalledWith(
-        '1',
-        expect.any(AbortSignal)
-      )
+      expect(mockedDeleteRole).toHaveBeenCalledWith(1, expect.any(AbortSignal))
     })
     await waitFor(() => {
       expect(mockedGetRoles).toHaveBeenLastCalledWith(

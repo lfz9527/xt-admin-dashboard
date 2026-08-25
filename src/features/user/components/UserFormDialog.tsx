@@ -112,13 +112,13 @@ export default function UserFormDialog({
   async function onSubmit(values: UserFormValues) {
     try {
       if (isEdit) {
-        // 编辑不允许修改密码；角色必填，校验已保证非空
+        // 编辑不允许修改密码；角色必填，校验已保证非空；后端 DTO 校验 id/roleId 必须为数字
         await updateAsync({
-          id: user.id,
+          id: Number(user.id),
           nickname: values.nickname,
           email: values.email,
           gender: values.gender,
-          roleId: values.roleId ?? undefined,
+          roleId: values.roleId == null ? undefined : Number(values.roleId),
           status: values.status,
         })
         toast.success('保存成功')
@@ -128,7 +128,7 @@ export default function UserFormDialog({
           email: values.email,
           password: values.password,
           gender: values.gender,
-          roleId: values.roleId ?? undefined,
+          roleId: values.roleId == null ? undefined : Number(values.roleId),
           status: values.status,
         })
         toast.success('创建成功')

@@ -46,7 +46,8 @@ export type CreateRoleParams = {
 }
 
 export type UpdateRoleParams = {
-  id: string
+  /** 角色 ID（后端 DTO 校验为数字，列表返回的字符串 id 需转换） */
+  id: number
   /** 角色名称，1-30 字符 */
   name: string
   status?: number
@@ -74,7 +75,7 @@ export function updateRole(data: UpdateRoleParams, signal?: AbortSignal) {
   return http.post<RoleItem>('/roles/update', data, { signal })
 }
 
-/** 删除角色（需鉴权；软删除；网关限制，POST 路径实现） */
-export function deleteRole(id: string, signal?: AbortSignal) {
+/** 删除角色（需鉴权；软删除；网关限制，POST 路径实现；后端 DTO 校验 id 必须为数字） */
+export function deleteRole(id: number, signal?: AbortSignal) {
   return http.post<null>('/roles/delete', { id }, { signal })
 }

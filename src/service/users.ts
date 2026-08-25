@@ -65,15 +65,15 @@ export type CreateUserParams = {
   gender?: number
   /** 备注，最长 255 字符 */
   remark?: string
-  /** 角色 ID，不传则无角色 */
-  roleId?: string
+  /** 角色 ID，不传则无角色（后端 DTO 校验为数字，列表返回的字符串 id 需转换） */
+  roleId?: number
   /** 账号状态：0=正常 1=停用，默认 0 */
   status?: number
 }
 
 export type UpdateUserParams = {
-  /** 用户 ID */
-  id: string
+  /** 用户 ID（后端 DTO 校验为数字，列表返回的字符串 id 需转换） */
+  id: number
   /** 昵称，最长 30 字符 */
   nickname?: string
   /** 邮箱，最长 100 字符 */
@@ -84,8 +84,8 @@ export type UpdateUserParams = {
   gender?: number
   /** 备注，最长 255 字符 */
   remark?: string
-  /** 角色 ID，不传保留原值 */
-  roleId?: string
+  /** 角色 ID，不传保留原值（后端 DTO 校验为数字，列表返回的字符串 id 需转换） */
+  roleId?: number
   /** 账号状态：0=正常 1=停用，不传保留原值 */
   status?: number
 }
@@ -110,8 +110,8 @@ export function updateUser(data: UpdateUserParams, signal?: AbortSignal) {
   return http.post<UserItem>('/users/update', data, { signal })
 }
 
-/** 删除用户（需鉴权；软删除；网关限制，POST 路径实现） */
-export function deleteUser(id: string, signal?: AbortSignal) {
+/** 删除用户（需鉴权；软删除；网关限制，POST 路径实现；后端 DTO 校验 id 必须为数字） */
+export function deleteUser(id: number, signal?: AbortSignal) {
   return http.post<null>('/users/delete', { id }, { signal })
 }
 

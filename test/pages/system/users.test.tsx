@@ -159,7 +159,7 @@ describe('Users page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateUser).toHaveBeenCalledWith(
-        { id: '1', status: 1 },
+        { id: 1, status: 1 },
         expect.any(AbortSignal)
       )
     })
@@ -229,7 +229,7 @@ describe('Users page', () => {
           email: 'test@example.com',
           password: '123456',
           gender: 2,
-          roleId: '2',
+          roleId: 2,
           status: 0,
         },
         expect.any(AbortSignal)
@@ -289,11 +289,11 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(mockedUpdateUser).toHaveBeenCalledWith(
         {
-          id: '1',
+          id: 1,
           nickname: '超级管理员',
           email: '123456@qq.com',
           gender: 0,
-          roleId: '1',
+          roleId: 1,
           status: 0,
         },
         expect.any(AbortSignal)
@@ -336,10 +336,7 @@ describe('Users page', () => {
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteUser).toHaveBeenCalledWith(
-        '1',
-        expect.any(AbortSignal)
-      )
+      expect(mockedDeleteUser).toHaveBeenCalledWith(1, expect.any(AbortSignal))
     })
     await waitFor(() => {
       expect(mockedGetUsers).toHaveBeenLastCalledWith(

@@ -50,8 +50,9 @@ export default function Roles() {
       applyStatus(nextStatus)
       setSwitchingId(role.id)
       try {
+        // 后端更新接口 DTO 校验 id 必须为数字，列表返回的字符串 id 需转换
         await updateStatusAsync({
-          id: role.id,
+          id: Number(role.id),
           name: role.name,
           status: nextStatus,
         })
