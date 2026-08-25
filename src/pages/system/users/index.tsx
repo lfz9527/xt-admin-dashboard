@@ -53,9 +53,8 @@ export default function Users() {
       applyStatus(nextStatus)
       setSwitchingId(user.id)
       try {
-        // 列表返回的 id 为字符串，需转数字
         await updateStatusAsync({
-          id: Number(user.id),
+          id: user.id,
           status: nextStatus,
         })
         toast.success('状态更新成功')

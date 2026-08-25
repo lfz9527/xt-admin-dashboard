@@ -91,9 +91,9 @@ export default function RoleFormDialog({
   async function onSubmit(values: CreateRoleValues) {
     try {
       if (isEdit) {
-        // roleKey 创建后不可修改，更新不传该字段；列表返回的 id 为字符串，需转数字
+        // roleKey 创建后不可修改，更新不传该字段
         await updateAsync({
-          id: Number(role.id),
+          id: role.id,
           name: values.name,
           status: values.status,
           remark: values.remark,

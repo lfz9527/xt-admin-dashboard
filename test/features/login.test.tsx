@@ -35,13 +35,17 @@ vi.mock('@/service/auth', () => ({
 }))
 
 const mockUser = {
-  id: 1,
+  id: '1',
   nickname: 'admin',
   email: 'admin@example.com',
   avatar: '',
   gender: 0,
   status: 0,
   lastLoginTime: null,
+  roleId: null,
+  role: null,
+  createdAt: '2026-08-01T06:00:00.000Z',
+  updatedAt: '2026-08-01T06:00:00.000Z',
 }
 
 describe('LoginFeature', () => {

@@ -50,9 +50,8 @@ export default function Roles() {
       applyStatus(nextStatus)
       setSwitchingId(role.id)
       try {
-        // 列表返回的 id 为字符串，需转数字
         await updateStatusAsync({
-          id: Number(role.id),
+          id: role.id,
           name: role.name,
           status: nextStatus,
         })

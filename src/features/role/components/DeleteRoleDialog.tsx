@@ -32,8 +32,7 @@ export default function DeleteRoleDialog({
   async function onConfirm() {
     if (!role) return
     try {
-      // 列表返回的 id 为字符串，需转数字
-      await runAsync(Number(role.id))
+      await runAsync(role.id)
       toast.success('删除成功')
       onOpenChange(false)
       onSuccess()

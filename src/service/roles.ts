@@ -2,7 +2,8 @@ import { http } from './request'
 
 /** 角色项 */
 export type RoleItem = {
-  id: number
+  /** 角色 ID（后端 bigint 字段，运行时返回字符串） */
+  id: string
   /** 角色名称 */
   name: string
   /** 角色编码（唯一，创建后不可修改） */
@@ -45,7 +46,7 @@ export type CreateRoleParams = {
 }
 
 export type UpdateRoleParams = {
-  id: number
+  id: string
   /** 角色名称，1-30 字符 */
   name: string
   status?: number
@@ -59,7 +60,7 @@ export function getRoles(params: RoleListParams, signal?: AbortSignal) {
 }
 
 /** 角色详情（需鉴权） */
-export function getRole(id: number, signal?: AbortSignal) {
+export function getRole(id: string, signal?: AbortSignal) {
   return http.get<RoleItem>(`/roles/${id}`, { signal })
 }
 
@@ -74,6 +75,6 @@ export function updateRole(data: UpdateRoleParams, signal?: AbortSignal) {
 }
 
 /** 删除角色（需鉴权；软删除；网关限制，POST 路径实现） */
-export function deleteRole(id: number, signal?: AbortSignal) {
+export function deleteRole(id: string, signal?: AbortSignal) {
   return http.post<null>('/roles/delete', { id }, { signal })
 }

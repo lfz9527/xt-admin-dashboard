@@ -31,8 +31,7 @@ const mockedDeleteRole = vi.mocked(deleteRole)
 
 const roleList: RoleListResult['list'] = [
   {
-    // 后端列表返回字符串 id，接口入参需转数字
-    id: '1' as unknown as number,
+    id: '1',
     name: '管理员',
     roleKey: 'admin',
     status: 0,
@@ -42,7 +41,7 @@ const roleList: RoleListResult['list'] = [
     updatedAt: '2026-08-01T08:30:00.000Z',
   },
   {
-    id: '2' as unknown as number,
+    id: '2',
     name: '运营',
     roleKey: 'operator',
     status: 1,
@@ -101,7 +100,7 @@ describe('Roles page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateRole).toHaveBeenCalledWith(
-        { id: 1, name: '管理员', status: 1 },
+        { id: '1', name: '管理员', status: 1 },
         expect.any(AbortSignal)
       )
     })
@@ -226,7 +225,7 @@ describe('Roles page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateRole).toHaveBeenCalledWith(
-        { id: 1, name: '超级管理员', status: 0, remark: '系统内置角色' },
+        { id: '1', name: '超级管理员', status: 0, remark: '系统内置角色' },
         expect.any(AbortSignal)
       )
     })
@@ -252,7 +251,10 @@ describe('Roles page', () => {
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteRole).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+      expect(mockedDeleteRole).toHaveBeenCalledWith(
+        '1',
+        expect.any(AbortSignal)
+      )
     })
     await waitFor(() => {
       expect(mockedGetRoles).toHaveBeenLastCalledWith(

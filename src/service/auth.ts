@@ -1,3 +1,4 @@
+import type { UserItem } from './users'
 import { http } from './request'
 
 /** 图形验证码 */
@@ -8,17 +9,8 @@ export type CaptchaResult = {
   image: string
 }
 
-export type AuthUser = {
-  id: number
-  nickname: string
-  email: string
-  avatar: string
-  /** 性别：0=男 1=女 2=未知 */
-  gender: number
-  /** 账号状态：0=正常 1=停用 */
-  status: number
-  lastLoginTime: string | null
-}
+/** 登录用户信息，结构同用户列表项（后端 bigint id 运行时为字符串） */
+export type AuthUser = UserItem
 
 export type LoginParams = {
   email: string

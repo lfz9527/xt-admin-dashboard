@@ -11,9 +11,9 @@ const userBaseSchema = z.object({
   gender: z.number(),
   /** 状态：0=正常 1=停用 */
   status: z.number(),
-  /** 角色 ID，新增/编辑均必填 */
+  /** 角色 ID（后端 bigint 序列化为字符串），新增/编辑均必填 */
   roleId: z
-    .number()
+    .string()
     .nullable()
     .refine((value) => value !== null, '请选择角色'),
 })

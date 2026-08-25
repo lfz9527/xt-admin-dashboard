@@ -32,8 +32,7 @@ export default function DeleteUserDialog({
   async function onConfirm() {
     if (!user) return
     try {
-      // 列表返回的 id 为字符串，需转数字
-      await runAsync(Number(user.id))
+      await runAsync(user.id)
       toast.success('删除成功')
       onOpenChange(false)
       onSuccess()

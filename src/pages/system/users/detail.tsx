@@ -30,7 +30,7 @@ export default function UserDetail() {
   })
 
   useEffect(() => {
-    if (id) run(Number(id))
+    if (id) run(id)
   }, [id, run])
 
   if (loading) {

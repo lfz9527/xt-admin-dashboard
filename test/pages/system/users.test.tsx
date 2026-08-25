@@ -42,21 +42,20 @@ const mockedGetRoles = vi.mocked(getRoles)
 
 const userList: UserListResult['list'] = [
   {
-    // 后端列表返回字符串 id，接口入参需转数字
-    id: '1' as unknown as number,
+    id: '1',
     nickname: 'admin',
     email: '123456@qq.com',
     avatar: '',
     gender: 0,
     status: 0,
     lastLoginTime: '2026-08-22T06:00:00.000Z',
-    roleId: 1,
-    role: { id: 1, name: '管理员', roleKey: 'admin' },
+    roleId: '1',
+    role: { id: '1', name: '管理员', roleKey: 'admin' },
     createdAt: '2026-08-01T08:30:00.000Z',
     updatedAt: '2026-08-01T08:30:00.000Z',
   },
   {
-    id: '2' as unknown as number,
+    id: '2',
     nickname: '运营小王',
     email: 'user@example.com',
     avatar: '',
@@ -72,7 +71,7 @@ const userList: UserListResult['list'] = [
 
 const roleList = [
   {
-    id: '1' as unknown as number,
+    id: '1',
     name: '管理员',
     roleKey: 'admin',
     status: 0,
@@ -82,7 +81,7 @@ const roleList = [
     updatedAt: '2026-08-01T00:00:00.000Z',
   },
   {
-    id: '2' as unknown as number,
+    id: '2',
     name: '运营',
     roleKey: 'operator',
     status: 0,
@@ -160,7 +159,7 @@ describe('Users page', () => {
 
     await waitFor(() => {
       expect(mockedUpdateUser).toHaveBeenCalledWith(
-        { id: 1, status: 1 },
+        { id: '1', status: 1 },
         expect.any(AbortSignal)
       )
     })
@@ -230,7 +229,7 @@ describe('Users page', () => {
           email: 'test@example.com',
           password: '123456',
           gender: 2,
-          roleId: 2,
+          roleId: '2',
           status: 0,
         },
         expect.any(AbortSignal)
@@ -290,11 +289,11 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(mockedUpdateUser).toHaveBeenCalledWith(
         {
-          id: 1,
+          id: '1',
           nickname: '超级管理员',
           email: '123456@qq.com',
           gender: 0,
-          roleId: 1,
+          roleId: '1',
           status: 0,
         },
         expect.any(AbortSignal)
@@ -337,7 +336,10 @@ describe('Users page', () => {
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteUser).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+      expect(mockedDeleteUser).toHaveBeenCalledWith(
+        '1',
+        expect.any(AbortSignal)
+      )
     })
     await waitFor(() => {
       expect(mockedGetUsers).toHaveBeenLastCalledWith(
@@ -371,6 +373,6 @@ describe('Users page', () => {
     })
     expect(await screen.findByText('用户详情')).toBeInTheDocument()
     expect(await screen.findByText('123456@qq.com')).toBeInTheDocument()
-    expect(mockedGetUser).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+    expect(mockedGetUser).toHaveBeenCalledWith('1', expect.any(AbortSignal))
   })
 })

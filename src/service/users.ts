@@ -2,7 +2,7 @@ import { http } from './request'
 
 /** 用户绑定的角色信息 */
 export type UserRole = {
-  id: number
+  id: string
   /** 角色名称 */
   name: string
   /** 角色编码（唯一，创建后不可修改） */
@@ -11,7 +11,8 @@ export type UserRole = {
 
 /** 用户项 */
 export type UserItem = {
-  id: number
+  /** 用户 ID（后端 bigint 字段，运行时返回字符串） */
+  id: string
   /** 昵称 */
   nickname: string
   /** 邮箱 */
@@ -26,8 +27,8 @@ export type UserItem = {
   lastLoginTime: string | null
   /** 最近登录 IP（后端未返回时为 undefined，不展示） */
   lastLoginIp?: string | null
-  /** 角色 ID，未分配角色为 null */
-  roleId: number | null
+  /** 角色 ID，未分配角色为 null（后端 bigint 字段，运行时返回字符串） */
+  roleId: string | null
   /** 角色信息，未分配角色为 null */
   role: UserRole | null
   /** 注册时间 */
@@ -65,14 +66,14 @@ export type CreateUserParams = {
   /** 备注，最长 255 字符 */
   remark?: string
   /** 角色 ID，不传则无角色 */
-  roleId?: number
+  roleId?: string
   /** 账号状态：0=正常 1=停用，默认 0 */
   status?: number
 }
 
 export type UpdateUserParams = {
   /** 用户 ID */
-  id: number
+  id: string
   /** 昵称，最长 30 字符 */
   nickname?: string
   /** 邮箱，最长 100 字符 */
@@ -84,7 +85,7 @@ export type UpdateUserParams = {
   /** 备注，最长 255 字符 */
   remark?: string
   /** 角色 ID，不传保留原值 */
-  roleId?: number
+  roleId?: string
   /** 账号状态：0=正常 1=停用，不传保留原值 */
   status?: number
 }
@@ -95,7 +96,7 @@ export function getUsers(params: UserListParams, signal?: AbortSignal) {
 }
 
 /** 查询用户（需鉴权） */
-export function getUser(id: number, signal?: AbortSignal) {
+export function getUser(id: string, signal?: AbortSignal) {
   return http.get<UserItem>(`/users/${id}`, { signal })
 }
 
@@ -110,7 +111,7 @@ export function updateUser(data: UpdateUserParams, signal?: AbortSignal) {
 }
 
 /** 删除用户（需鉴权；软删除；网关限制，POST 路径实现） */
-export function deleteUser(id: number, signal?: AbortSignal) {
+export function deleteUser(id: string, signal?: AbortSignal) {
   return http.post<null>('/users/delete', { id }, { signal })
 }
 

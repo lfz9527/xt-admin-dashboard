@@ -114,7 +114,7 @@ export default function UserFormDialog({
       if (isEdit) {
         // 编辑不允许修改密码；角色必填，校验已保证非空
         await updateAsync({
-          id: Number(user.id),
+          id: user.id,
           nickname: values.nickname,
           email: values.email,
           gender: values.gender,
@@ -219,9 +219,9 @@ export default function UserFormDialog({
                 <FormItem>
                   <FormLabel>角色</FormLabel>
                   <Select
-                    value={field.value == null ? '' : String(field.value)}
+                    value={field.value == null ? '' : field.value}
                     onValueChange={(value) =>
-                      field.onChange(value === '' ? null : Number(value))
+                      field.onChange(value === '' ? null : value)
                     }
                   >
                     <SelectTrigger
@@ -231,16 +231,15 @@ export default function UserFormDialog({
                       <SelectValue>
                         {field.value == null
                           ? '请选择角色'
-                          : (roleList.find(
-                              (role) => Number(role.id) === field.value
-                            )?.name ?? user?.role?.name)}
+                          : (roleList.find((role) => role.id === field.value)
+                              ?.name ?? user?.role?.name)}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {roleList.map((role) => (
                         <SelectItem
                           key={role.id}
-                          value={String(role.id)}
+                          value={role.id}
                         >
                           {role.name}
                         </SelectItem>
