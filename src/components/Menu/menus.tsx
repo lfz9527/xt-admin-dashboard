@@ -13,7 +13,9 @@ import type { RouteMeta } from '@/router/types'
 import { cn } from '@/utils/common'
 import { useMemo } from 'react'
 import routes from '@/router/routes'
-import { routeToMenus, allowAllPermissions } from '@/router/menu'
+import useAuthor from '@/store/useAuthor'
+import { routeToMenus } from '@/router/menu'
+import { createRoleChecker } from '@/router/permissions'
 
 const MenuItemCls = 'h-9.5 leading-none'
 const MenuItemHoverCls = 'hover:bg-menu-accent'
@@ -131,7 +133,11 @@ export default function Menus() {
   const { pathname } = useLocation()
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
-  const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
+  const roleKey = useAuthor((state) => state.roleKey)
+  const menus = useMemo(
+    () => routeToMenus(routes, createRoleChecker(roleKey)),
+    [roleKey]
+  )
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>

@@ -19,13 +19,18 @@ import defaultAvatar from '@/assets/icon/default-avatar.svg'
 import { useLogout } from '@/features/auth/hooks'
 import type { RouteMeta } from '@/router/types'
 import routes from '@/router/routes'
-import { allowAllPermissions, routeToMenus } from '@/router/menu'
+import { routeToMenus } from '@/router/menu'
+import { createRoleChecker } from '@/router/permissions'
 import { useMemo } from 'react'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const isMobile = useIsMobile()
-  const menus = useMemo(() => routeToMenus(routes, allowAllPermissions), [])
+  const roleKey = useAuthor((state) => state.roleKey)
+  const menus = useMemo(
+    () => routeToMenus(routes, createRoleChecker(roleKey)),
+    [roleKey]
+  )
   const user = useAuthor((state) => state.user)
   const { runAsync: runLogout } = useLogout()
 
