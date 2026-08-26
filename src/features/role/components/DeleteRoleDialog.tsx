@@ -1,14 +1,15 @@
 import { useRequest } from '@/hooks'
 import { deleteRole, type RoleItem } from '@/service/roles'
-import { Button } from '@/ui/Button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/ui/Dialog'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/ui/AlertDialog'
 import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
@@ -43,27 +44,21 @@ export default function DeleteRoleDialog({
   }
 
   return (
-    <Dialog
+    <AlertDialog
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className='sm:max-w-sm'>
-        <DialogHeader>
-          <DialogTitle>删除角色</DialogTitle>
-          <DialogDescription>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>删除角色</AlertDialogTitle>
+          <AlertDialogDescription>
             确认删除角色「{role?.name}
             」？删除后其关联用户将变为无角色，该操作不可恢复。
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-          >
-            取消
-          </Button>
-          <Button
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction
             variant='destructive'
             onClick={onConfirm}
             disabled={loading}
@@ -76,9 +71,9 @@ export default function DeleteRoleDialog({
             ) : (
               '确认删除'
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
