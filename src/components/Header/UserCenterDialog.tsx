@@ -96,9 +96,8 @@ export default function UserCenterDialog({
     defaultValues: { nickname: '', gender: 2 },
   })
 
-  const handleOpenChange = (next: boolean) => {
-    onOpenChange(next)
-    // 关闭弹窗时重置回信息视图
+  const handleOpenChangeComplete = (next: boolean) => {
+    // 关闭动画结束后再复位视图，避免关闭过程中编辑/修改密码表单闪回信息视图
     if (!next) setView('info')
   }
 
@@ -176,7 +175,8 @@ export default function UserCenterDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={handleOpenChangeComplete}
     >
       <DialogContent className='sm:max-w-sm'>
         {view === 'info' ? (
