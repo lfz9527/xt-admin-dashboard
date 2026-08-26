@@ -63,13 +63,14 @@ export function NavTabProvider({
       const target = prev.find((t) => t.id === id)
       if (!target || !target.closable || prev.length === 1) return prev
 
+      const index = prev.findIndex((t) => t.id === id)
       const remaining = prev.filter((t) => t.id !== id)
 
       setActiveTabId((prevActive) => {
         if (prevActive !== id) return prevActive
         if (remaining.length === 0) return null
-        // 激活第一个标签页
-        return remaining[0].id
+        // 关闭激活标签后激活左侧相邻标签，关闭的是第一个标签时激活右侧相邻标签
+        return remaining[Math.max(index - 1, 0)].id
       })
 
       return remaining
@@ -86,6 +87,14 @@ export function NavTabProvider({
 
       setActiveTabId((prevActive) => {
         if (prevActive && !idSet.has(prevActive)) return prevActive
+        // 激活标签被批量关闭时，激活其左侧最近的存活标签，无左侧则右侧最近的
+        const activeIndex = prev.findIndex((t) => t.id === prevActive)
+        for (let i = activeIndex - 1; i >= 0; i--) {
+          if (!idSet.has(prev[i].id)) return prev[i].id
+        }
+        for (let i = activeIndex + 1; i < prev.length; i++) {
+          if (!idSet.has(prev[i].id)) return prev[i].id
+        }
         return remaining[0].id
       })
 

@@ -650,7 +650,7 @@ describe('NavTab', () => {
     expect(screen.getByTestId('count').textContent).toBe('1')
   })
 
-  it('关闭激活标签后跳转第一个标签路由', () => {
+  it('关闭激活标签后跳转左侧相邻标签路由', () => {
     function Page() {
       const { pathname } = useLocation()
       const { tabs } = useNavTab()
@@ -687,8 +687,8 @@ describe('NavTab', () => {
 
     fireEvent.click(tab3Close)
     expect(screen.getByTestId('count').textContent).toBe('2')
-    // 关闭激活标签后激活剩余第一个标签，而非前一个
-    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    // 关闭激活标签后跳转左侧相邻标签
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
   })
 
   it('closable=false 不显示关闭按钮', () => {
@@ -871,6 +871,48 @@ describe('NavTab', () => {
     expect(screen.getByText('Tab 2')).toBeInTheDocument()
     expect(screen.queryByText('Tab 3')).not.toBeInTheDocument()
     expect(screen.queryByText('Tab 4')).not.toBeInTheDocument()
+  })
+
+  it('关闭右侧标签页时激活标签被关闭则跳转左侧相邻标签', () => {
+    function Page() {
+      const { pathname } = useLocation()
+      const { tabs } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='pathname'>{pathname}</span>
+          <span data-testid='count'>{tabs.length}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '/', title: 'Tab 1' },
+      { id: '/two', title: 'Tab 2' },
+      { id: '/three', title: 'Tab 3' },
+      { id: '/four', title: 'Tab 4' },
+    ]
+
+    render(
+      <MemoryRouter initialEntries={['/four']}>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='/four'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab2)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭右侧标签页' }))
+
+    expect(screen.getByTestId('count').textContent).toBe('2')
+    // 激活标签被关闭后跳转其左侧相邻标签（即右键锚点标签）
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
   })
 
   it('右键菜单关闭全部标签页仅保留当前激活', () => {

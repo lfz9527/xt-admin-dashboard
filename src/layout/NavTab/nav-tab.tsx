@@ -102,22 +102,33 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
 
   if (tabs.length === 0) return null
 
+  // 关闭激活标签后，优先跳转左侧相邻标签，无左侧时跳转右侧相邻标签
+  function getNextActive(closedIds: string[]): string | undefined {
+    const idSet = new Set(closedIds)
+    const index = tabs.findIndex((t) => t.id === activeTabId)
+    for (let i = index - 1; i >= 0; i--) {
+      if (!idSet.has(tabs[i].id)) return tabs[i].id
+    }
+    for (let i = index + 1; i < tabs.length; i++) {
+      if (!idSet.has(tabs[i].id)) return tabs[i].id
+    }
+    return undefined
+  }
+
   function handleClose(id: string) {
-    const remaining = tabs.filter((t) => t.id !== id)
-    if (id === activeTabId && remaining.length > 0) {
-      removeTab(id)
-      navigate(remaining[0].id)
-    } else {
-      removeTab(id)
+    removeTab(id)
+    if (id === activeTabId) {
+      const next = getNextActive([id])
+      if (next) navigate(next)
     }
   }
 
   function closeBatch(ids: string[]) {
     const idSet = new Set(ids)
-    const remaining = tabs.filter((t) => !idSet.has(t.id))
     removeTabs(ids)
-    if (activeTabId && idSet.has(activeTabId) && remaining.length > 0) {
-      navigate(remaining[0].id)
+    if (activeTabId && idSet.has(activeTabId)) {
+      const next = getNextActive(ids)
+      if (next) navigate(next)
     }
   }
 
