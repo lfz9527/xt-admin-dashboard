@@ -368,7 +368,7 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/system/users/1')
     })
-    expect(await screen.findByText('用户详情')).toBeInTheDocument()
+    expect(await screen.findByText('admin')).toBeInTheDocument()
     expect(await screen.findByText('123456@qq.com')).toBeInTheDocument()
     expect(mockedGetUser).toHaveBeenCalledWith('1', expect.any(AbortSignal))
   })
