@@ -122,3 +122,15 @@ export type UserInfo = UserItem
 export function getUserInfo(signal?: AbortSignal) {
   return http.get<UserInfo>('/users/me', { signal })
 }
+
+export type UpdateProfileParams = {
+  /** 昵称，最长 30 字符 */
+  nickname?: string
+  /** 性别：0=男 1=女 2=未知 */
+  gender?: number
+}
+
+/** 编辑个人资料（需鉴权）：仅昵称/性别生效，改什么传什么 */
+export function updateProfile(data: UpdateProfileParams, signal?: AbortSignal) {
+  return http.post<UserInfo>('/users/profile', data, { signal })
+}

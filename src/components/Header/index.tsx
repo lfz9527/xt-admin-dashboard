@@ -1,5 +1,7 @@
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { LogOut, Moon, Sun, User } from 'lucide-react'
 import { useMatches, useLocation } from 'react-router'
+import { useState, useMemo } from 'react'
+import UserCenterDialog from './UserCenterDialog'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useTheme, useIsMobile } from '@/hooks'
@@ -21,7 +23,6 @@ import type { RouteMeta } from '@/router/types'
 import routes from '@/router/routes'
 import { routeToMenus } from '@/router/menu'
 import { createRoleChecker } from '@/router/permissions'
-import { useMemo } from 'react'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
@@ -33,6 +34,7 @@ export default function Header() {
   )
   const user = useAuthor((state) => state.user)
   const { runAsync: runLogout } = useLogout()
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const matches = useMatches()
   const { pathname } = useLocation()
@@ -105,6 +107,10 @@ export default function Header() {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                <User />
+                个人中心
+              </DropdownMenuItem>
               <DropdownMenuItem
                 variant='destructive'
                 onClick={handleLogout}
@@ -114,6 +120,10 @@ export default function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <UserCenterDialog
+            open={profileOpen}
+            onOpenChange={setProfileOpen}
+          />
         </div>
       </div>
     </header>

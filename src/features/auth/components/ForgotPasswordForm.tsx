@@ -20,6 +20,8 @@ type ForgotPasswordFormProps = {
   onSubmit: (values: ForgotPasswordValues) => void | Promise<void>
   onBackToLogin: () => void
   onSendCode: (email: string) => Promise<boolean>
+  /** 返回按钮文案，登录页默认「返回登录」，弹窗内复用可自定义 */
+  backText?: string
 }
 
 export default function ForgotPasswordForm({
@@ -27,6 +29,7 @@ export default function ForgotPasswordForm({
   onSubmit,
   onBackToLogin,
   onSendCode,
+  backText = '返回登录',
 }: ForgotPasswordFormProps) {
   return (
     <Form
@@ -103,7 +106,7 @@ export default function ForgotPasswordForm({
           className='text-muted-foreground text-center text-sm underline-offset-4 hover:bg-transparent hover:underline'
           onClick={onBackToLogin}
         >
-          返回登录
+          {backText}
         </Button>
       </form>
     </Form>
