@@ -13,10 +13,10 @@ import {
 import { GENDER_OPTIONS } from '@/features/user/constant'
 import { useRequest } from '@/hooks'
 import { authLogout } from '@/service/request'
-import { updateProfile } from '@/service/users'
+import { updateProfile, uploadAvatar } from '@/service/users'
 import useAuthor from '@/store/useAuthor'
-import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
 import { Button } from '@/ui/Button'
+import { UploadThingAvatar } from '@/ui/UploadthingAvatar'
 import {
   Dialog,
   DialogContent,
@@ -79,6 +79,9 @@ export default function UserCenterDialog({
     updateProfile,
     { immediate: false }
   )
+  const { runAsync: runUploadAvatar } = useRequest(uploadAvatar, {
+    immediate: false,
+  })
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -147,6 +150,14 @@ export default function UserCenterDialog({
     }
   }
 
+  const onUploadAvatar = async (file: File) => {
+    // 上传成功后后端返回更新后的用户对象（含新头像地址），写入认证 store
+    const updated = await runUploadAvatar(file)
+    setUser(updated)
+    toast.success('头像上传成功')
+    return updated.avatar
+  }
+
   const onSubmit = async (values: ForgotPasswordValues) => {
     try {
       // 修改密码成功后后端强制所有已登录设备下线，需重新登录
@@ -174,16 +185,12 @@ export default function UserCenterDialog({
               <DialogTitle>个人中心</DialogTitle>
             </DialogHeader>
             <div className='flex flex-col items-center gap-1 py-1'>
-              <Avatar
-                size='lg'
-                className='size-12'
-              >
-                <AvatarImage
-                  src={user?.avatar || defaultAvatar}
-                  alt={user?.nickname}
-                />
-                <AvatarFallback>{user?.nickname?.[0] ?? 'U'}</AvatarFallback>
-              </Avatar>
+              <UploadThingAvatar
+                value={user?.avatar || defaultAvatar}
+                onUpload={onUploadAvatar}
+                size='sm'
+                fallback={user?.nickname?.[0]}
+              />
             </div>
             <div className='divide-border divide-y'>
               <Field

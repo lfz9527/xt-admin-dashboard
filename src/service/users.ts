@@ -134,3 +134,10 @@ export type UpdateProfileParams = {
 export function updateProfile(data: UpdateProfileParams, signal?: AbortSignal) {
   return http.post<UserInfo>('/users/profile', data, { signal })
 }
+
+/** 上传头像（需鉴权）：multipart/form-data 字段名 file，返回更新后的用户对象 */
+export function uploadAvatar(file: File, signal?: AbortSignal) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return http.post<UserInfo>('/users/avatar', formData, { signal })
+}

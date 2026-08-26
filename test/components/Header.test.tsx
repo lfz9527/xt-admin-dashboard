@@ -39,6 +39,9 @@ vi.mock('@/service/users', () => ({
   updateProfile: vi.fn().mockResolvedValue({
     data: { ...userInfo, nickname: 'admin-new', gender: 0 },
   }),
+  uploadAvatar: vi.fn().mockResolvedValue({
+    data: { ...userInfo, avatar: 'http://localhost/uploads/avatar.png' },
+  }),
 }))
 
 vi.mock('@/service/roles', () => ({
@@ -70,6 +73,10 @@ beforeEach(() => {
   }
   if (!Element.prototype.getAnimations) {
     Element.prototype.getAnimations = () => []
+  }
+  // jsdom 未实现 createObjectURL，UploadThingAvatar 本地预览会调用
+  if (!URL.createObjectURL) {
+    URL.createObjectURL = vi.fn(() => 'blob:mock-preview')
   }
   useAuthor.setState({ token: 'test-token', roleKey: 'admin', user: null })
 })
@@ -179,5 +186,31 @@ describe('Header', () => {
       expect(screen.getByRole('dialog')).toHaveTextContent('个人中心')
     })
     expect(screen.getByRole('dialog')).toHaveTextContent('admin-new')
+  })
+
+  it('个人中心头像支持上传，成功后更新 store 中头像', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+    await waitForHeaderReady()
+
+    // 打开个人中心弹窗
+    const avatarTrigger = document.querySelector('button.rounded-full')
+    expect(avatarTrigger).not.toBeNull()
+    await user.click(avatarTrigger as HTMLElement)
+    const menuItem = await screen.findByText('个人中心')
+    await user.click(menuItem)
+
+    // 通过隐藏 file input 选择图片上传
+    const fileInput = screen.getByLabelText('Upload avatar')
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+    await user.upload(fileInput, file)
+
+    // 上传成功后 store 中头像更新为接口返回的地址
+    await waitFor(() => {
+      expect(useAuthor.getState().user?.avatar).toBe(
+        'http://localhost/uploads/avatar.png'
+      )
+    })
+    expect(screen.getByRole('dialog')).toHaveTextContent('个人中心')
   })
 })
