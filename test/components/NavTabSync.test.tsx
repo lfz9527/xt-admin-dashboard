@@ -28,6 +28,12 @@ vi.mock('@/service/users', () => ({
   createUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   updateUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   deleteUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  updateProfile: vi.fn().mockResolvedValue({
+    data: { ...userInfo, nickname: 'admin-new', gender: 0 },
+  }),
+  uploadAvatar: vi.fn().mockResolvedValue({
+    data: { ...userInfo, avatar: 'http://localhost/uploads/avatar.png' },
+  }),
 }))
 
 vi.mock('@/service/roles', () => ({
