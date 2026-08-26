@@ -11,8 +11,11 @@ export default function Main() {
         <NavTab />
       </section>
       {/* 内容区为唯一滚动区域 */}
-      <div className='my-(--main-content-padding) min-h-0 flex-1 overflow-auto px-(--main-content-padding)'>
-        <Outlet />
+      <div className='m-(--main-content-padding) min-h-0 flex-1 overflow-auto px-(--main-content-padding)'>
+        {/* 上下留白放在滚动内容内层：容器自身的 pb 不参与滚动溢出，放容器上底部间隙会被吞掉 */}
+        <div className='py-(--main-content-padding)'>
+          <Outlet />
+        </div>
       </div>
     </div>
   )
