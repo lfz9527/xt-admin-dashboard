@@ -97,15 +97,27 @@ export default function Header() {
             </Button>
           </div>
           <DropdownMenu>
-            <DropdownMenuTrigger className='rounded-full outline-none'>
-              <Avatar className='cursor-pointer'>
-                <AvatarImage
-                  src={user?.avatar || defaultAvatar}
-                  alt={user?.nickname}
-                />
-                <AvatarFallback>{user?.nickname?.[0] ?? 'U'}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant='ghost'
+                  className='h-9 gap-2 rounded-full px-1.5'
+                >
+                  <Avatar className='cursor-pointer'>
+                    <AvatarImage
+                      src={user?.avatar || defaultAvatar}
+                      alt={user?.nickname}
+                    />
+                    <AvatarFallback>
+                      {user?.nickname?.[0] ?? 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className='max-w-24 truncate text-sm font-medium'>
+                    {user?.nickname}
+                  </span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align='end'>
               <DropdownMenuItem onClick={() => setProfileOpen(true)}>
                 <User />
