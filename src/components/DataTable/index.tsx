@@ -1,12 +1,15 @@
+import { useMemo } from 'react'
 import {
   columnPinningFeature,
   flexRender,
   metaHelper,
   rowPaginationFeature,
+  rowSelectionFeature,
   rowSortingFeature,
   tableFeatures,
   useTable,
   type Cell,
+  type ColumnDef,
   type Header,
   type PaginationState,
   type RowData,
@@ -20,6 +23,7 @@ import {
 
 import Loading from '@/components/Loading'
 import { Button } from '@/ui/Button'
+import { Checkbox } from '@/ui/Checkbox'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import {
   Select,
@@ -55,6 +59,7 @@ const features = tableFeatures({
   rowSortingFeature,
   rowPaginationFeature,
   columnPinningFeature,
+  rowSelectionFeature,
   columnMeta: metaHelper<{
     align?: 'left' | 'center' | 'right'
     width?: number | string
@@ -67,6 +72,41 @@ const alignClassMap: Record<string, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
+}
+
+// 内置多选列：header/cell 的 table/row 上下文由 TanStack 渲染时注入，列定义本身无需实例状态
+function createSelectColumn<TData extends RowData>(): ColumnDef<
+  DataTableFeatures,
+  TData
+> {
+  return {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        aria-label='全选'
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label={`选择第 ${row.index + 1} 行`}
+        checked={row.getIsSelected()}
+        disabled={!row.getCanSelect()}
+        onCheckedChange={(checked, eventDetails) => {
+          // handler 读取 event.target.checked（原生 input 语义）与 shiftKey 判断区间连选；
+          // Base UI 按钮型 Checkbox 无 checked 属性，需包装事件透传目标值与原生事件
+          row.getToggleSelectedHandler()({
+            target: { checked },
+            shiftKey: (eventDetails.event as MouseEvent).shiftKey,
+            nativeEvent: eventDetails.event,
+          })
+        }}
+      />
+    ),
+    meta: { align: 'center', width: 40 },
+  }
 }
 
 // 页码序列：总数 <= 7 全展示；否则首尾恒显，当前页 ±1，其余折叠为省略号
@@ -120,6 +160,10 @@ function DataTable<TData extends RowData>({
   sorting,
   onSortingChange,
   frozenColumns,
+  selectable = false,
+  rowSelection,
+  onRowSelectionChange,
+  enableRowSelection,
   className,
   style,
 }: DataTableProps<TData>) {
@@ -128,10 +172,23 @@ function DataTable<TData extends RowData>({
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
     : 0
 
+  // 多选开启时首列插入复选框列；useMemo 保证列数组引用稳定，避免每次渲染重建列定义
+  const resolvedColumns = useMemo(
+    () => (selectable ? [createSelectColumn<TData>(), ...columns] : columns),
+    [columns, selectable]
+  )
+  // 多选列固定为最左侧冻结列，避免横向滚动时复选框移出可视区
+  const frozenStart = selectable
+    ? [
+        'select',
+        ...(frozenColumns?.start ?? []).filter((id) => id !== 'select'),
+      ]
+    : (frozenColumns?.start ?? [])
+
   const table = useTable(
     {
       features,
-      columns,
+      columns: resolvedColumns,
       data: [...data],
       getRowId: (record) =>
         typeof rowKey === 'function'
@@ -146,9 +203,10 @@ function DataTable<TData extends RowData>({
           ? { pageIndex: pagination.page - 1, pageSize: pagination.pageSize }
           : { pageIndex: 0, pageSize: 10 },
         columnPinning: {
-          start: frozenColumns?.start ?? [],
+          start: frozenStart,
           end: frozenColumns?.end ?? [],
         },
+        rowSelection: rowSelection ?? {},
       },
       onSortingChange: (updater) => {
         const next =
@@ -162,11 +220,18 @@ function DataTable<TData extends RowData>({
         const next = typeof updater === 'function' ? updater(current) : updater
         pagination?.onChange(next.pageIndex + 1, next.pageSize)
       },
+      onRowSelectionChange: (updater) => {
+        const next =
+          typeof updater === 'function' ? updater(rowSelection ?? {}) : updater
+        onRowSelectionChange?.(next)
+      },
+      ...(enableRowSelection !== undefined ? { enableRowSelection } : {}),
     },
     (state) => ({
       sorting: state.sorting,
       pagination: state.pagination,
       columnPinning: state.columnPinning,
+      rowSelection: state.rowSelection,
     })
   )
 
@@ -286,7 +351,7 @@ function DataTable<TData extends RowData>({
             {isEmpty && !loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={resolvedColumns.length}
                   className='h-24 p-0 text-center'
                 >
                   {empty ?? (

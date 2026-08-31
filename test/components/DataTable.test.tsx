@@ -517,3 +517,266 @@ describe('DataTable 冻结列', () => {
     })
   })
 })
+
+describe('DataTable 多选', () => {
+  it('selectable 渲染表头与行复选框列', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('checkbox', { name: '全选' })).toBeInTheDocument()
+    expect(screen.getAllByRole('checkbox')).toHaveLength(3)
+  })
+
+  it('未开启 selectable 不渲染复选框', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+      />
+    )
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+  })
+
+  it('selectable 时复选框列自动冻结在最左侧', () => {
+    // 多选列偏移依赖 number 类型 meta.width，配置多列验证首列冻结与偏移
+    const wideColumns: ColumnDef<DataTableFeatures, User>[] = [
+      { accessorKey: 'name', header: '姓名', meta: { width: 120 } },
+      { accessorKey: 'age', header: '年龄', meta: { width: 100 } },
+    ]
+    const { container } = render(
+      <DataTable
+        columns={wideColumns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+      />
+    )
+    const firstTh = container.querySelector('th:nth-child(1)')
+    expect(firstTh).toHaveStyle({ position: 'sticky', left: '0px' })
+    expect(firstTh).toHaveClass('bg-background')
+  })
+
+  it('selectable 与自定义 start 冻结列叠加时偏移累加', () => {
+    const wideColumns: ColumnDef<DataTableFeatures, User>[] = [
+      { accessorKey: 'name', header: '姓名', meta: { width: 120 } },
+      { accessorKey: 'age', header: '年龄', meta: { width: 100 } },
+    ]
+    const { container } = render(
+      <DataTable
+        columns={wideColumns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+        frozenColumns={{ start: ['name'] }}
+      />
+    )
+    // DOM 列序 [select, name, age]：select 在左 0，name 累加多选列宽 40
+    const selectTh = container.querySelector('th:nth-child(1)')
+    expect(selectTh).toHaveStyle({ position: 'sticky', left: '0px' })
+    const nameTh = container.querySelector('th:nth-child(2)')
+    expect(nameTh).toHaveStyle({ position: 'sticky', left: '40px' })
+  })
+
+  it('点击行复选框触发 onRowSelectionChange 并选中该行', async () => {
+    const user = userEvent.setup()
+    const onRowSelectionChange = vi.fn()
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    expect(onRowSelectionChange).toHaveBeenCalledWith({ 1: true })
+    // 受控：父级更新 rowSelection 后行复选框保持选中
+    rerender(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{ 1: true }}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    expect(screen.getByRole('checkbox', { name: '选择第 1 行' })).toBeChecked()
+  })
+
+  it('点击已选中的行复选框取消选中', async () => {
+    const user = userEvent.setup()
+    const onRowSelectionChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{ 1: true, 2: true }}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    expect(onRowSelectionChange).toHaveBeenCalledWith({ 2: true })
+  })
+
+  it('表头全选选中当前页所有行，再次点击取消全选', async () => {
+    const user = userEvent.setup()
+    const onRowSelectionChange = vi.fn()
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    await user.click(screen.getByRole('checkbox', { name: '全选' }))
+    expect(onRowSelectionChange).toHaveBeenCalledWith({ 1: true, 2: true })
+    rerender(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{ 1: true, 2: true }}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    await user.click(screen.getByRole('checkbox', { name: '全选' }))
+    expect(onRowSelectionChange).toHaveBeenCalledWith({})
+  })
+
+  it('部分行选中时表头复选框为 indeterminate', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{ 1: true }}
+        onRowSelectionChange={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('checkbox', { name: '全选' })).toHaveAttribute(
+      'data-indeterminate'
+    )
+  })
+
+  it('enableRowSelection 为函数时禁用不可选行的复选框', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+        enableRowSelection={(row) => row.original.id !== 2}
+      />
+    )
+    // Base UI 禁用态渲染为 aria-disabled 的 span，而非原生 disabled 属性
+    expect(
+      screen.getByRole('checkbox', { name: '选择第 2 行' })
+    ).toHaveAttribute('aria-disabled', 'true')
+    expect(
+      screen.getByRole('checkbox', { name: '选择第 1 行' })
+    ).not.toHaveAttribute('aria-disabled')
+  })
+
+  it('enableRowSelection=false 时所有行复选框禁用', () => {
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+        enableRowSelection={false}
+      />
+    )
+    const rowCheckboxes = screen
+      .getAllByRole('checkbox')
+      .filter((checkbox) =>
+        checkbox.getAttribute('aria-label')?.startsWith('选择')
+      )
+    expect(rowCheckboxes).toHaveLength(2)
+    rowCheckboxes.forEach((checkbox) => {
+      expect(checkbox).toHaveAttribute('aria-disabled', 'true')
+    })
+  })
+
+  it('表头半选状态下点击全选当前页所有行', async () => {
+    const user = userEvent.setup()
+    const onRowSelectionChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{ 1: true }}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    const headerCheckbox = screen.getByRole('checkbox', { name: '全选' })
+    expect(headerCheckbox).toHaveAttribute('data-indeterminate')
+    await user.click(headerCheckbox)
+    expect(onRowSelectionChange).toHaveBeenCalledWith({ 1: true, 2: true })
+  })
+
+  it('Shift 点击支持区间连选', async () => {
+    const user = userEvent.setup()
+    const onRowSelectionChange = vi.fn()
+    render(
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={onRowSelectionChange}
+      />
+    )
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    await user.keyboard('{Shift>}')
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    await user.keyboard('{/Shift}')
+    expect(onRowSelectionChange).toHaveBeenLastCalledWith({ 1: true, 2: true })
+  })
+
+  it('空数据时多选列仍渲染且空态占满全部列', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        data={[]}
+        rowKey='id'
+        selectable
+        rowSelection={{}}
+        onRowSelectionChange={vi.fn()}
+      />
+    )
+    expect(screen.getByText('暂无数据')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: '全选' })).toBeInTheDocument()
+    // colSpan = 业务列数 + 多选列
+    expect(container.querySelector('td')).toHaveAttribute('colspan', '4')
+  })
+})

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, RowSelectionState } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
@@ -20,6 +20,9 @@ export default function Roles() {
   /** 正在编辑的角色；null 为新增模式 */
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
+  /** 表格多选选中行（key 为行 id），供后续批量操作使用 */
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const selectedCount = Object.keys(rowSelection).length
   const { data, loading, error, run, mutate, refresh } = useRequest(getRoles, {
     immediate: false,
   })
@@ -152,17 +155,27 @@ export default function Roles() {
         columns={columns}
         data={data?.list ?? []}
         rowKey='id'
+        selectable
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
         title='角色列表'
         toolRender={() => (
-          <Button
-            onClick={() => {
-              setEditingRole(null)
-              setFormOpen(true)
-            }}
-          >
-            <Plus className='size-4' />
-            新增角色
-          </Button>
+          <>
+            {selectedCount > 0 && (
+              <span className='text-muted-foreground self-center text-sm'>
+                已选 {selectedCount} 项
+              </span>
+            )}
+            <Button
+              onClick={() => {
+                setEditingRole(null)
+                setFormOpen(true)
+              }}
+            >
+              <Plus className='size-4' />
+              新增角色
+            </Button>
+          </>
         )}
         onRefresh={refresh}
         loading={loading}
@@ -204,7 +217,17 @@ export default function Roles() {
           if (!open) setDeleteTarget(null)
         }}
         role={deleteTarget}
-        onSuccess={() => run({ page, pageSize })}
+        onSuccess={() => {
+          // 删除成功后清理选中状态，避免「已选 N 项」残留已删除行
+          if (deleteTarget) {
+            setRowSelection((prev) => {
+              const next = { ...prev }
+              delete next[deleteTarget.id]
+              return next
+            })
+          }
+          run({ page, pageSize })
+        }}
       />
     </div>
   )

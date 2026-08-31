@@ -260,4 +260,54 @@ describe('Roles page', () => {
       )
     })
   })
+
+  it('勾选行展示已选数量，取消勾选后数量同步更新', async () => {
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    // 未选中时不展示数量提示
+    expect(screen.queryByText(/已选/)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    expect(screen.getByText('已选 1 项')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    expect(screen.getByText('已选 2 项')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    expect(screen.getByText('已选 1 项')).toBeInTheDocument()
+  })
+
+  it('表头全选选中当前页全部行，再次点击取消全选', async () => {
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getByRole('checkbox', { name: '全选' }))
+    expect(screen.getByText('已选 2 项')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: '全选' }))
+    expect(screen.queryByText(/已选/)).not.toBeInTheDocument()
+  })
+
+  it('删除选中行后清理选中状态，计数不再残留', async () => {
+    mockedDeleteRole.mockResolvedValue({
+      res: {} as never,
+      data: null,
+    } as never)
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    expect(screen.getByText('已选 1 项')).toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('button', { name: '删除' })[0])
+    await user.click(screen.getByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(screen.queryByText(/已选/)).not.toBeInTheDocument()
+    })
+  })
 })
