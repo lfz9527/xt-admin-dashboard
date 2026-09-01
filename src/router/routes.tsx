@@ -1,4 +1,4 @@
-import { House, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { Bookmark, House, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { Outlet } from 'react-router'
 import type { AppRouteObject } from './types'
 import { Lazy } from '@/components/LazyImport'
@@ -64,6 +64,17 @@ const routes: AppRouteObject[] = [
                       title: '角色管理',
                       menuKey: 'system-roles',
                       icon: ShieldCheck,
+                      // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
+                      permission: 'admin',
+                    },
+                  },
+                  {
+                    path: '/system/bookmarks',
+                    element: Lazy(() => import('@/pages/system/bookmarks')),
+                    meta: {
+                      title: '书签管理',
+                      menuKey: 'system-bookmarks',
+                      icon: Bookmark,
                       // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
                       permission: 'admin',
                     },
