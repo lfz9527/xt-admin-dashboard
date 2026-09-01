@@ -19,7 +19,11 @@ export default function Roles() {
   const [formOpen, setFormOpen] = useState(false)
   /** 正在编辑的角色；null 为新增模式 */
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<RoleItem | null>(null)
+  /** 待删除角色（id 与名称）；null 表示未打开删除确认弹窗 */
+  const [deleteTarget, setDeleteTarget] = useState<{
+    ids: number[]
+    names: string[]
+  } | null>(null)
   /** 表格多选选中行（key 为行 id），供后续批量操作使用 */
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const selectedCount = Object.keys(rowSelection).length
@@ -138,7 +142,12 @@ export default function Roles() {
             <Button
               variant='ghost'
               className='hover:text-destructive text-destructive'
-              onClick={() => setDeleteTarget(row.original)}
+              onClick={() =>
+                setDeleteTarget({
+                  ids: [Number(row.original.id)],
+                  names: [row.original.name],
+                })
+              }
             >
               删除
             </Button>
@@ -162,9 +171,29 @@ export default function Roles() {
         toolRender={() => (
           <>
             {selectedCount > 0 && (
-              <span className='text-muted-foreground self-center text-sm'>
-                已选 {selectedCount} 项
-              </span>
+              <>
+                <span className='text-muted-foreground self-center text-sm'>
+                  已选 {selectedCount} 项
+                </span>
+                {/* 后端批量删除接口单次最多 50 条，超过时禁用并提示 */}
+                {selectedCount > 50 && (
+                  <span className='text-muted-foreground self-center text-sm'>
+                    单次最多删除 50 条
+                  </span>
+                )}
+                <Button
+                  variant='destructive'
+                  disabled={selectedCount > 50}
+                  onClick={() =>
+                    setDeleteTarget({
+                      ids: Object.keys(rowSelection).map(Number),
+                      names: [],
+                    })
+                  }
+                >
+                  批量删除
+                </Button>
+              </>
             )}
             <Button
               onClick={() => {
@@ -216,13 +245,14 @@ export default function Roles() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)
         }}
-        role={deleteTarget}
+        ids={deleteTarget?.ids ?? []}
+        names={deleteTarget?.names ?? []}
         onSuccess={() => {
           // 删除成功后清理选中状态，避免「已选 N 项」残留已删除行
           if (deleteTarget) {
             setRowSelection((prev) => {
               const next = { ...prev }
-              delete next[deleteTarget.id]
+              deleteTarget.ids.forEach((id) => delete next[String(id)])
               return next
             })
           }

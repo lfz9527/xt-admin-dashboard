@@ -6,6 +6,7 @@ import Users from '@/pages/system/users'
 import {
   createUser,
   deleteUser,
+  deleteUsers,
   getUsers,
   getUser,
   updateUser,
@@ -27,6 +28,7 @@ vi.mock('@/service/users', () => ({
   createUser: vi.fn(),
   updateUser: vi.fn(),
   deleteUser: vi.fn(),
+  deleteUsers: vi.fn(),
 }))
 
 vi.mock('@/service/roles', () => ({
@@ -38,6 +40,7 @@ const mockedGetUser = vi.mocked(getUser)
 const mockedCreateUser = vi.mocked(createUser)
 const mockedUpdateUser = vi.mocked(updateUser)
 const mockedDeleteUser = vi.mocked(deleteUser)
+const mockedDeleteUsers = vi.mocked(deleteUsers)
 const mockedGetRoles = vi.mocked(getRoles)
 
 const userList: UserListResult['list'] = [
@@ -106,6 +109,7 @@ beforeEach(() => {
   mockedCreateUser.mockReset()
   mockedUpdateUser.mockReset()
   mockedDeleteUser.mockReset()
+  mockedDeleteUsers.mockReset()
   mockedGetRoles.mockReset()
   toastSuccess.mockReset()
   toastError.mockReset()
@@ -344,6 +348,62 @@ describe('Users page', () => {
         expect.any(AbortSignal)
       )
     })
+  })
+
+  it('批量删除用户：勾选多行确认后调用 deleteUsers 并刷新列表', async () => {
+    mockedDeleteUsers.mockResolvedValue({
+      res: {} as never,
+      data: null,
+    } as never)
+    const user = userEvent.setup()
+    renderUsers()
+    await screen.findByText('admin')
+
+    // 未勾选时不展示批量删除入口
+    expect(
+      screen.queryByRole('button', { name: '批量删除' })
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    expect(screen.getByText('已选 2 项')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '批量删除' }))
+
+    expect(screen.getByText(/确认删除选中的 2 个用户/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(mockedDeleteUsers).toHaveBeenCalledWith(
+        [1, 2],
+        expect.any(AbortSignal)
+      )
+    })
+    await waitFor(() => {
+      expect(mockedGetUsers).toHaveBeenLastCalledWith(
+        { page: 1, pageSize: 10 },
+        expect.any(AbortSignal)
+      )
+    })
+    expect(toastSuccess).toHaveBeenCalledWith('删除成功')
+  })
+
+  it('批量删除用户失败：提示错误且不清空选中状态', async () => {
+    mockedDeleteUsers.mockRejectedValue(new Error('超级管理员用户不允许删除'))
+    const user = userEvent.setup()
+    renderUsers()
+    await screen.findByText('admin')
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    await user.click(screen.getByRole('button', { name: '批量删除' }))
+    await user.click(screen.getByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith('超级管理员用户不允许删除')
+    })
+    // 弹窗仍打开，列表中仍展示已选数量
+    expect(screen.getByText(/确认删除选中的 2 个用户/)).toBeInTheDocument()
+    expect(screen.getByText('已选 2 项')).toBeInTheDocument()
   })
 
   it('查看用户：跳转详情路由并渲染详情', async () => {

@@ -1,5 +1,5 @@
 import { useRequest } from '@/hooks'
-import { deleteRole, type RoleItem } from '@/service/roles'
+import { deleteRole, deleteRoles } from '@/service/roles'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,23 +18,32 @@ type DeleteRoleDialogProps = {
   onOpenChange: (open: boolean) => void
   /** 删除成功回调，父级用于刷新列表 */
   onSuccess: () => void
-  /** 待删除角色 */
-  role: RoleItem | null
+  /** 待删除角色 id 列表（后端 DTO 校验为数字，列表返回的字符串 id 需转换）；单个删除传 1 个元素 */
+  ids: number[]
+  /** 待删除角色名称（仅单个删除时展示，批量删除只展示数量） */
+  names: string[]
+}
+
+/** 单个删除走单删接口，批量删除走批量接口 */
+function removeRoles(ids: number[], signal?: AbortSignal) {
+  return ids.length === 1
+    ? deleteRole(ids[0], signal)
+    : deleteRoles(ids, signal)
 }
 
 export default function DeleteRoleDialog({
   open,
   onOpenChange,
   onSuccess,
-  role,
+  ids,
+  names,
 }: DeleteRoleDialogProps) {
-  const { runAsync, loading } = useRequest(deleteRole, { immediate: false })
+  const { runAsync, loading } = useRequest(removeRoles, { immediate: false })
 
   async function onConfirm() {
-    if (!role) return
+    if (ids.length === 0) return
     try {
-      // 后端删除接口 DTO 校验 id 必须为数字，列表返回的字符串 id 需转换
-      await runAsync(Number(role.id))
+      await runAsync(ids)
       toast.success('删除成功')
       onOpenChange(false)
       onSuccess()
@@ -43,6 +52,8 @@ export default function DeleteRoleDialog({
     }
   }
 
+  const isSingle = ids.length === 1 && names.length === 1
+
   return (
     <AlertDialog
       open={open}
@@ -50,10 +61,21 @@ export default function DeleteRoleDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>删除角色</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isSingle ? '删除角色' : '批量删除角色'}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            确认删除角色「{role?.name}
-            」？删除后其关联用户将变为无角色，该操作不可恢复。
+            {isSingle ? (
+              <>
+                确认删除角色「{names[0]}
+                」？删除后其关联用户将变为无角色，该操作不可恢复。
+              </>
+            ) : (
+              <>
+                确认删除选中的 {ids.length}{' '}
+                个角色？删除后其关联用户将变为无角色，该操作不可恢复。
+              </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

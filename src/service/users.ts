@@ -115,6 +115,11 @@ export function deleteUser(id: number, signal?: AbortSignal) {
   return http.post<null>('/users/delete', { id }, { signal })
 }
 
+/** 批量删除用户（需鉴权；软删除；网关限制，POST 路径实现；后端 DTO 校验 id 必须为数字，单次最多 50 条） */
+export function deleteUsers(ids: number[], signal?: AbortSignal) {
+  return http.post<null>('/users/delete/batch', { ids }, { signal })
+}
+
 /** 当前登录用户完整信息（含角色），结构同用户列表项 */
 export type UserInfo = UserItem
 

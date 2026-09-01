@@ -79,3 +79,8 @@ export function updateRole(data: UpdateRoleParams, signal?: AbortSignal) {
 export function deleteRole(id: number, signal?: AbortSignal) {
   return http.post<null>('/roles/delete', { id }, { signal })
 }
+
+/** 批量删除角色（需鉴权；物理删除；网关限制，POST 路径实现；后端 DTO 校验 id 必须为数字，单次最多 50 条） */
+export function deleteRoles(ids: number[], signal?: AbortSignal) {
+  return http.post<null>('/roles/delete/batch', { ids }, { signal })
+}

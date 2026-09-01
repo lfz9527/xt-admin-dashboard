@@ -4,6 +4,7 @@ import Roles from '@/pages/system/roles'
 import {
   createRole,
   deleteRole,
+  deleteRoles,
   getRoles,
   updateRole,
   type RoleListResult,
@@ -22,12 +23,14 @@ vi.mock('@/service/roles', () => ({
   createRole: vi.fn(),
   updateRole: vi.fn(),
   deleteRole: vi.fn(),
+  deleteRoles: vi.fn(),
 }))
 
 const mockedGetRoles = vi.mocked(getRoles)
 const mockedCreateRole = vi.mocked(createRole)
 const mockedUpdateRole = vi.mocked(updateRole)
 const mockedDeleteRole = vi.mocked(deleteRole)
+const mockedDeleteRoles = vi.mocked(deleteRoles)
 
 const roleList: RoleListResult['list'] = [
   {
@@ -57,6 +60,7 @@ beforeEach(() => {
   mockedCreateRole.mockReset()
   mockedUpdateRole.mockReset()
   mockedDeleteRole.mockReset()
+  mockedDeleteRoles.mockReset()
   toastSuccess.mockReset()
   toastError.mockReset()
   mockedGetRoles.mockResolvedValue({
@@ -259,6 +263,56 @@ describe('Roles page', () => {
         expect.any(AbortSignal)
       )
     })
+  })
+
+  it('批量删除：勾选多行确认后调用 deleteRoles 并刷新列表', async () => {
+    mockedDeleteRoles.mockResolvedValue({
+      res: {} as never,
+      data: null,
+    } as never)
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    await user.click(screen.getByRole('button', { name: '批量删除' }))
+
+    expect(screen.getByText(/确认删除选中的 2 个角色/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(mockedDeleteRoles).toHaveBeenCalledWith(
+        [1, 2],
+        expect.any(AbortSignal)
+      )
+    })
+    await waitFor(() => {
+      expect(mockedGetRoles).toHaveBeenLastCalledWith(
+        { page: 1, pageSize: 10 },
+        expect.any(AbortSignal)
+      )
+    })
+    expect(toastSuccess).toHaveBeenCalledWith('删除成功')
+  })
+
+  it('批量删除失败：提示错误且不刷新列表', async () => {
+    mockedDeleteRoles.mockRejectedValue(new Error('超级管理员角色不允许删除'))
+    const user = userEvent.setup()
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
+    await user.click(screen.getByRole('button', { name: '批量删除' }))
+    await user.click(screen.getByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith('超级管理员角色不允许删除')
+    })
+    // 失败不触发刷新，弹窗保持打开
+    expect(screen.getByText(/确认删除选中的 2 个角色/)).toBeInTheDocument()
+    expect(mockedGetRoles).toHaveBeenCalledTimes(1)
   })
 
   it('勾选行展示已选数量，取消勾选后数量同步更新', async () => {
