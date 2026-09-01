@@ -326,6 +326,18 @@ describe('Users page', () => {
     expect(mockedUpdateUser).not.toHaveBeenCalled()
   })
 
+  it('超级管理员用户行删除按钮禁用，普通用户行可点击', async () => {
+    renderUsers()
+    await screen.findByText('admin')
+
+    const deleteButtons = screen.getAllByRole('button', { name: '删除' })
+    expect(deleteButtons).toHaveLength(2)
+    // 第 1 行 admin 绑定超级管理员角色，删除按钮禁用
+    expect(deleteButtons[0]).toBeDisabled()
+    // 第 2 行运营小王无角色，删除按钮可用
+    expect(deleteButtons[1]).not.toBeDisabled()
+  })
+
   it('删除用户：确认后调用 deleteUser 并刷新列表', async () => {
     mockedDeleteUser.mockResolvedValue({
       res: {} as never,
@@ -335,12 +347,12 @@ describe('Users page', () => {
     renderUsers()
     await screen.findByText('admin')
 
-    await user.click(screen.getAllByRole('button', { name: '删除' })[0])
-    expect(screen.getByText(/确认删除用户「admin」/)).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '删除' })[1])
+    expect(screen.getByText(/确认删除用户「运营小王」/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteUser).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+      expect(mockedDeleteUser).toHaveBeenCalledWith(2, expect.any(AbortSignal))
     })
     await waitFor(() => {
       expect(mockedGetUsers).toHaveBeenLastCalledWith(

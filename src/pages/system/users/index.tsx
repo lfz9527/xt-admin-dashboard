@@ -178,6 +178,12 @@ export default function Users() {
             <Button
               variant='ghost'
               className='hover:text-destructive text-destructive'
+              disabled={row.original.role?.roleKey === 'admin'}
+              title={
+                row.original.role?.roleKey === 'admin'
+                  ? '超级管理员用户不允许删除'
+                  : undefined
+              }
               onClick={() =>
                 setDeleteTarget({
                   ids: [Number(row.original.id)],

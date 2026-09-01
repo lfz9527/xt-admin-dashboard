@@ -139,9 +139,16 @@ export default function Roles() {
             >
               编辑
             </Button>
+            {/* 超级管理员角色不允许删除，禁用删除按钮 */}
             <Button
               variant='ghost'
               className='hover:text-destructive text-destructive'
+              disabled={row.original.roleKey === 'admin'}
+              title={
+                row.original.roleKey === 'admin'
+                  ? '超级管理员角色不允许删除'
+                  : undefined
+              }
               onClick={() =>
                 setDeleteTarget({
                   ids: [Number(row.original.id)],

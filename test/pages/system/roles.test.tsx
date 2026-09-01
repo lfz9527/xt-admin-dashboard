@@ -241,6 +241,18 @@ describe('Roles page', () => {
     })
   })
 
+  it('超级管理员行删除按钮禁用，普通角色行可点击', async () => {
+    render(<Roles />)
+    await screen.findByText('管理员')
+
+    const deleteButtons = screen.getAllByRole('button', { name: '删除' })
+    expect(deleteButtons).toHaveLength(2)
+    // 第 1 行为超级管理员（admin），删除按钮禁用
+    expect(deleteButtons[0]).toBeDisabled()
+    // 第 2 行为普通角色，删除按钮可用
+    expect(deleteButtons[1]).not.toBeDisabled()
+  })
+
   it('删除角色：确认后调用 deleteRole 并刷新列表', async () => {
     mockedDeleteRole.mockResolvedValue({
       res: {} as never,
@@ -250,12 +262,12 @@ describe('Roles page', () => {
     render(<Roles />)
     await screen.findByText('管理员')
 
-    await user.click(screen.getAllByRole('button', { name: '删除' })[0])
-    expect(screen.getByText(/确认删除角色「管理员」/)).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '删除' })[1])
+    expect(screen.getByText(/确认删除角色「运营」/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
-      expect(mockedDeleteRole).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+      expect(mockedDeleteRole).toHaveBeenCalledWith(2, expect.any(AbortSignal))
     })
     await waitFor(() => {
       expect(mockedGetRoles).toHaveBeenLastCalledWith(
@@ -354,10 +366,11 @@ describe('Roles page', () => {
     render(<Roles />)
     await screen.findByText('管理员')
 
-    await user.click(screen.getByRole('checkbox', { name: '选择第 1 行' }))
+    // 勾选普通角色行（管理员行删除按钮禁用）
+    await user.click(screen.getByRole('checkbox', { name: '选择第 2 行' }))
     expect(screen.getByText('已选 1 项')).toBeInTheDocument()
 
-    await user.click(screen.getAllByRole('button', { name: '删除' })[0])
+    await user.click(screen.getAllByRole('button', { name: '删除' })[1])
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {
