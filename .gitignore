@@ -27,6 +27,3 @@ analyze.html
 # ZCode 会话计划文件
 .zcode/
 .playwright-mcp
-
-# Loop 工作区状态与证据
-.loop/
