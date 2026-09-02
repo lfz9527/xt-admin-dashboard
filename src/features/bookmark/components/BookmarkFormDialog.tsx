@@ -263,7 +263,13 @@ export default function BookmarkFormDialog({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='选择父级文件夹' />
+                      <SelectValue placeholder='选择父级文件夹'>
+                        {field.value === '0'
+                          ? '根级'
+                          : (folderOptions.find(
+                              (option) => option.value === field.value
+                            )?.label ?? '')}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value='0'>根级</SelectItem>
