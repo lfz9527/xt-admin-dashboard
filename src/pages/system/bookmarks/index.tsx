@@ -107,24 +107,26 @@ function TreeNode({
   if (node.type === 1) {
     const isExpanded = expanded.has(node.id)
     return (
-      <div className='group relative'>
-        <div
-          className={rowClass}
-          onClick={() => {
-            onSelect(node)
-            onToggle(node.id)
-          }}
-        >
-          <ChevronRight
-            className={cn(
-              'size-4 shrink-0 transition-transform duration-150',
-              isExpanded && 'rotate-90'
-            )}
-          />
-          <Folder className='size-4 shrink-0 text-sky-500' />
-          <span className='min-w-0 truncate'>{node.title}</span>
+      <div className='group'>
+        <div className='relative'>
+          <div
+            className={rowClass}
+            onClick={() => {
+              onSelect(node)
+              onToggle(node.id)
+            }}
+          >
+            <ChevronRight
+              className={cn(
+                'size-4 shrink-0 transition-transform duration-150',
+                isExpanded && 'rotate-90'
+              )}
+            />
+            <Folder className='size-4 shrink-0 text-sky-500' />
+            <span className='min-w-0 truncate'>{node.title}</span>
+          </div>
+          {actions}
         </div>
-        {actions}
         {isExpanded && (
           <div className='border-border/60 ml-3 border-l pl-2'>
             {node.children.map((child) => (
