@@ -219,7 +219,7 @@ export default function Bookmarks() {
   return (
     <div className='flex h-full min-h-0'>
       {/* 左侧：收藏树（自定义文件树结构） */}
-      <div className='bg-muted/30 border-border flex h-full w-md shrink-0 flex-col border-r'>
+      <div className='bg-muted/30 border-border flex h-full w-60 shrink-0 flex-col border-r md:w-72 lg:w-md'>
         <div className='flex items-center justify-between p-3'>
           <span className='text-sm font-medium'>书签管理</span>
           <Button
