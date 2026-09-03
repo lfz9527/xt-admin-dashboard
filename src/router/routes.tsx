@@ -1,5 +1,6 @@
 import {
   Bookmark,
+  Globe,
   House,
   Library,
   Settings2,
@@ -27,6 +28,22 @@ const routes: AppRouteObject[] = [
                 path: '/',
                 element: Lazy(() => import('@/pages/home')),
                 meta: { title: '首页', menuKey: 'home', icon: House },
+              },
+              {
+                meta: { title: '浏览器管理', menuKey: 'browser', icon: Globe },
+                children: [
+                  {
+                    path: '/browser/bookmarks',
+                    element: Lazy(() => import('@/pages/browser/bookmarks')),
+                    meta: {
+                      title: '书签管理',
+                      menuKey: 'browser-bookmarks',
+                      icon: Bookmark,
+                      // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
+                      permission: 'admin',
+                    },
+                  },
+                ],
               },
               {
                 meta: { title: '系统管理', menuKey: 'system', icon: Settings2 },
@@ -71,17 +88,6 @@ const routes: AppRouteObject[] = [
                       title: '角色管理',
                       menuKey: 'system-roles',
                       icon: ShieldCheck,
-                      // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
-                      permission: 'admin',
-                    },
-                  },
-                  {
-                    path: '/system/bookmarks',
-                    element: Lazy(() => import('@/pages/system/bookmarks')),
-                    meta: {
-                      title: '书签管理',
-                      menuKey: 'system-bookmarks',
-                      icon: Bookmark,
                       // 第一版：permission 暂存角色码，仅超级管理员（roleKey=admin）可访问
                       permission: 'admin',
                     },
