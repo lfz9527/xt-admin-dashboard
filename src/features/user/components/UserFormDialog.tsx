@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
+import { SelectData } from '@/components/SelectData'
 import { useRequest } from '@/hooks'
 import { getRoles } from '@/service/roles'
 import { createUser, updateUser, type UserItem } from '@/service/users'
@@ -23,13 +24,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/Select'
 import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
@@ -218,34 +212,17 @@ export default function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>角色</FormLabel>
-                  <Select
-                    value={field.value == null ? '' : field.value}
-                    onValueChange={(value) =>
-                      field.onChange(value === '' ? null : value)
-                    }
-                  >
-                    <SelectTrigger
-                      className='w-full'
-                      disabled={roleLoading}
-                    >
-                      <SelectValue>
-                        {field.value == null
-                          ? '请选择角色'
-                          : (roleList.find((role) => role.id === field.value)
-                              ?.name ?? user?.role?.name)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roleList.map((role) => (
-                        <SelectItem
-                          key={role.id}
-                          value={role.id}
-                        >
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SelectData
+                    options={roleList.map((role) => ({
+                      value: role.id,
+                      label: role.name,
+                    }))}
+                    value={field.value}
+                    onChange={(value) => field.onChange(value)}
+                    placeholder='请选择角色'
+                    disabled={roleLoading}
+                    className='w-full'
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -256,30 +233,15 @@ export default function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel showRequired={false}>性别</FormLabel>
-                  <Select
+                  <SelectData
+                    options={GENDER_OPTIONS.map((option) => ({
+                      value: String(option.value),
+                      label: option.label,
+                    }))}
                     value={String(field.value)}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue>
-                        {
-                          GENDER_OPTIONS.find(
-                            (option) => option.value === field.value
-                          )?.label
-                        }
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GENDER_OPTIONS.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={String(option.value)}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => field.onChange(Number(value))}
+                    className='w-full'
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -290,20 +252,15 @@ export default function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel showRequired={false}>状态</FormLabel>
-                  <Select
+                  <SelectData
+                    options={[
+                      { value: '0', label: '启用' },
+                      { value: '1', label: '停用' },
+                    ]}
                     value={String(field.value)}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue>
-                        {field.value === 0 ? '启用' : '停用'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='0'>启用</SelectItem>
-                      <SelectItem value='1'>停用</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => field.onChange(Number(value))}
+                    className='w-full'
+                  />
                   <FormMessage />
                 </FormItem>
               )}

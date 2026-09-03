@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 
 import { useRequest } from '@/hooks'
 import { createRole, updateRole, type RoleItem } from '@/service/roles'
+import { SelectData } from '@/components/SelectData'
 import { Button } from '@/ui/Button'
 import {
   Dialog,
@@ -22,13 +23,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/Select'
 import { Spinner } from '@/ui/Spinner'
 import { Textarea } from '@/ui/Textarea'
 import { toast } from '@/ui/Toast'
@@ -168,20 +162,15 @@ export default function RoleFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel showRequired={false}>状态</FormLabel>
-                  <Select
+                  <SelectData
+                    options={[
+                      { value: '0', label: '启用' },
+                      { value: '1', label: '停用' },
+                    ]}
                     value={String(field.value)}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue>
-                        {field.value === 0 ? '启用' : '停用'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='0'>启用</SelectItem>
-                      <SelectItem value='1'>停用</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => field.onChange(Number(value))}
+                    className='w-full'
+                  />
                   <FormMessage />
                 </FormItem>
               )}
