@@ -102,10 +102,12 @@ describe('SelectData', () => {
     )
 
     const trigger = screen.getByRole('combobox')
-    expect(trigger.querySelector('[data-slot=select-value]')).toHaveClass(
-      'min-w-0',
-      'truncate'
-    )
+    // 省略号由 value 内层块级 span 承载（外层 select-value 只负责收缩）
+    const value = trigger.querySelector('[data-slot=select-value]')!
+    expect(value).toHaveClass('min-w-0', 'flex-1')
+    const label = value.querySelector('span')
+    expect(label).not.toBeNull()
+    expect(label!).toHaveClass('block', 'min-w-0', 'truncate')
 
     await user.click(trigger)
     const option = await screen.findByRole('option', {

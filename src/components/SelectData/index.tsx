@@ -73,11 +73,16 @@ export function SelectData({
           className={cn('w-50', className)}
           title={toTitle(selectedOption?.label)}
         >
-          <SelectValue className='min-w-0 truncate'>
-            {(current) =>
-              options.find((option) => option.value === current)?.label ??
-              placeholder
-            }
+          <SelectValue className='min-w-0 flex-1'>
+            {(current) => {
+              const label =
+                options.find((option) => option.value === current)?.label ??
+                placeholder
+              // 块级 span 承载省略号：不受外层 select-value 的 display 影响
+              return (
+                <span className='block min-w-0 flex-1 truncate'>{label}</span>
+              )
+            }}
           </SelectValue>
         </SelectTrigger>
       </div>

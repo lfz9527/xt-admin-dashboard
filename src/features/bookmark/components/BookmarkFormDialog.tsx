@@ -182,7 +182,8 @@ export default function BookmarkFormDialog({
         >
           <form
             id='bookmark-form'
-            className='flex flex-col gap-4'
+            // min-w-0：DialogContent 为 grid 布局，默认 min-width:auto 会让超长父级名把轨道撑破溢出弹窗
+            className='flex min-w-0 flex-col gap-4'
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <FormField
