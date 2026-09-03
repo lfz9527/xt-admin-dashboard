@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { Modal } from '@/components/Modal'
 import { SelectData } from '@/components/SelectData'
 import { useRequest } from '@/hooks'
 import {
@@ -9,15 +10,7 @@ import {
   updateBookmark,
   type BookmarkNode,
 } from '@/service/bookmarks'
-import { Button } from '@/ui/Button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/ui/Dialog'
+import { DialogDescription } from '@/ui/Dialog'
 import {
   Form,
   FormControl,
@@ -27,7 +20,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
 import { bookmarkFormSchema, type BookmarkFormValues } from '../types'
@@ -165,126 +157,103 @@ export default function BookmarkFormDialog({
   const watchType = useWatch({ control: form.control, name: 'type' })
 
   return (
-    <Dialog
+    <Modal
       open={open}
-      onOpenChange={onOpenChange}
+      title={isEdit ? '编辑书签' : '新增书签'}
+      onCancel={() => onOpenChange(false)}
+      confirmLoading={loading}
+      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
+      okButtonProps={{ type: 'submit', form: 'bookmark-form' }}
+      className='sm:max-w-md'
     >
-      <DialogContent className='sm:max-w-md'>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? '编辑书签' : '新增书签'}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? '类型不可修改' : '收藏需填写网址，文件夹可包含子项'}
-          </DialogDescription>
-        </DialogHeader>
-        <Form
-          {...form}
-          schema={bookmarkFormSchema}
+      <DialogDescription>
+        {isEdit ? '类型不可修改' : '收藏需填写网址，文件夹可包含子项'}
+      </DialogDescription>
+      <Form
+        {...form}
+        schema={bookmarkFormSchema}
+      >
+        <form
+          id='bookmark-form'
+          // min-w-0：DialogContent 为 grid 布局，默认 min-width:auto 会让超长父级名把轨道撑破溢出弹窗
+          className='flex min-w-0 flex-col gap-4'
+          onSubmit={form.handleSubmit(onSubmit)}
         >
-          <form
-            id='bookmark-form'
-            // min-w-0：DialogContent 为 grid 布局，默认 min-width:auto 会让超长父级名把轨道撑破溢出弹窗
-            className='flex min-w-0 flex-col gap-4'
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
-            <FormField
-              control={form.control}
-              name='type'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>类型</FormLabel>
-                  <SelectData
-                    options={[
-                      { value: '1', label: '文件夹' },
-                      { value: '2', label: '收藏' },
-                    ]}
-                    value={String(field.value)}
-                    onChange={(value) => field.onChange(Number(value))}
-                    disabled={isEdit}
-                    className='w-full'
+          <FormField
+            control={form.control}
+            name='type'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>类型</FormLabel>
+                <SelectData
+                  options={[
+                    { value: '1', label: '文件夹' },
+                    { value: '2', label: '收藏' },
+                  ]}
+                  value={String(field.value)}
+                  onChange={(value) => field.onChange(Number(value))}
+                  disabled={isEdit}
+                  className='w-full'
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='title'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>名称</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder={
+                      watchType === 1 ? '如：常用网站' : '如：GitHub'
+                    }
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {watchType === 2 && (
             <FormField
               control={form.control}
-              name='title'
+              name='url'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>名称</FormLabel>
+                  <FormLabel>网址</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder={
-                        watchType === 1 ? '如：常用网站' : '如：GitHub'
-                      }
+                      placeholder='如：https://github.com'
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {watchType === 2 && (
-              <FormField
-                control={form.control}
-                name='url'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>网址</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder='如：https://github.com'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          )}
+          <FormField
+            control={form.control}
+            name='parentId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel showRequired={false}>父级</FormLabel>
+                <SelectData
+                  options={[{ value: '0', label: '根级' }, ...folderOptions]}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder='选择父级文件夹'
+                  className='w-full'
+                />
+                <FormMessage />
+              </FormItem>
             )}
-            <FormField
-              control={form.control}
-              name='parentId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel showRequired={false}>父级</FormLabel>
-                  <SelectData
-                    options={[{ value: '0', label: '根级' }, ...folderOptions]}
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder='选择父级文件夹'
-                    className='w-full'
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-          >
-            取消
-          </Button>
-          <Button
-            type='submit'
-            form='bookmark-form'
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner />
-                {isEdit ? '保存中...' : '创建中...'}
-              </>
-            ) : (
-              '确认'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          />
+        </form>
+      </Form>
+    </Modal>
   )
 }

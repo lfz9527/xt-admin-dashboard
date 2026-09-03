@@ -1,16 +1,6 @@
 import { useRequest } from '@/hooks'
+import { Confirm } from '@/components/Confirm'
 import { deleteBookmark, type BookmarkNode } from '@/service/bookmarks'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/ui/AlertDialog'
-import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
 type DeleteBookmarkDialogProps = {
@@ -53,47 +43,27 @@ export default function DeleteBookmarkDialog({
   const subtreeCount = node ? countSubtree(node) - 1 : 0
 
   return (
-    <AlertDialog
+    <Confirm
       open={open}
       onOpenChange={onOpenChange}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isFolder ? '删除文件夹' : '删除收藏'}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {isFolder ? (
-              <>
-                确认删除文件夹「{node?.title}
-                」？其下 {subtreeCount} 个子项将一并删除，该操作不可恢复。
-              </>
-            ) : (
-              <>
-                确认删除收藏「{node?.title}
-                」？该操作不可恢复。
-              </>
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction
-            variant='destructive'
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner />
-                删除中...
-              </>
-            ) : (
-              '确认删除'
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      title={isFolder ? '删除文件夹' : '删除收藏'}
+      description={
+        isFolder ? (
+          <>
+            确认删除文件夹「{node?.title}
+            」？其下 {subtreeCount} 个子项将一并删除，该操作不可恢复。
+          </>
+        ) : (
+          <>
+            确认删除收藏「{node?.title}
+            」？该操作不可恢复。
+          </>
+        )
+      }
+      destructive
+      confirmText={loading ? '删除中...' : '确认删除'}
+      confirmLoading={loading}
+      onConfirm={onConfirm}
+    />
   )
 }
