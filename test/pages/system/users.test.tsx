@@ -13,6 +13,7 @@ import {
   type UserListResult,
 } from '@/service/users'
 import { getRoles } from '@/service/roles'
+import { getDictOptions } from '@/service/dict'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const toastSuccess = vi.hoisted(() => vi.fn())
@@ -35,6 +36,11 @@ vi.mock('@/service/roles', () => ({
   getRoles: vi.fn(),
 }))
 
+vi.mock('@/service/dict', () => ({
+  getDictOptions: vi.fn(),
+  getEnabledDicts: vi.fn(),
+}))
+
 const mockedGetUsers = vi.mocked(getUsers)
 const mockedGetUser = vi.mocked(getUser)
 const mockedCreateUser = vi.mocked(createUser)
@@ -42,6 +48,7 @@ const mockedUpdateUser = vi.mocked(updateUser)
 const mockedDeleteUser = vi.mocked(deleteUser)
 const mockedDeleteUsers = vi.mocked(deleteUsers)
 const mockedGetRoles = vi.mocked(getRoles)
+const mockedGetDictOptions = vi.mocked(getDictOptions)
 
 const userList: UserListResult['list'] = [
   {
@@ -111,6 +118,7 @@ beforeEach(() => {
   mockedDeleteUser.mockReset()
   mockedDeleteUsers.mockReset()
   mockedGetRoles.mockReset()
+  mockedGetDictOptions.mockReset()
   toastSuccess.mockReset()
   toastError.mockReset()
   mockedGetUsers.mockResolvedValue({
@@ -121,6 +129,23 @@ beforeEach(() => {
     res: {} as never,
     data: { list: roleList, total: 2 },
   } as never)
+  // 性别/状态选项从字典读取（按 dictKey 返回对应预置数据）
+  mockedGetDictOptions.mockImplementation(
+    (dictKey) =>
+      Promise.resolve({
+        data:
+          dictKey === 'sys_user_sex'
+            ? [
+                { id: 1, label: '男', value: '0', children: [] },
+                { id: 2, label: '女', value: '1', children: [] },
+                { id: 3, label: '未知', value: '2', children: [] },
+              ]
+            : [
+                { id: 1, label: '正常', value: '0', children: [] },
+                { id: 2, label: '停用', value: '1', children: [] },
+              ],
+      }) as never
+  )
 })
 
 describe('Users page', () => {

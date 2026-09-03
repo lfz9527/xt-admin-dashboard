@@ -10,6 +10,7 @@ import {
   type RoleListResult,
 } from '@/service/roles'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getDictOptions } from '@/service/dict'
 
 const toastSuccess = vi.hoisted(() => vi.fn())
 const toastError = vi.hoisted(() => vi.fn())
@@ -26,11 +27,17 @@ vi.mock('@/service/roles', () => ({
   deleteRoles: vi.fn(),
 }))
 
+vi.mock('@/service/dict', () => ({
+  getDictOptions: vi.fn(),
+  getEnabledDicts: vi.fn(),
+}))
+
 const mockedGetRoles = vi.mocked(getRoles)
 const mockedCreateRole = vi.mocked(createRole)
 const mockedUpdateRole = vi.mocked(updateRole)
 const mockedDeleteRole = vi.mocked(deleteRole)
 const mockedDeleteRoles = vi.mocked(deleteRoles)
+const mockedGetDictOptions = vi.mocked(getDictOptions)
 
 const roleList: RoleListResult['list'] = [
   {
@@ -61,11 +68,19 @@ beforeEach(() => {
   mockedUpdateRole.mockReset()
   mockedDeleteRole.mockReset()
   mockedDeleteRoles.mockReset()
+  mockedGetDictOptions.mockReset()
   toastSuccess.mockReset()
   toastError.mockReset()
   mockedGetRoles.mockResolvedValue({
     res: {} as never,
     data: { list: roleList, total: 12 },
+  } as never)
+  // 角色表单的状态下拉读取「通用状态」字典
+  mockedGetDictOptions.mockResolvedValue({
+    data: [
+      { id: 1, label: '正常', value: '0', children: [] },
+      { id: 2, label: '停用', value: '1', children: [] },
+    ],
   } as never)
 })
 

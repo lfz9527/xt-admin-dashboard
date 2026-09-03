@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 
 import { Modal } from '@/components/Modal'
 import { SelectData } from '@/components/SelectData'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import {
   createDictType,
   updateDictType,
@@ -23,7 +23,6 @@ import { Input } from '@/ui/Input'
 import { Textarea } from '@/ui/Textarea'
 import { toast } from '@/ui/Toast'
 
-import { STATUS_OPTIONS } from '../constant'
 import { dictTypeFormSchema, type DictTypeFormValues } from '../types'
 
 type DictTypeFormDialogProps = {
@@ -63,6 +62,8 @@ export default function DictTypeFormDialog({
     { immediate: false }
   )
   const loading = createLoading || updateLoading
+  // 状态选项从「通用状态」字典读取，避免在表单中写死启用/停用
+  const { options: statusOptions } = useDictOptions('sys_normal_disable')
 
   // 每次打开按模式重置表单，避免残留上次输入
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function DictTypeFormDialog({
               <FormItem>
                 <FormLabel showRequired={false}>状态</FormLabel>
                 <SelectData
-                  options={STATUS_OPTIONS}
+                  options={statusOptions}
                   value={String(field.value)}
                   onChange={(value) => field.onChange(Number(value))}
                   className='w-full'

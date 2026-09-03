@@ -38,6 +38,12 @@ vi.mock('@/service/auth', () => ({
   resetPassword: resetPasswordMock,
 }))
 
+// 登录成功后经启用字典接口预取字典到全局 store，mock 掉避免真实请求
+vi.mock('@/service/dict', () => ({
+  getEnabledDicts: vi.fn().mockResolvedValue({ data: [] }),
+  getDictOptions: vi.fn().mockResolvedValue({ data: [] }),
+}))
+
 const mockUser = {
   id: '1',
   nickname: 'admin',

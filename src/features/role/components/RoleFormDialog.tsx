@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 
 import { Modal } from '@/components/Modal'
 import { SelectData } from '@/components/SelectData'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import { createRole, updateRole, type RoleItem } from '@/service/roles'
 import { DialogDescription } from '@/ui/Dialog'
 import {
@@ -57,6 +57,8 @@ export default function RoleFormDialog({
     { immediate: false }
   )
   const loading = createLoading || updateLoading
+  // 状态选项从「通用状态」字典读取，避免在表单中写死启用/停用
+  const { options: statusOptions } = useDictOptions('sys_normal_disable')
 
   // 每次打开按模式重置表单，避免残留上次输入
   useEffect(() => {
@@ -156,10 +158,7 @@ export default function RoleFormDialog({
               <FormItem>
                 <FormLabel showRequired={false}>状态</FormLabel>
                 <SelectData
-                  options={[
-                    { value: '0', label: '启用' },
-                    { value: '1', label: '停用' },
-                  ]}
+                  options={statusOptions}
                   value={String(field.value)}
                   onChange={(value) => field.onChange(Number(value))}
                   className='w-full'

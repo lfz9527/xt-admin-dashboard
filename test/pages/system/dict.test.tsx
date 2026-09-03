@@ -6,6 +6,7 @@ import {
   createDictType,
   deleteDictItem,
   deleteDictType,
+  getDictOptions,
   listAllDictItems,
   listAllDictTypes,
   updateDictItemStatus,
@@ -33,10 +34,13 @@ vi.mock('@/service/dict', () => ({
   updateDictItem: vi.fn(),
   updateDictItemStatus: vi.fn(),
   deleteDictItem: vi.fn(),
+  getDictOptions: vi.fn(),
+  getEnabledDicts: vi.fn(),
 }))
 
 const mockedListTypes = vi.mocked(listAllDictTypes)
 const mockedListItems = vi.mocked(listAllDictItems)
+const mockedGetDictOptions = vi.mocked(getDictOptions)
 const mockedCreateType = vi.mocked(createDictType)
 const mockedDeleteType = vi.mocked(deleteDictType)
 const mockedUpdateTypeStatus = vi.mocked(updateDictTypeStatus)
@@ -118,6 +122,7 @@ beforeEach(() => {
   mockedCreateItem.mockReset()
   mockedDeleteItem.mockReset()
   mockedUpdateItemStatus.mockReset()
+  mockedGetDictOptions.mockReset()
   toastSuccess.mockReset()
   toastError.mockReset()
 
@@ -128,6 +133,13 @@ beforeEach(() => {
         data: id === 1 ? type1Items : [],
       }) as never
   )
+  // 类型/项表单的状态下拉读取「通用状态」字典
+  mockedGetDictOptions.mockResolvedValue({
+    data: [
+      { id: 1, label: '正常', value: '0', children: [] },
+      { id: 2, label: '停用', value: '1', children: [] },
+    ],
+  } as never)
 })
 
 describe('Dict page', () => {

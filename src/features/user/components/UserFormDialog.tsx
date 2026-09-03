@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 
 import { Modal } from '@/components/Modal'
 import { SelectData } from '@/components/SelectData'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import { getRoles } from '@/service/roles'
 import { createUser, updateUser, type UserItem } from '@/service/users'
 import { DialogDescription } from '@/ui/Dialog'
@@ -19,7 +19,6 @@ import {
 import { Input } from '@/ui/Input'
 import { toast } from '@/ui/Toast'
 
-import { GENDER_OPTIONS } from '../constant'
 import {
   createUserSchema,
   updateUserSchema,
@@ -64,6 +63,10 @@ export default function UserFormDialog({
     { immediate: false }
   )
   const loading = createLoading || updateLoading
+
+  // 性别/状态选项从字典读取，避免在表单中写死
+  const { options: genderOptions } = useDictOptions('sys_user_sex')
+  const { options: statusOptions } = useDictOptions('sys_normal_disable')
 
   // 角色下拉数据：分页接口，取第一页（pageSize 100 为接口上限）
   const {
@@ -227,10 +230,7 @@ export default function UserFormDialog({
               <FormItem>
                 <FormLabel showRequired={false}>性别</FormLabel>
                 <SelectData
-                  options={GENDER_OPTIONS.map((option) => ({
-                    value: String(option.value),
-                    label: option.label,
-                  }))}
+                  options={genderOptions}
                   value={String(field.value)}
                   onChange={(value) => field.onChange(Number(value))}
                   className='w-full'
@@ -246,10 +246,7 @@ export default function UserFormDialog({
               <FormItem>
                 <FormLabel showRequired={false}>状态</FormLabel>
                 <SelectData
-                  options={[
-                    { value: '0', label: '启用' },
-                    { value: '1', label: '停用' },
-                  ]}
+                  options={statusOptions}
                   value={String(field.value)}
                   onChange={(value) => field.onChange(Number(value))}
                   className='w-full'

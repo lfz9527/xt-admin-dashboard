@@ -62,6 +62,26 @@ vi.mock('@/service/auth', () => ({
   }),
 }))
 
+// 个人中心性别/状态回显与编辑下拉从字典读取，需 mock 字典下拉接口
+vi.mock('@/service/dict', () => ({
+  getEnabledDicts: vi.fn().mockResolvedValue({ data: [] }),
+  getDictOptions: vi.fn((dictKey: string) =>
+    Promise.resolve({
+      data:
+        dictKey === 'sys_user_sex'
+          ? [
+              { id: 1, label: '男', value: '0', children: [] },
+              { id: 2, label: '女', value: '1', children: [] },
+              { id: 3, label: '未知', value: '2', children: [] },
+            ]
+          : [
+              { id: 1, label: '正常', value: '0', children: [] },
+              { id: 2, label: '停用', value: '1', children: [] },
+            ],
+    })
+  ),
+}))
+
 beforeEach(() => {
   localStorage.clear()
   if (!window.ResizeObserver) {

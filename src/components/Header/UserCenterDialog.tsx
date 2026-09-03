@@ -11,8 +11,7 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordValues,
 } from '@/features/auth/types'
-import { GENDER_OPTIONS } from '@/features/user/constant'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import { authLogout } from '@/service/request'
 import { updateProfile, uploadAvatar } from '@/service/users'
 import useAuthor from '@/store/useAuthor'
@@ -67,6 +66,9 @@ export default function UserCenterDialog({
   const user = useAuthor((state) => state.user)
   const setUser = useAuthor((state) => state.setUser)
   const [view, setView] = useState<'info' | 'edit' | 'password'>('info')
+  // 性别选项与回显文案从字典读取，避免写死
+  const { options: genderOptions, labelOf: genderLabelOf } =
+    useDictOptions('sys_user_sex')
   const { runAsync: runSendResetCode } = useSendResetCode()
   const { runAsync: runResetPassword } = useResetPassword()
   const { runAsync: runUpdateProfile, loading: updateLoading } = useRequest(
@@ -247,11 +249,7 @@ export default function UserCenterDialog({
             />
             <Field
               label='性别'
-              value={
-                user &&
-                GENDER_OPTIONS.find((option) => option.value === user.gender)
-                  ?.label
-              }
+              value={user && genderLabelOf(user.gender)}
             />
             <Field
               label='角色'
@@ -297,19 +295,13 @@ export default function UserCenterDialog({
                       onValueChange={(value) => field.onChange(Number(value))}
                     >
                       <SelectTrigger className='w-full'>
-                        <SelectValue>
-                          {
-                            GENDER_OPTIONS.find(
-                              (option) => option.value === field.value
-                            )?.label
-                          }
-                        </SelectValue>
+                        <SelectValue>{genderLabelOf(field.value)}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {GENDER_OPTIONS.map((option) => (
+                        {genderOptions.map((option) => (
                           <SelectItem
                             key={option.value}
-                            value={String(option.value)}
+                            value={option.value}
                           >
                             {option.label}
                           </SelectItem>

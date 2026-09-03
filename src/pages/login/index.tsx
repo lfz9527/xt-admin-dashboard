@@ -7,6 +7,7 @@ import { Moon, Sun } from 'lucide-react'
 import Logo from '@/components/Logo'
 import { useTheme } from '@/hooks'
 import useAuthor from '@/store/useAuthor'
+import useDictStore from '@/store/useDictStore'
 import { Button } from '@/ui/Button'
 import { toast } from '@/ui/Toast'
 import {
@@ -95,6 +96,8 @@ export default function Login() {
       })
       setToken(result.access_token)
       setUser(result.user)
+      // 登录成功后预取常用字典到全局 store（异步，不阻塞跳转；失败由 store 容错）
+      useDictStore.getState().prefetchDicts()
       if (values.remember)
         await saveCredentials(values.account, values.password)
       else clearCredentials()

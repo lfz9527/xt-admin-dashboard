@@ -247,6 +247,46 @@ export function deleteDictItem(id: number, signal?: AbortSignal) {
   return http.post<null>('/dict-items/delete', { id }, { signal })
 }
 
+// ── 下拉选项读取（任意登录用户可调用）───────────────────────
+
+/** 启用字典类型简要信息（GET /dicts 返回） */
+export type EnabledDict = {
+  /** 字典类型 ID */
+  id: number
+  /** 字典名称（展示名） */
+  name: string
+  /** 字典编码（读取下拉选项时用作路径参数） */
+  dictKey: string
+}
+
+/** 下拉选项节点（GET /dicts/:dictKey/items 返回的树形结构，叶子 children 为 []） */
+export type DictOptionNode = {
+  /** 字典项 ID */
+  id: number
+  /** 展示文本（下拉显示用） */
+  label: string
+  /** 存储值（提交表单用） */
+  value: string
+  /** 子选项数组（递归嵌套；叶子为 []） */
+  children: DictOptionNode[]
+}
+
+/**
+ * 全部启用字典（需鉴权；任意登录用户可调用，仅返回启用 status=0 的类型）。
+ * 返回按 sort 升序、id 升序排列；拿到 dictKey 后再调 getDictOptions 获取选项。
+ */
+export function getEnabledDicts(signal?: AbortSignal) {
+  return http.get<EnabledDict[]>('/dicts', { signal })
+}
+
+/**
+ * 按编码读取下拉选项（需鉴权；任意登录用户可调用）。
+ * 仅返回启用项，停用节点连同其子树整体隐藏。
+ */
+export function getDictOptions(dictKey: string, signal?: AbortSignal) {
+  return http.get<DictOptionNode[]>(`/dicts/${dictKey}/items`, { signal })
+}
+
 // ── 前端管理数据收集 ─────────────────────────────────────
 
 /** 单页最大条数（后端 pageSize 上限） */

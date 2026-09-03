@@ -7,8 +7,7 @@ import { Plus } from 'lucide-react'
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 import DeleteUserDialog from '@/features/user/components/DeleteUserDialog'
 import UserFormDialog from '@/features/user/components/UserFormDialog'
-import { GENDER_OPTIONS } from '@/features/user/constant'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import { getUsers, updateUser, type UserItem } from '@/service/users'
 import { Button } from '@/ui/Button'
 import { Switch } from '@/ui/Switch'
@@ -39,6 +38,8 @@ export default function Users() {
     })
   /** 正在切换状态的用户 id（仅该行显示 loading） */
   const [switchingId, setSwitchingId] = useState<UserItem['id'] | null>(null)
+  // 性别回显文案从字典读取，避免写死
+  const { labelOf: genderLabelOf } = useDictOptions('sys_user_sex')
 
   // 行内切换启用/停用：先乐观更新本地列表，接口失败时回滚
   const handleStatusChange = useCallback(
@@ -91,13 +92,7 @@ export default function Users() {
         accessorKey: 'gender',
         header: '性别',
         meta: { align: 'center', width: 80 },
-        cell: ({ getValue }) => {
-          const gender = getValue() as number
-          return (
-            GENDER_OPTIONS.find((option) => option.value === gender)?.label ??
-            '-'
-          )
-        },
+        cell: ({ getValue }) => genderLabelOf(getValue() as number) ?? '-',
       },
       {
         accessorKey: 'role',
@@ -197,7 +192,13 @@ export default function Users() {
         ),
       },
     ],
-    [handleStatusChange, navigate, updateStatusLoading, switchingId]
+    [
+      handleStatusChange,
+      navigate,
+      updateStatusLoading,
+      switchingId,
+      genderLabelOf,
+    ]
   )
 
   return (

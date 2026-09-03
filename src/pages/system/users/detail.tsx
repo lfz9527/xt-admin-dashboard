@@ -2,8 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { useParams } from 'react-router'
 
 import defaultAvatar from '@/assets/icon/default-avatar.svg'
-import { GENDER_OPTIONS } from '@/features/user/constant'
-import { useRequest } from '@/hooks'
+import { useRequest, useDictOptions } from '@/hooks'
 import { getUser } from '@/service/users'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
 import { Card, CardContent, CardHeader } from '@/ui/Card'
@@ -29,6 +28,10 @@ export default function UserDetail() {
   useEffect(() => {
     if (id) run(id)
   }, [id, run])
+
+  // 性别/状态回显文案从字典读取（hook 需在所有条件 return 之前调用）
+  const { labelOf: genderLabelOf } = useDictOptions('sys_user_sex')
+  const { labelOf: statusLabelOf } = useDictOptions('sys_normal_disable')
 
   if (loading) {
     return (
@@ -77,15 +80,12 @@ export default function UserDetail() {
             />
             <Field
               label='性别'
-              value={
-                GENDER_OPTIONS.find((option) => option.value === data.gender)
-                  ?.label
-              }
+              value={genderLabelOf(data.gender)}
             />
-            {/* 后端约定：0=正常（启用）1=停用 */}
+            {/* 状态文案从「通用状态」字典读取 */}
             <Field
               label='状态'
-              value={data.status === 0 ? '启用' : '停用'}
+              value={statusLabelOf(data.status)}
             />
             <Field
               label='角色'

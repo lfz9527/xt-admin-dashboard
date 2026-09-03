@@ -17,6 +17,7 @@ import {
   type DictItem,
   type DictTypeItem,
 } from '@/service/dict'
+import useDictStore from '@/store/useDictStore'
 import { Button } from '@/ui/Button'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import { Switch } from '@/ui/Switch'
@@ -329,6 +330,8 @@ export default function Dict() {
       try {
         await updateTypeStatusAsync({ id: Number(type.id), status: nextStatus })
         toast.success('状态更新成功')
+        // 字典选项已变更，同步刷新全局字典 store
+        useDictStore.getState().refresh()
       } catch (err) {
         mutateTypes((prev) =>
           (prev ?? []).map((item) =>
@@ -357,6 +360,8 @@ export default function Dict() {
       try {
         await updateItemStatusAsync({ id: Number(node.id), status: nextStatus })
         toast.success('状态更新成功')
+        // 字典选项已变更，同步刷新全局字典 store
+        useDictStore.getState().refresh()
       } catch (err) {
         mutateItems((prev) =>
           (prev ?? []).map((item) =>
@@ -382,6 +387,8 @@ export default function Dict() {
   }, [])
 
   const handleTypeFormSuccess = useCallback(() => {
+    // 类型新增/编辑可能变更编码与状态，刷新全部已加载字典
+    useDictStore.getState().refresh()
     runTypes()
   }, [runTypes])
 
@@ -390,6 +397,7 @@ export default function Dict() {
     if (deleteTypeTarget && String(deleteTypeTarget.id) === selectedTypeId) {
       setSelectedTypeId(null)
     }
+    useDictStore.getState().refresh()
     runTypes()
   }, [deleteTypeTarget, selectedTypeId, runTypes])
 
@@ -404,12 +412,16 @@ export default function Dict() {
   }, [])
 
   const handleItemFormSuccess = useCallback(() => {
+    // 字典项新增/编辑影响下拉选项，刷新全局字典 store
+    useDictStore.getState().refresh()
     if (selectedTypeId != null) {
       runItems(Number(selectedTypeId))
     }
   }, [selectedTypeId, runItems])
 
   const handleDeleteItemSuccess = useCallback(() => {
+    // 字典项删除影响下拉选项，刷新全局字典 store
+    useDictStore.getState().refresh()
     if (selectedTypeId != null) {
       runItems(Number(selectedTypeId))
     }
