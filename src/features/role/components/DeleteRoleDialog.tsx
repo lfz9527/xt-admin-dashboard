@@ -1,16 +1,6 @@
 import { useRequest } from '@/hooks'
+import { Confirm } from '@/components/Confirm'
 import { deleteRole, deleteRoles } from '@/service/roles'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/ui/AlertDialog'
-import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
 type DeleteRoleDialogProps = {
@@ -55,47 +45,27 @@ export default function DeleteRoleDialog({
   const isSingle = ids.length === 1 && names.length === 1
 
   return (
-    <AlertDialog
+    <Confirm
       open={open}
       onOpenChange={onOpenChange}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isSingle ? '删除角色' : '批量删除角色'}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {isSingle ? (
-              <>
-                确认删除角色「{names[0]}
-                」？删除后其关联用户将变为无角色，该操作不可恢复。
-              </>
-            ) : (
-              <>
-                确认删除选中的 {ids.length}{' '}
-                个角色？删除后其关联用户将变为无角色，该操作不可恢复。
-              </>
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction
-            variant='destructive'
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner />
-                删除中...
-              </>
-            ) : (
-              '确认删除'
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      title={isSingle ? '删除角色' : '批量删除角色'}
+      description={
+        isSingle ? (
+          <>
+            确认删除角色「{names[0]}
+            」？删除后其关联用户将变为无角色，该操作不可恢复。
+          </>
+        ) : (
+          <>
+            确认删除选中的 {ids.length}{' '}
+            个角色？删除后其关联用户将变为无角色，该操作不可恢复。
+          </>
+        )
+      }
+      destructive
+      confirmText={loading ? '删除中...' : '确认删除'}
+      confirmLoading={loading}
+      onConfirm={onConfirm}
+    />
   )
 }
