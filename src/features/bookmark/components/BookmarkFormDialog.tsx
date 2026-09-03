@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { SelectData } from '@/components/SelectData'
 import { useRequest } from '@/hooks'
 import {
   createBookmark,
@@ -26,13 +27,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/Select'
 import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
@@ -197,21 +191,15 @@ export default function BookmarkFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>类型</FormLabel>
-                  <Select
+                  <SelectData
+                    options={[
+                      { value: '1', label: '文件夹' },
+                      { value: '2', label: '收藏' },
+                    ]}
                     value={String(field.value)}
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onChange={(value) => field.onChange(Number(value))}
                     disabled={isEdit}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue>
-                        {field.value === 1 ? '文件夹' : '收藏'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='1'>文件夹</SelectItem>
-                      <SelectItem value='2'>收藏</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -258,31 +246,12 @@ export default function BookmarkFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel showRequired={false}>父级</FormLabel>
-                  <Select
+                  <SelectData
+                    options={[{ value: '0', label: '根级' }, ...folderOptions]}
                     value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='选择父级文件夹'>
-                        {field.value === '0'
-                          ? '根级'
-                          : (folderOptions.find(
-                              (option) => option.value === field.value
-                            )?.label ?? '')}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='0'>根级</SelectItem>
-                      {folderOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={field.onChange}
+                    placeholder='选择父级文件夹'
+                  />
                   <FormMessage />
                 </FormItem>
               )}
