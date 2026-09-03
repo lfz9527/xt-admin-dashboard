@@ -2,19 +2,12 @@ import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
+import { Modal } from '@/components/Modal'
 import { SelectData } from '@/components/SelectData'
 import { useRequest } from '@/hooks'
 import { getRoles } from '@/service/roles'
 import { createUser, updateUser, type UserItem } from '@/service/users'
-import { Button } from '@/ui/Button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/ui/Dialog'
+import { DialogDescription } from '@/ui/Dialog'
 import {
   Form,
   FormControl,
@@ -24,7 +17,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import { Spinner } from '@/ui/Spinner'
 import { toast } from '@/ui/Toast'
 
 import { GENDER_OPTIONS } from '../constant'
@@ -135,162 +127,139 @@ export default function UserFormDialog({
   }
 
   return (
-    <Dialog
+    <Modal
       open={open}
-      onOpenChange={onOpenChange}
+      title={isEdit ? '编辑用户' : '新增用户'}
+      onCancel={() => onOpenChange(false)}
+      confirmLoading={loading}
+      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
+      okButtonProps={{ type: 'submit', form: 'user-form' }}
+      className='sm:max-w-md'
     >
-      <DialogContent className='sm:max-w-md'>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? '编辑用户' : '新增用户'}</DialogTitle>
-          {!isEdit && (
-            <DialogDescription>由管理员创建，无需邮箱验证</DialogDescription>
-          )}
-        </DialogHeader>
-        <Form
-          {...form}
-          schema={isEdit ? updateUserSchema : createUserSchema}
+      {!isEdit && (
+        <DialogDescription>由管理员创建，无需邮箱验证</DialogDescription>
+      )}
+      <Form
+        {...form}
+        schema={isEdit ? updateUserSchema : createUserSchema}
+      >
+        <form
+          id='user-form'
+          className='flex flex-col gap-4'
+          onSubmit={form.handleSubmit(onSubmit)}
         >
-          <form
-            id='user-form'
-            className='flex flex-col gap-4'
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <FormField
+            control={form.control}
+            name='nickname'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>昵称</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='请输入昵称'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>邮箱</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='请输入邮箱'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {!isEdit && (
             <FormField
               control={form.control}
-              name='nickname'
+              name='password'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>昵称</FormLabel>
+                  <FormLabel>密码</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder='请输入昵称'
+                      type='password'
+                      placeholder='请输入密码'
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='email'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>邮箱</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder='请输入邮箱'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!isEdit && (
-              <FormField
-                control={form.control}
-                name='password'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>密码</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type='password'
-                        placeholder='请输入密码'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          )}
+          <FormField
+            control={form.control}
+            name='roleId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>角色</FormLabel>
+                <SelectData
+                  options={roleList.map((role) => ({
+                    value: role.id,
+                    label: role.name,
+                  }))}
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  placeholder='请选择角色'
+                  disabled={roleLoading}
+                  className='w-full'
+                />
+                <FormMessage />
+              </FormItem>
             )}
-            <FormField
-              control={form.control}
-              name='roleId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>角色</FormLabel>
-                  <SelectData
-                    options={roleList.map((role) => ({
-                      value: role.id,
-                      label: role.name,
-                    }))}
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    placeholder='请选择角色'
-                    disabled={roleLoading}
-                    className='w-full'
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='gender'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel showRequired={false}>性别</FormLabel>
-                  <SelectData
-                    options={GENDER_OPTIONS.map((option) => ({
-                      value: String(option.value),
-                      label: option.label,
-                    }))}
-                    value={String(field.value)}
-                    onChange={(value) => field.onChange(Number(value))}
-                    className='w-full'
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='status'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel showRequired={false}>状态</FormLabel>
-                  <SelectData
-                    options={[
-                      { value: '0', label: '启用' },
-                      { value: '1', label: '停用' },
-                    ]}
-                    value={String(field.value)}
-                    onChange={(value) => field.onChange(Number(value))}
-                    className='w-full'
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-          >
-            取消
-          </Button>
-          <Button
-            type='submit'
-            form='user-form'
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner />
-                {isEdit ? '保存中...' : '创建中...'}
-              </>
-            ) : (
-              '确认'
+          />
+          <FormField
+            control={form.control}
+            name='gender'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel showRequired={false}>性别</FormLabel>
+                <SelectData
+                  options={GENDER_OPTIONS.map((option) => ({
+                    value: String(option.value),
+                    label: option.label,
+                  }))}
+                  value={String(field.value)}
+                  onChange={(value) => field.onChange(Number(value))}
+                  className='w-full'
+                />
+                <FormMessage />
+              </FormItem>
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          />
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel showRequired={false}>状态</FormLabel>
+                <SelectData
+                  options={[
+                    { value: '0', label: '启用' },
+                    { value: '1', label: '停用' },
+                  ]}
+                  value={String(field.value)}
+                  onChange={(value) => field.onChange(Number(value))}
+                  className='w-full'
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
+    </Modal>
   )
 }

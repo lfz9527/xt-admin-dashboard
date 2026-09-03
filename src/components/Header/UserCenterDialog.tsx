@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { Modal } from '@/components/Modal'
 import defaultAvatar from '@/assets/icon/default-avatar.svg'
 import ForgotPasswordForm from '@/features/auth/components/ForgotPasswordForm'
 import { useResetPassword, useSendResetCode } from '@/features/auth/hooks'
@@ -17,13 +18,6 @@ import { updateProfile, uploadAvatar } from '@/service/users'
 import useAuthor from '@/store/useAuthor'
 import { Button } from '@/ui/Button'
 import { UploadThingAvatar } from '@/ui/UploadthingAvatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/ui/Dialog'
 import {
   Form,
   FormControl,
@@ -173,175 +167,171 @@ export default function UserCenterDialog({
   }
 
   return (
-    <Dialog
+    <Modal
       open={open}
-      onOpenChange={onOpenChange}
-      onOpenChangeComplete={handleOpenChangeComplete}
-    >
-      <DialogContent className='sm:max-w-sm'>
-        {view === 'info' ? (
+      title={
+        view === 'info' ? '个人中心' : view === 'edit' ? '编辑资料' : '修改密码'
+      }
+      onCancel={() => onOpenChange(false)}
+      afterOpenChange={handleOpenChangeComplete}
+      footer={
+        view === 'info' ? (
           <>
-            <DialogHeader>
-              <DialogTitle>个人中心</DialogTitle>
-            </DialogHeader>
-            <div className='flex flex-col items-center gap-1 py-1'>
-              <UploadThingAvatar
-                value={user?.avatar || defaultAvatar}
-                onUpload={onUploadAvatar}
-                size='sm'
-                fallback={user?.nickname?.[0]}
-              />
-            </div>
-            <div className='divide-border divide-y'>
-              <Field
-                label='昵称'
-                value={user?.nickname}
-              />
-              <Field
-                label='邮箱'
-                value={user?.email}
-              />
-              <Field
-                label='性别'
-                value={
-                  user &&
-                  GENDER_OPTIONS.find((option) => option.value === user.gender)
-                    ?.label
-                }
-              />
-              <Field
-                label='角色'
-                value={user?.role?.name ?? '无角色'}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={openEdit}
-              >
-                编辑
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={openChangePassword}
-              >
-                修改密码
-              </Button>
-              <Button
-                type='button'
-                onClick={() => onOpenChange(false)}
-              >
-                知道了
-              </Button>
-            </DialogFooter>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={openEdit}
+            >
+              编辑
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={openChangePassword}
+            >
+              修改密码
+            </Button>
+            <Button
+              type='button'
+              onClick={() => onOpenChange(false)}
+            >
+              知道了
+            </Button>
           </>
         ) : view === 'edit' ? (
           <>
-            <DialogHeader>
-              <DialogTitle>编辑资料</DialogTitle>
-            </DialogHeader>
-            <Form
-              {...editForm}
-              schema={editProfileSchema}
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setView('info')}
             >
-              <form
-                id='profile-form'
-                className='flex flex-col gap-4'
-                onSubmit={editForm.handleSubmit(onEditSubmit)}
-              >
-                <FormField
-                  control={editForm.control}
-                  name='nickname'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>昵称</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder='请输入昵称'
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name='gender'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel showRequired={false}>性别</FormLabel>
-                      <Select
-                        value={String(field.value)}
-                        onValueChange={(value) => field.onChange(Number(value))}
-                      >
-                        <SelectTrigger className='w-full'>
-                          <SelectValue>
-                            {
-                              GENDER_OPTIONS.find(
-                                (option) => option.value === field.value
-                              )?.label
-                            }
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GENDER_OPTIONS.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={String(option.value)}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-            <DialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => setView('info')}
-              >
-                返回
-              </Button>
-              <Button
-                type='submit'
-                form='profile-form'
-                disabled={updateLoading}
-              >
-                {updateLoading ? (
-                  <>
-                    <Spinner />
-                    保存中...
-                  </>
-                ) : (
-                  '保存'
-                )}
-              </Button>
-            </DialogFooter>
+              返回
+            </Button>
+            <Button
+              type='submit'
+              form='profile-form'
+              disabled={updateLoading}
+            >
+              {updateLoading ? (
+                <>
+                  <Spinner />
+                  保存中...
+                </>
+              ) : (
+                '保存'
+              )}
+            </Button>
           </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>修改密码</DialogTitle>
-            </DialogHeader>
-            <ForgotPasswordForm
-              form={form}
-              onSubmit={onSubmit}
-              onBackToLogin={() => setView('info')}
-              onSendCode={onSendCode}
-              backText='返回'
+        ) : null
+      }
+      className='sm:max-w-sm'
+    >
+      {view === 'info' ? (
+        <>
+          <div className='flex flex-col items-center gap-1 py-1'>
+            <UploadThingAvatar
+              value={user?.avatar || defaultAvatar}
+              onUpload={onUploadAvatar}
+              size='sm'
+              fallback={user?.nickname?.[0]}
             />
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+          </div>
+          <div className='divide-border divide-y'>
+            <Field
+              label='昵称'
+              value={user?.nickname}
+            />
+            <Field
+              label='邮箱'
+              value={user?.email}
+            />
+            <Field
+              label='性别'
+              value={
+                user &&
+                GENDER_OPTIONS.find((option) => option.value === user.gender)
+                  ?.label
+              }
+            />
+            <Field
+              label='角色'
+              value={user?.role?.name ?? '无角色'}
+            />
+          </div>
+        </>
+      ) : view === 'edit' ? (
+        <>
+          <Form
+            {...editForm}
+            schema={editProfileSchema}
+          >
+            <form
+              id='profile-form'
+              className='flex flex-col gap-4'
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+            >
+              <FormField
+                control={editForm.control}
+                name='nickname'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>昵称</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder='请输入昵称'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name='gender'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel showRequired={false}>性别</FormLabel>
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue>
+                          {
+                            GENDER_OPTIONS.find(
+                              (option) => option.value === field.value
+                            )?.label
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GENDER_OPTIONS.map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={String(option.value)}
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </>
+      ) : (
+        <ForgotPasswordForm
+          form={form}
+          onSubmit={onSubmit}
+          onBackToLogin={() => setView('info')}
+          onSendCode={onSendCode}
+          backText='返回'
+        />
+      )}
+    </Modal>
   )
 }
