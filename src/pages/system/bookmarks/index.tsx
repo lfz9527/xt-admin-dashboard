@@ -260,19 +260,22 @@ export default function Bookmarks() {
       <div className='flex min-w-0 flex-1 flex-col'>
         {selectedNode ? (
           <div className='flex flex-col gap-4 p-6'>
-            <div className='flex items-center gap-2'>
+            {/* mt-1：标题行盒顶部含半行距空白，图标整体下移后与首行字形视觉顶对齐 */}
+            <div className='flex items-start gap-2'>
               {selectedNode.type === 1 ? (
-                <Folder className='size-5 text-sky-500' />
+                <Folder className='mt-1 size-5 shrink-0' />
               ) : selectedNode.favicon ? (
                 <img
                   src={selectedNode.favicon}
                   alt=''
-                  className='size-5 rounded-sm'
+                  className='mt-1 size-5 shrink-0 rounded-sm'
                 />
               ) : (
-                <Link2 className='text-muted-foreground size-5' />
+                <Link2 className='text-muted-foreground mt-1 size-5 shrink-0' />
               )}
-              <h2 className='text-base font-medium'>{selectedNode.title}</h2>
+              <h2 className='min-w-0 text-base font-medium'>
+                {selectedNode.title}
+              </h2>
             </div>
             <div className='text-muted-foreground text-sm'>
               {selectedNode.type === 1 ? (
