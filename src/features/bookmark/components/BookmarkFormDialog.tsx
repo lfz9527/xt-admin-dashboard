@@ -199,6 +199,7 @@ export default function BookmarkFormDialog({
                     value={String(field.value)}
                     onChange={(value) => field.onChange(Number(value))}
                     disabled={isEdit}
+                    className='w-full'
                   />
                   <FormMessage />
                 </FormItem>
@@ -251,6 +252,7 @@ export default function BookmarkFormDialog({
                     value={field.value}
                     onChange={field.onChange}
                     placeholder='选择父级文件夹'
+                    className='w-full'
                   />
                   <FormMessage />
                 </FormItem>

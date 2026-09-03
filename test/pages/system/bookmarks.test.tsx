@@ -82,30 +82,55 @@ beforeEach(() => {
 })
 
 describe('Bookmarks page', () => {
-  it('挂载即请求收藏树并渲染节点（默认全部展开）', async () => {
+  it('挂载即请求收藏树并渲染节点（默认收起）', async () => {
+    const user = userEvent.setup()
     render(<Bookmarks />)
     expect(await screen.findByText('常用网站')).toBeInTheDocument()
-    // 等 useEffect 完成默认展开后再断言子节点
-    expect(await screen.findByText('GitHub')).toBeInTheDocument()
+    // 默认收起：文件夹可见，子节点不可见
+    expect(screen.queryByText('GitHub')).not.toBeInTheDocument()
     expect(screen.getByText('掘金')).toBeInTheDocument()
-    // 收藏行渲染为外链
-    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
-      'href',
-      'https://github.com'
-    )
+    // 点击文件夹行展开后子节点可见
+    await user.click(screen.getByText('常用网站'))
+    expect(await screen.findByText('GitHub')).toBeInTheDocument()
+    // 收藏行不渲染为外链，点击不跳转，仅选中并在右侧详情展示网址链接
+    expect(
+      screen.queryByRole('link', { name: 'GitHub' })
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByText('GitHub'))
+    expect(
+      await screen.findByRole('link', { name: 'https://github.com' })
+    ).toBeInTheDocument()
     expect(mockedGetBookmarkTree).toHaveBeenCalledWith(expect.any(AbortSignal))
   })
 
-  it('点击文件夹收起子节点', async () => {
+  it('点击文件夹行展开子节点，点击箭头收起', async () => {
     const user = userEvent.setup()
     render(<Bookmarks />)
     await screen.findByText('常用网站')
 
+    // 默认收起：点击文件夹行展开
     await user.click(screen.getByText('常用网站'))
+    expect(await screen.findByText('GitHub')).toBeInTheDocument()
 
+    // 点击箭头收起，子节点隐藏
+    await user.click(screen.getByRole('button', { name: '收起' }))
     await waitFor(() => {
       expect(screen.queryByText('GitHub')).not.toBeInTheDocument()
     })
+  })
+
+  it('点击箭头仅展开/收起，不触发选中', async () => {
+    const user = userEvent.setup()
+    render(<Bookmarks />)
+    await screen.findByText('常用网站')
+    // 默认收起，子节点不可见
+    expect(screen.queryByText('GitHub')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '展开' }))
+
+    expect(await screen.findByText('GitHub')).toBeInTheDocument()
+    // 未触发选中，右侧仍显示占位提示
+    expect(screen.getByText('从左侧选择一个节点')).toBeInTheDocument()
   })
 
   it('新增文件夹：填写名称提交 createBookmark 并刷新列表', async () => {
@@ -189,7 +214,8 @@ describe('Bookmarks page', () => {
     const user = userEvent.setup()
     render(<Bookmarks />)
     await screen.findByText('常用网站')
-    // 等 useEffect 完成默认展开，确保子节点按钮已渲染
+    // 默认收起，先点击文件夹行展开，确保子节点按钮已渲染
+    await user.click(screen.getByText('常用网站'))
     await screen.findByText('GitHub')
 
     // 树中第 2 个编辑按钮为收藏「GitHub」（第 1 个为文件夹「常用网站」）
@@ -248,7 +274,8 @@ describe('Bookmarks page', () => {
     await screen.findByText('常用网站')
     await screen.findByText('掘金')
 
-    await user.click(screen.getAllByLabelText('删除')[2])
+    // 默认收起时子节点不渲染，第 2 个删除按钮为根级收藏「掘金」
+    await user.click(screen.getAllByLabelText('删除')[1])
     await user.click(screen.getByRole('button', { name: '确认删除' }))
 
     await waitFor(() => {

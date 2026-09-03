@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { ChevronRight, Folder, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
 
@@ -19,21 +19,6 @@ function findNode(nodes: BookmarkNode[], id: number): BookmarkNode | null {
     if (found) return found
   }
   return null
-}
-
-/** 收集树中全部文件夹 id */
-function collectFolderIds(nodes: BookmarkNode[]): Set<number> {
-  const ids = new Set<number>()
-  const walk = (items: BookmarkNode[]) => {
-    items.forEach((item) => {
-      if (item.type === 1) {
-        ids.add(item.id)
-        walk(item.children)
-      }
-    })
-  }
-  walk(nodes)
-  return ids
 }
 
 /** 统计节点及其全部子孙数量 */
@@ -81,7 +66,7 @@ type TreeNodeProps = {
   onDelete: (node: BookmarkNode) => void
 }
 
-/** 树节点：文件夹可展开/收起，收藏为外链（点击打开 + 选中）；子级缩进并带左侧竖线 */
+/** 树节点：文件夹可展开/收起，收藏仅点击选中（不跳转外链）；子级缩进并带左侧竖线 */
 function TreeNode({
   node,
   expanded,
@@ -116,12 +101,23 @@ function TreeNode({
               onToggle(node.id)
             }}
           >
-            <ChevronRight
-              className={cn(
-                'size-4 shrink-0 transition-transform duration-150',
-                isExpanded && 'rotate-90'
-              )}
-            />
+            <button
+              type='button'
+              aria-label={isExpanded ? '收起' : '展开'}
+              className='text-muted-foreground rounded-sm p-0.5'
+              onClick={(event) => {
+                // 箭头只负责展开/收起，阻止冒泡避免触发行的选中
+                event.stopPropagation()
+                onToggle(node.id)
+              }}
+            >
+              <ChevronRight
+                className={cn(
+                  'size-3.5 shrink-0 transition-transform duration-150',
+                  isExpanded && 'rotate-90'
+                )}
+              />
+            </button>
             <Folder className='size-4 shrink-0' />
             <span className='min-w-0 truncate'>{node.title}</span>
           </div>
@@ -149,10 +145,7 @@ function TreeNode({
 
   return (
     <div className='group relative'>
-      <a
-        href={node.url}
-        target='_blank'
-        rel='noreferrer'
+      <div
         className={rowClass}
         onClick={() => onSelect(node)}
       >
@@ -166,7 +159,7 @@ function TreeNode({
           <Link2 className='text-muted-foreground size-4 shrink-0' />
         )}
         <span className='min-w-0 truncate'>{node.title}</span>
-      </a>
+      </div>
       {actions}
     </div>
   )
@@ -174,7 +167,7 @@ function TreeNode({
 
 export default function Bookmarks() {
   const { data: tree, loading, error, run } = useRequest(getBookmarkTree)
-  /** 展开的文件夹 id 集合；加载后默认全部展开 */
+  /** 展开的文件夹 id 集合；默认全部收起，由用户手动展开 */
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -186,11 +179,6 @@ export default function Bookmarks() {
   const [deleteTarget, setDeleteTarget] = useState<BookmarkNode | null>(null)
 
   const nodes = tree ?? []
-
-  // 数据加载/刷新后默认展开全部文件夹，避免新节点不可见
-  useEffect(() => {
-    if (tree) setExpanded(collectFolderIds(tree))
-  }, [tree])
 
   const toggleFolder = useCallback((id: number) => {
     setExpanded((prev) => {
