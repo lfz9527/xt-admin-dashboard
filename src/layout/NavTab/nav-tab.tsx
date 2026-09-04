@@ -10,9 +10,8 @@ import {
 import { useNavigate } from 'react-router'
 import { useMenu } from '@/store'
 import useAuthor from '@/store/useAuthor'
-import routes from '@/router/routes'
-import { firstLeafMenu, routeToMenus } from '@/router/menu'
-import { createRoleChecker } from '@/router/permissions'
+// 经 router/derivedMenus 取派生菜单，切断 routes → layout → Menu → routes 静态环
+import { getFirstLeafMenu } from '@/router/derivedMenus'
 import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
@@ -43,10 +42,7 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
   const roleKey = useAuthor((s) => s.roleKey)
   const navigate = useNavigate()
   // 权限过滤后的侧边栏菜单中，自上而下第一个可打开的菜单（当前路由表即首页）
-  const firstMenu = useMemo(
-    () => firstLeafMenu(routeToMenus(routes, createRoleChecker(roleKey))),
-    [roleKey]
-  )
+  const firstMenu = useMemo(() => getFirstLeafMenu(roleKey), [roleKey])
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef(new Map<string, HTMLDivElement>())

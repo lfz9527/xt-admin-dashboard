@@ -77,7 +77,7 @@
 ### 架构与依赖
 
 - **P2-1 · 全项目唯一静态循环依赖**:
-  `src/router/routes.tsx:16 → src/layout/index.tsx → src/layout/baseLayout.tsx → src/components/Menu/menu.tsx → src/components/Menu/menus.tsx:16 → 回 routes.tsx`,闭环上全为值导入。当前靠 `menus.tsx` 在组件体内惰性读取 `routes` + 页面全 `React.lazy` 规避;任何把该访问提前到模块顶层的改动都会在加载期崩溃。**置信度高**。建议把菜单派生(`routeToMenus`)收敛为独立叶子模块或经 store 注入。
+  `src/router/routes.tsx:16 → src/layout/index.tsx → src/layout/baseLayout.tsx → src/components/Menu/menu.tsx → src/components/Menu/menus.tsx:16 → 回 routes.tsx`,闭环上全为值导入。当前靠 `menus.tsx` 在组件体内惰性读取 `routes` + 页面全 `React.lazy` 规避;任何把该访问提前到模块顶层的改动都会在加载期崩溃。**置信度高**。建议把菜单派生(`routeToMenus`)收敛为独立叶子模块或经 store 注入。✅ 已修复,详见文末「修复记录」。
 - **P2-2 · store ↔ service 双向依赖**:
   `src/service/request.ts:3` 值依赖 `src/store/useAuthor`(token 读取),而 `src/store/useDictStore.ts:3-7` 值依赖 `src/service/dict`;叠加 `request.ts:69` 动态 `import('@/router')`(401 跳登录)。建议 token 改为注入式/回调式获取切断 service→store;useDictStore 保持 store→service 单向即可。
 - **P2-3 · hooks 全量桶拖垮依赖边界**:
@@ -178,6 +178,22 @@
   - `pnpm compile`(tsc -b)通过;
   - `pnpm lint` 通过;
   - 删除重复 `export *` 不改变任何导出符号,29 个引用 `@/hooks` 桶的消费方解析结果不变,故未重跑全量测试。
+
+### P2-1 · routes ↔ layout ↔ Menu 静态循环依赖
+
+- **修复时间**:2026-09-04(审查当日,分支 `lfz/refactor/break_route_menu_cycle`)
+- **修复方式**:新增叶子模块 `src/router/derivedMenus.ts` 作为「路由表 → 菜单派生数据」的单一入口,提供 `getMenus(roleKey)`(完整菜单树)与 `getFirstLeafMenu(roleKey)`(第一个可跳转叶子)两个函数;三个原先各自 `import routes + routeToMenus + createRoleChecker` 的消费方统一切换:
+  - `src/components/Menu/menus.tsx`(环闭合点):删除 `import routes from '@/router/routes'`,改用 `getMenus`;
+  - `src/components/Header/index.tsx`:同上改用 `getMenus`;
+  - `src/layout/NavTab/nav-tab.tsx`:改用 `getFirstLeafMenu`。
+    修复后 `components/Menu` 对 `router/routes` 的值依赖消失,`routes.tsx → layout → Menu → routes` 环被打断;`derivedMenus.ts` 仅被三个下游消费方引用、自身不依赖 layout/components(对 `Menu/types` 仅类型引用,编译期擦除),不参与任何环。
+- **修复证据**:
+  - Tarjan SCC 全量 import 图检测:修复前该环存在;修复后**运行时(值导入)循环依赖为 0**(仅剩 Breadcrumb/DataTable/service↔store 三处含 `import type` 擦除边的类型级环,与原报告 P2-2 记录一致,未扩大);
+  - `pnpm compile`、`pnpm lint` 通过;
+  - `test/components/Menu.test.tsx`(含面包屑全链路、菜单派生、MenuItemLink 用例)、`test/components/useMenuBreadcrumb.test.ts`、`test/components/NavTabSync.test.tsx`、`test/router/*` 共 7 个测试文件 51/52 用例通过;唯一失败用例 `叶子菜单在自身路由激活时点亮` 经 `git stash` 基线复跑确认**先于本次改动存在**(与 Header.test.tsx 的 6 例同属当日懒加载回归 P1-1 批次,非本次引入);
+  - diff 摘要:3 个消费方各 -3/+1 行 import 与 `useMemo` 调用体,行为语义(按 roleKey 派生菜单)完全不变。
+
+---
 
 ### P3-6 · xt-commit-kit 引用关系核实
 

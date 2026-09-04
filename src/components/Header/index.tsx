@@ -19,9 +19,7 @@ import { toast } from '@/ui/Toast'
 import defaultAvatar from '@/assets/icon/default-avatar.svg'
 import { useLogout } from '@/features/auth/hooks'
 import type { RouteMeta } from '@/router/types'
-import routes from '@/router/routes'
-import { routeToMenus } from '@/router/menu'
-import { createRoleChecker } from '@/router/permissions'
+import { getMenus } from '@/router/derivedMenus'
 import UserCenterDialog from './UserCenterDialog'
 
 export default function Header() {
@@ -29,10 +27,7 @@ export default function Header() {
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const isMobile = useIsMobile()
   const roleKey = useAuthor((state) => state.roleKey)
-  const menus = useMemo(
-    () => routeToMenus(routes, createRoleChecker(roleKey)),
-    [roleKey]
-  )
+  const menus = useMemo(() => getMenus(roleKey), [roleKey])
   const user = useAuthor((state) => state.user)
   const { runAsync: runLogout } = useLogout()
   const [profileOpen, setProfileOpen] = useState(false)

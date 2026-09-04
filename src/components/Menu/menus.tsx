@@ -13,10 +13,10 @@ import type { MenuItem } from './types'
 import type { RouteMeta } from '@/router/types'
 import { cn } from '@/utils/common'
 import { useMemo } from 'react'
-import routes from '@/router/routes'
 import useAuthor from '@/store/useAuthor'
-import { routeToMenus } from '@/router/menu'
-import { createRoleChecker } from '@/router/permissions'
+// 经 router/derivedMenus 取派生菜单：menus 不再直接 import routes，
+// 否则与 routes.tsx → layout → Menu 构成静态循环依赖
+import { getMenus } from '@/router/derivedMenus'
 
 const MenuItemCls = 'h-9.5 leading-none'
 const MenuItemHoverCls = 'hover:bg-menu-accent'
@@ -153,10 +153,7 @@ export default function Menus() {
   const currentMatch = matches[matches.length - 1]
   const menuKey = (currentMatch?.handle as RouteMeta)?.menuKey ?? ''
   const roleKey = useAuthor((state) => state.roleKey)
-  const menus = useMemo(
-    () => routeToMenus(routes, createRoleChecker(roleKey)),
-    [roleKey]
-  )
+  const menus = useMemo(() => getMenus(roleKey), [roleKey])
   return (
     <SidebarGroup>
       <SidebarMenu className='gap-1'>
