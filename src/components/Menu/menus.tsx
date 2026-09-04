@@ -41,7 +41,7 @@ export function MenuItemLink({
         // 移动端侧边栏为覆盖层，点击菜单跳转后自动收起，避免遮挡页面内容
         if (isMobile) setOpenMobile(false)
       }}
-      className={cn('flex items-center', props.className)}
+      className={cn('flex items-center gap-x-2', props.className)}
       {...(item.openIn === 'newTab'
         ? { target: '_blank', rel: 'noreferrer' }
         : {})}
@@ -85,7 +85,6 @@ function Tree({ item, menuKey, pathname, level }: TreeProps) {
   if (!children?.length) {
     return (
       <SidebarMenuButton
-        asChild
         tooltip={item.title}
         isActive={isActive}
         key={key}
