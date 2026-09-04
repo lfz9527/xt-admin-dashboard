@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { SidebarProvider } from '@/ui/Sidebar'
@@ -82,6 +82,23 @@ vi.mock('@/service/dict', () => ({
   ),
 }))
 
+// jsdom 未实现浏览器全屏 API：以可控 stub 模拟全屏状态与 fullscreenchange 时序
+let fullscreenElement: Element | null = null
+const requestFullscreen = vi.fn(() => {
+  fullscreenElement = document.documentElement
+  document.dispatchEvent(new Event('fullscreenchange'))
+  return Promise.resolve()
+})
+const exitFullscreen = vi.fn(() => {
+  fullscreenElement = null
+  document.dispatchEvent(new Event('fullscreenchange'))
+  return Promise.resolve()
+})
+const originalFullscreenElementDescriptor = Object.getOwnPropertyDescriptor(
+  document,
+  'fullscreenElement'
+)
+
 beforeEach(() => {
   localStorage.clear()
   if (!window.ResizeObserver) {
@@ -99,6 +116,37 @@ beforeEach(() => {
     URL.createObjectURL = vi.fn(() => 'blob:mock-preview')
   }
   useAuthor.setState({ token: 'test-token', roleKey: 'admin', user: null })
+
+  // 安装浏览器全屏 API stub
+  fullscreenElement = null
+  requestFullscreen.mockClear()
+  exitFullscreen.mockClear()
+  Object.defineProperty(document, 'fullscreenElement', {
+    configurable: true,
+    get: () => fullscreenElement,
+  })
+  ;(document.documentElement as unknown as Record<string, unknown>)[
+    'requestFullscreen'
+  ] = requestFullscreen
+  ;(document as unknown as Record<string, unknown>)['exitFullscreen'] =
+    exitFullscreen
+})
+
+afterEach(() => {
+  // 移除全屏 API stub，恢复 jsdom 原始实现
+  delete (document.documentElement as unknown as Record<string, unknown>)[
+    'requestFullscreen'
+  ]
+  delete (document as unknown as Record<string, unknown>)['exitFullscreen']
+  if (originalFullscreenElementDescriptor) {
+    Object.defineProperty(
+      document,
+      'fullscreenElement',
+      originalFullscreenElementDescriptor
+    )
+  } else {
+    delete (document as unknown as Record<string, unknown>)['fullscreenElement']
+  }
 })
 
 function renderApp(initialEntry: string) {
@@ -232,5 +280,52 @@ describe('Header', () => {
       )
     })
     expect(screen.getByRole('dialog')).toHaveTextContent('个人中心')
+  })
+
+  it('主题切换旁全屏按钮进入与退出浏览器全屏，状态与图标联动', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+    await waitForHeaderReady()
+
+    // 初始为非全屏态，按钮可定位
+    const fullscreenButton = screen.getByRole('button', { name: '全屏' })
+    expect(fullscreenButton).toBeInTheDocument()
+    // 全屏按钮位于主题切换按钮左侧（同一容器内第一个按钮）
+    const actionGroup = fullscreenButton.parentElement!
+    expect(actionGroup.children).toHaveLength(2)
+    expect(actionGroup.children[0]).toBe(fullscreenButton)
+
+    // 点击进入浏览器全屏
+    await user.click(screen.getByRole('button', { name: '全屏' }))
+    expect(requestFullscreen).toHaveBeenCalledTimes(1)
+    expect(
+      await screen.findByRole('button', { name: '退出全屏' })
+    ).toBeInTheDocument()
+
+    // 再点击退出全屏
+    await user.click(screen.getByRole('button', { name: '退出全屏' }))
+    expect(exitFullscreen).toHaveBeenCalledTimes(1)
+    expect(
+      await screen.findByRole('button', { name: '全屏' })
+    ).toBeInTheDocument()
+  })
+
+  it('浏览器级退出全屏（ESC）后按钮状态自动同步为全屏', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+    await waitForHeaderReady()
+
+    await user.click(screen.getByRole('button', { name: '全屏' }))
+    expect(
+      await screen.findByRole('button', { name: '退出全屏' })
+    ).toBeInTheDocument()
+
+    // 模拟浏览器级退出：全屏元素清空并触发 fullscreenchange，不经过按钮
+    fullscreenElement = null
+    fireEvent(document, new Event('fullscreenchange'))
+
+    expect(
+      await screen.findByRole('button', { name: '全屏' })
+    ).toBeInTheDocument()
   })
 })

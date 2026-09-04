@@ -1,9 +1,9 @@
-import { LogOut, Moon, Sun, User } from 'lucide-react'
+import { Fullscreen, LogOut, Moon, Shrink, Sun, User } from 'lucide-react'
 import { useMatches, useLocation } from 'react-router'
 import { Suspense, lazy, useState, useMemo } from 'react'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
-import { useTheme, useIsMobile } from '@/hooks'
+import { useFullscreen, useTheme, useIsMobile } from '@/hooks'
 import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
 import { Separator } from '@/ui/Separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
@@ -28,6 +28,7 @@ const UserCenterDialog = lazy(() => import('./UserCenterDialog'))
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
+  const { isFullscreen, toggleFullscreen } = useFullscreen()
   const isMobile = useIsMobile()
   const roleKey = useAuthor((state) => state.roleKey)
   const menus = useMemo(
@@ -90,6 +91,15 @@ export default function Header() {
         </div>
         <div className='flex shrink-0 items-center gap-3'>
           <div className='flex shrink-0 items-center gap-1'>
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              aria-label={isFullscreen ? '退出全屏' : '全屏'}
+              title={isFullscreen ? '退出全屏' : '全屏'}
+              onClick={toggleFullscreen}
+            >
+              {isFullscreen ? <Shrink /> : <Fullscreen />}
+            </Button>
             <Button
               variant='ghost'
               size='icon-sm'
