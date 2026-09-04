@@ -27,7 +27,9 @@ function renderIcon(Icon?: LucideIcon) {
   return Icon ? <Icon /> : null
 }
 
-/** 叶子菜单链接：openIn=newTab 时交给浏览器在新标签页打开（Link 对非 _self 目标不拦截） */
+/** 叶子菜单链接：openIn=newTab 时交给浏览器在新标签页打开（Link 对非 _self 目标不拦截）。
+ *  Link 以 w-full h-full 铺满宿主 SidebarMenuButton（按钮为 flex w-full、有固定高度），
+ *  使整块菜单区域（含文字右侧空白）都可点击跳转，而不只是文字/图标部分。 */
 export function MenuItemLink({
   item,
   ...props
@@ -41,7 +43,7 @@ export function MenuItemLink({
         // 移动端侧边栏为覆盖层，点击菜单跳转后自动收起，避免遮挡页面内容
         if (isMobile) setOpenMobile(false)
       }}
-      className={cn('flex items-center gap-x-2', props.className)}
+      className={cn('flex h-full w-full items-center gap-x-2', props.className)}
       {...(item.openIn === 'newTab'
         ? { target: '_blank', rel: 'noreferrer' }
         : {})}

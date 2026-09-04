@@ -218,6 +218,21 @@ describe('Menus', () => {
     expect(link).not.toHaveAttribute('rel')
   })
 
+  it('叶子菜单链接铺满宿主按钮（宽高占满，整块区域可点击）', () => {
+    render(
+      <SidebarProvider>
+        <MemoryRouter>
+          <MenuItemLink item={{ key: 'home', title: '首页', path: '/' }} />
+        </MemoryRouter>
+      </SidebarProvider>
+    )
+
+    const link = screen.getByRole('link', { name: '首页' })
+    // w-full + h-full 使 Link 占满 SidebarMenuButton（flex w-full、有固定高度），
+    // 点击范围扩大到整个菜单项而非仅文字部分
+    expect(link).toHaveClass('w-full', 'h-full')
+  })
+
   it('openIn=newTab 时在新浏览器标签页打开（target=_blank + rel=noreferrer）', () => {
     render(
       <SidebarProvider>
