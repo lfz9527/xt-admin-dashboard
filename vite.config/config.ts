@@ -28,6 +28,10 @@ const buildConfig = ({ mode, env }: Props): ReturnType<typeof defineConfig> => {
       open: true,
       host: true,
       port: 9529,
+      // frame-ancestors 只能通过 HTTP 响应头下发（meta 中会被浏览器忽略），用于禁止页面被 iframe 嵌套
+      headers: {
+        'Content-Security-Policy': "frame-ancestors 'none'",
+      },
       proxy: {
         '/api': {
           target: 'http://localhost:3000',

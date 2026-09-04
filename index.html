@@ -6,10 +6,12 @@
       CSP 基线：仅放行 Vite 开发所需的内联样式与 ws/localhost 连接；
       script 限 self + 内联模块（Vite dev 注入的模块脚本），生产不含 unsafe-eval。
       如后续接入外部 CDN 或上报域名，需在此追加对应来源。
+      注意：frame-ancestors 只能通过 HTTP 响应头下发（写在 meta 里会被浏览器忽略），
+      开发环境见 vite.config 的 server.headers；生产环境需由网关（如 nginx）配置同名响应头。
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: http: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: http: https:; object-src 'none'; base-uri 'self'"
     />
     <link
       rel="icon"
