@@ -167,14 +167,26 @@ export default function Login() {
         variant='ghost'
         size='icon-sm'
         aria-label='切换主题'
-        className='absolute top-4 right-4'
+        className='absolute top-4 right-4 hidden sm:inline-flex'
         onClick={(event) => toggleTheme(event)}
       >
         {theme === 'dark' ? <Sun /> : <Moon />}
       </Button>
       <Card className='w-full max-w-md gap-5 rounded-2xl py-6 shadow-xl shadow-black/5 sm:py-8'>
         <CardHeader className='items-center px-6 text-center sm:px-8'>
-          <Logo />
+          {/* 移动端：主题切换按钮收进卡片内，位于 Logo 对面；桌面端保持 Logo 靠左、主题按钮仍在页面右上角 */}
+          <div className='flex w-full items-center justify-between'>
+            <Logo />
+            <Button
+              variant='outline'
+              size='icon-sm'
+              aria-label='切换主题'
+              className='sm:hidden'
+              onClick={(event) => toggleTheme(event)}
+            >
+              {theme === 'dark' ? <Sun /> : <Moon />}
+            </Button>
+          </div>
           <div className='mt-3 space-y-1'>
             <CardTitle className='text-xl'>
               {mode === MODE.LOGIN

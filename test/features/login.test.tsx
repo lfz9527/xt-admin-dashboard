@@ -97,6 +97,23 @@ describe('LoginFeature', () => {
     })
   })
 
+  it('shows theme toggle at the page corner on desktop and inside the card on mobile', () => {
+    render(
+      <MemoryRouter>
+        <LoginFeature />
+      </MemoryRouter>
+    )
+
+    const toggles = screen.getAllByRole('button', { name: '切换主题' })
+    expect(toggles).toHaveLength(2)
+    // 桌面端：右上角悬浮按钮，移动端隐藏
+    expect(toggles[0]).toHaveClass('hidden', 'sm:inline-flex')
+    // 移动端：卡片头部内、Logo 对面，桌面端隐藏，带边框（outline 变体）
+    const mobileToggle = toggles[1]
+    expect(mobileToggle).toHaveClass('sm:hidden', 'border-border')
+    expect(mobileToggle.closest('[data-slot="card-header"]')).not.toBeNull()
+  })
+
   it('switches to registration without navigating', async () => {
     const user = userEvent.setup()
     render(
