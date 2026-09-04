@@ -1,46 +1,16 @@
 import { Outlet } from 'react-router'
 import { useMenu } from '@/store'
 import { Lazy } from '@/components/LazyImport'
-import { Skeleton } from '@/ui/Skeleton'
-import { useNavTab } from './NavTab'
+import { HeaderSkeleton } from '@/components/Header/Skeleton'
+import { useNavTab } from './NavTab/context'
+import { NavTabSkeleton } from './NavTab/skeleton'
 
-// Header 懒加载占位：按真实结构出骨架（侧栏开关、面包屑、功能按钮、用户信息），
-// 容器与真实 Header 同高，加载期间布局不跳动
-const headerFallback = (
-  <header className='flex h-(--header-height) shrink-0 items-center border-b'>
-    <div className='flex w-full items-center justify-between gap-2 px-2'>
-      <div className='flex items-center gap-3'>
-        <Skeleton className='size-7 rounded-md' />
-        <Skeleton className='h-4 w-32 rounded-sm' />
-      </div>
-      <div className='flex items-center gap-3'>
-        <Skeleton className='size-7 rounded-md' />
-        <Skeleton className='size-7 rounded-md' />
-        <Skeleton className='h-9 w-24 rounded-full' />
-      </div>
-    </div>
-  </header>
-)
-
-// NavTab 懒加载占位：几个标签块加右侧功能按钮骨架
-const navTabFallback = (
-  <div className='flex size-full items-center gap-1 px-2 pt-0.75'>
-    <Skeleton className='h-8 w-30 rounded-sm' />
-    <Skeleton className='h-8 w-24 rounded-sm' />
-    <Skeleton className='h-8 w-28 rounded-sm' />
-    <div className='ml-auto flex h-full items-center gap-1 border-l px-1.5'>
-      <Skeleton className='size-7 rounded-md' />
-      <Skeleton className='h-4 w-px' />
-      <Skeleton className='size-7 rounded-md' />
-    </div>
-  </div>
-)
-
-const Header = Lazy(() => import('@/components/Header'), headerFallback)
-// NavTab 懒加载（模块为具名导出，经 .then 映射为默认导出以适配 React.lazy）
+const Header = Lazy(() => import('@/components/Header'), <HeaderSkeleton />)
+// NavTab 懒加载（模块为具名导出，经 .then 映射为默认导出以适配 React.lazy）。
+// 需直连 nav-tab 模块、绕过 barrel（index.ts）：barrel 被静态导入时动态导入不会拆包
 const NavTab = Lazy(
-  () => import('./NavTab').then((m) => ({ default: m.NavTab })),
-  navTabFallback
+  () => import('./NavTab/nav-tab').then((m) => ({ default: m.NavTab })),
+  <NavTabSkeleton />
 )
 
 export default function Main() {

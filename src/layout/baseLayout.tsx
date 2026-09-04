@@ -1,7 +1,8 @@
 import Main from './main'
 import { MenuProvider, Menu, MenuContent } from '@/components/Menu'
 import { useMenu } from '@/store'
-import { NavTabProvider, NavTabSync } from './NavTab'
+import { NavTabProvider } from './NavTab/context'
+import { NavTabSync } from './NavTab/sync'
 import { useUserInfo } from '@/features/auth/hooks'
 
 export default function BaseLayout() {
