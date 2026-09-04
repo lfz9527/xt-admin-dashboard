@@ -1,5 +1,6 @@
 import {
   Bookmark,
+  FileText,
   Globe,
   House,
   Library,
@@ -27,7 +28,13 @@ const routes: AppRouteObject[] = [
               {
                 path: '/',
                 element: Lazy(() => import('@/pages/home')),
-                meta: { title: '首页', menuKey: 'home', icon: House },
+                meta: {
+                  title: '首页',
+                  menuKey: 'home',
+                  icon: House,
+                  // 固定排在菜单首位
+                  menuOrder: 0,
+                },
               },
               {
                 meta: { title: '浏览器管理', menuKey: 'browser', icon: Globe },
@@ -125,6 +132,19 @@ const routes: AppRouteObject[] = [
         path: '/login',
         element: Lazy(() => import('@/pages/login')),
         meta: { title: '登录' },
+      },
+      {
+        path: '/resume',
+        element: Lazy(() => import('@/pages/resume')),
+        meta: {
+          title: '我的简历',
+          menuKey: 'resume',
+          icon: FileText,
+          // 点击菜单在新浏览器标签页打开（与 login 同级，不包 Layout/权限守卫）
+          openIn: 'newTab',
+          // 紧跟首页之后展示
+          menuOrder: 1,
+        },
       },
     ],
   },

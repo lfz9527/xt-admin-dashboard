@@ -32,6 +32,79 @@ describe('routeToMenus', () => {
     ])
   })
 
+  it('passes openIn through to the menu item', () => {
+    expect(
+      routeToMenus([
+        route('/dashboard', {
+          title: 'Dashboard',
+          menuKey: 'dashboard',
+          openIn: 'newTab',
+        }),
+      ])
+    ).toEqual([
+      {
+        key: 'dashboard',
+        title: 'Dashboard',
+        path: '/dashboard',
+        openIn: 'newTab',
+      },
+    ])
+  })
+
+  it('omits openIn when the route does not configure it', () => {
+    expect(
+      routeToMenus([
+        route('/dashboard', {
+          title: 'Dashboard',
+          menuKey: 'dashboard',
+        }),
+      ])
+    ).toEqual([
+      {
+        key: 'dashboard',
+        title: 'Dashboard',
+        path: '/dashboard',
+      },
+    ])
+  })
+
+  it('sorts sibling menus by menuOrder with unconfigured ones last', () => {
+    expect(
+      routeToMenus([
+        route('/first', { title: 'First', menuKey: 'first', menuOrder: 0 }),
+        route('/middle', { title: 'Middle', menuKey: 'middle' }),
+        route('/second', { title: 'Second', menuKey: 'second', menuOrder: 1 }),
+        route('/last', { title: 'Last', menuKey: 'last' }),
+      ])
+    ).toEqual([
+      { key: 'first', title: 'First', path: '/first', menuOrder: 0 },
+      { key: 'second', title: 'Second', path: '/second', menuOrder: 1 },
+      { key: 'middle', title: 'Middle', path: '/middle' },
+      { key: 'last', title: 'Last', path: '/last' },
+    ])
+  })
+
+  it('sorts nested menus within their parent by menuOrder', () => {
+    expect(
+      routeToMenus([
+        route('/system', { title: 'System', menuKey: 'system' }, [
+          route('dict', { title: 'Dict', menuKey: 'dict', menuOrder: 2 }),
+          route('users', { title: 'Users', menuKey: 'users', menuOrder: 1 }),
+        ]),
+      ])
+    ).toEqual([
+      {
+        key: 'system',
+        title: 'System',
+        path: '/system',
+        children: [
+          { key: 'users', title: 'Users', path: '/system/users', menuOrder: 1 },
+          { key: 'dict', title: 'Dict', path: '/system/dict', menuOrder: 2 },
+        ],
+      },
+    ])
+  })
+
   it('creates nested directory menus from routes', () => {
     expect(
       routeToMenus([

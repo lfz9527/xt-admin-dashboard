@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { House, Settings2 } from 'lucide-react'
+import { House, Globe, Settings2 } from 'lucide-react'
 import { render, screen, act } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router'
 import { SidebarProvider } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
 import useAuthor from '@/store/useAuthor'
@@ -62,6 +62,7 @@ import routes from '@/router/routes'
 import { routeToMenus, allowAllPermissions } from '@/router/menu'
 import { buildRouter } from '@/router/utils'
 import useMenu from '@/store/useMenu'
+import { MenuItemLink } from '@/components/Menu/menus'
 
 describe('Menus', () => {
   it('derives home and system menu hierarchy from routes', () => {
@@ -75,14 +76,35 @@ describe('Menus', () => {
       ]) ?? []),
     ])
 
-    expect(keys).toEqual(['home', 'system', 'system-users', 'system-roles'])
+    expect(keys).toEqual([
+      'home',
+      'resume',
+      'browser',
+      'browser-bookmarks',
+      'system',
+      'system-users',
+      'system-roles',
+      'system-dict',
+    ])
     expect(menus[0]).toMatchObject({ key: 'home', icon: House })
-    expect(menus[1]).toMatchObject({ key: 'system', icon: Settings2 })
+    expect(menus[1]).toMatchObject({ key: 'resume', openIn: 'newTab' })
+    expect(menus[2]).toMatchObject({ key: 'browser', icon: Globe })
+    expect(menus[3]).toMatchObject({ key: 'system', icon: Settings2 })
     expect(
       menus
         .flatMap((item) => item.children ?? [])
         .some(({ key }) => key.includes('detail'))
     ).toBe(false)
+  })
+
+  it('derives the resume menu with new-tab open mode from routes', () => {
+    const menus = routeToMenus(routes)
+
+    expect(menus.find((item) => item.key === 'resume')).toMatchObject({
+      title: '我的简历',
+      path: '/resume',
+      openIn: 'newTab',
+    })
   })
 
   it('renders complete detail breadcrumbs from real routes and derived menus', async () => {
@@ -154,5 +176,38 @@ describe('Menus', () => {
 
     expect(state).not.toHaveProperty('menus')
     expect(localStorage.getItem('app-menu')).toBeNull()
+  })
+
+  it('叶子菜单默认在当前标签页打开（不带 target）', () => {
+    render(
+      <MemoryRouter>
+        <MenuItemLink item={{ key: 'home', title: '首页', path: '/' }} />
+      </MemoryRouter>
+    )
+
+    const link = screen.getByRole('link', { name: '首页' })
+    expect(link).toHaveAttribute('href', '/')
+    expect(link).not.toHaveAttribute('target')
+    expect(link).not.toHaveAttribute('rel')
+  })
+
+  it('openIn=newTab 时在新浏览器标签页打开（target=_blank + rel=noreferrer）', () => {
+    render(
+      <MemoryRouter>
+        <MenuItemLink
+          item={{
+            key: 'bookmarks',
+            title: '书签管理',
+            path: '/browser/bookmarks',
+            openIn: 'newTab',
+          }}
+        />
+      </MemoryRouter>
+    )
+
+    const link = screen.getByRole('link', { name: '书签管理' })
+    expect(link).toHaveAttribute('href', '/browser/bookmarks')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noreferrer')
   })
 })

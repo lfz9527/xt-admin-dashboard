@@ -26,6 +26,26 @@ function renderIcon(Icon?: LucideIcon) {
   return Icon ? <Icon /> : null
 }
 
+/** 叶子菜单链接：openIn=newTab 时交给浏览器在新标签页打开（Link 对非 _self 目标不拦截） */
+export function MenuItemLink({
+  item,
+  ...props
+}: { item: MenuItem } & Omit<React.ComponentProps<typeof Link>, 'to'>) {
+  return (
+    <Link
+      to={item.path ?? '/'}
+      {...props}
+      className={cn('flex items-center', props.className)}
+      {...(item.openIn === 'newTab'
+        ? { target: '_blank', rel: 'noreferrer' }
+        : {})}
+    >
+      {renderIcon(item.icon)}
+      <span>{item.title}</span>
+    </Link>
+  )
+}
+
 function hasActiveDescendant(item: MenuItem, activeKey: string): boolean {
   if (!activeKey || !item.children?.length) return false
   return item.children.some(
@@ -73,13 +93,7 @@ function Tree({ item, menuKey, pathname, level }: TreeProps) {
             'text-menu-accent-foreground hover:text-menu-accent-foreground'
         )}
       >
-        <Link
-          to={item.path ?? '/'}
-          className='flex items-center'
-        >
-          {renderIcon(item.icon)}
-          <span>{item.title}</span>
-        </Link>
+        <MenuItemLink item={item} />
       </SidebarMenuButton>
     )
   }
