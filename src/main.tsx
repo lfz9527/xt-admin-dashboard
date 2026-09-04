@@ -6,6 +6,13 @@ import GlobalCrash from '@/components/ErrorBoundary/GlobalCrash'
 import App from './app'
 import '@/styles/tailwind.css'
 
+// 移动端调试控制台是否启用仅由 .env 的 VITE_USE_ERUDA 控制
+if (import.meta.env.VITE_USE_ERUDA) {
+  import('eruda').then(({ default: eruda }) => {
+    eruda.init()
+  })
+}
+
 const root = createRoot(document.getElementById('root')!, {
   // 捕获 ErrorBoundary 内部的错误
   onCaughtError: (error, errorInfo) => {

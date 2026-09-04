@@ -78,6 +78,7 @@
     "commitizen": "^4.3.2",
     "commitlint-config-cz": "^0.13.3",
     "cz-customizable": "^7.5.4",
+    "eruda": "^3.4.3",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",

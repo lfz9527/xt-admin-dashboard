@@ -12,8 +12,12 @@ const CODE = {
   AUTHCODE: 401,
 }
 
+const port = import.meta.env.VITE_API_BASE_PORT
+  ? `:${import.meta.env.VITE_API_BASE_PORT}`
+  : ''
+
 export const http = HttpClient.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}${port}`,
   timeout: 10000,
 })
 
