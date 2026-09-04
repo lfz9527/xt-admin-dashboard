@@ -4,7 +4,11 @@
 export interface ImportMetaEnv {
   // Auto generate by env-parse
   /**
-   * 后端接口地址（nest-practices 本地服务）
+   * 后端接口地址端口
+   */
+  readonly VITE_API_BASE_PORT: number
+  /**
+   * 后端接口地址服务
    */
   readonly VITE_API_BASE_URL: string
   /**
@@ -19,4 +23,8 @@ export interface ImportMetaEnv {
    * 是否在打包时生成 sourcemap
    */
   readonly VITE_BUILD_SOURCEMAP: boolean
+  /**
+   * 是否开启eruda调试
+   */
+  readonly VITE_USE_ERUDA: boolean
 }
