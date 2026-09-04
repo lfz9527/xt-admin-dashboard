@@ -20,6 +20,9 @@ export type NavTabContextProps = {
   removeTab: (id: string) => void
   removeTabs: (ids: string[]) => void
   setActiveTab: (id: string) => void
+  /** 每个标签的刷新计数，变化时内容区会重新挂载该标签对应的页面 */
+  refreshCounts: Record<string, number>
+  refreshTab: (id: string) => void
 }
 
 const NavTabContext = createContext<NavTabContextProps | null>(null)
@@ -48,6 +51,7 @@ export function NavTabProvider({
   const [activeTabId, setActiveTabId] = useState<string | null>(
     defaultActiveTabId
   )
+  const [refreshCounts, setRefreshCounts] = useState<Record<string, number>>({})
 
   const addTab = useCallback((tab: Tab) => {
     setTabs((prev) => {
@@ -106,6 +110,10 @@ export function NavTabProvider({
     setActiveTabId(id)
   }, [])
 
+  const refreshTab = useCallback((id: string) => {
+    setRefreshCounts((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }))
+  }, [])
+
   const contextValue = useMemo<NavTabContextProps>(
     () => ({
       tabs,
@@ -114,8 +122,19 @@ export function NavTabProvider({
       removeTab,
       removeTabs,
       setActiveTab,
+      refreshCounts,
+      refreshTab,
     }),
-    [tabs, activeTabId, addTab, removeTab, removeTabs, setActiveTab]
+    [
+      tabs,
+      activeTabId,
+      addTab,
+      removeTab,
+      removeTabs,
+      setActiveTab,
+      refreshCounts,
+      refreshTab,
+    ]
   )
 
   return (
