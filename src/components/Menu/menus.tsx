@@ -7,6 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
+  useSidebar,
 } from '@/ui/Sidebar'
 import type { MenuItem } from './types'
 import type { RouteMeta } from '@/router/types'
@@ -31,10 +32,15 @@ export function MenuItemLink({
   item,
   ...props
 }: { item: MenuItem } & Omit<React.ComponentProps<typeof Link>, 'to'>) {
+  const { isMobile, setOpenMobile } = useSidebar()
   return (
     <Link
       to={item.path ?? '/'}
       {...props}
+      onClick={() => {
+        // 移动端侧边栏为覆盖层，点击菜单跳转后自动收起，避免遮挡页面内容
+        if (isMobile) setOpenMobile(false)
+      }}
       className={cn('flex items-center', props.className)}
       {...(item.openIn === 'newTab'
         ? { target: '_blank', rel: 'noreferrer' }

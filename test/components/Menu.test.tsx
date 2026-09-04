@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { House, Globe, Settings2 } from 'lucide-react'
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, fireEvent } from '@testing-library/react'
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router'
-import { SidebarProvider } from '@/ui/Sidebar'
+import { SidebarProvider, useSidebar } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
 import useAuthor from '@/store/useAuthor'
 
@@ -33,6 +33,8 @@ vi.mock('@/service/users', () => ({
   createUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   updateUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   deleteUser: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  updateProfile: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+  uploadAvatar: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
 }))
 
 vi.mock('@/service/roles', () => ({
@@ -41,6 +43,29 @@ vi.mock('@/service/roles', () => ({
   createRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   updateRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
   deleteRole: vi.fn().mockResolvedValue({ data: { message: 'ok' } }),
+}))
+
+// 全树渲染会经字典 store 拉取下拉选项；不 mock 会发出真实请求，
+// 后端运行时返回 401 触发拦截器登出，测试环境不稳定
+vi.mock('@/service/dict', () => ({
+  getDictTypes: vi.fn().mockResolvedValue({
+    data: { list: [], total: 0, totalPages: 0 },
+  }),
+  createDictType: vi.fn().mockResolvedValue({ data: null }),
+  updateDictType: vi.fn().mockResolvedValue({ data: null }),
+  updateDictTypeStatus: vi.fn().mockResolvedValue({ data: null }),
+  deleteDictType: vi.fn().mockResolvedValue({ data: null }),
+  getDictItems: vi.fn().mockResolvedValue({
+    data: { list: [], total: 0, totalPages: 0 },
+  }),
+  createDictItem: vi.fn().mockResolvedValue({ data: null }),
+  updateDictItem: vi.fn().mockResolvedValue({ data: null }),
+  updateDictItemStatus: vi.fn().mockResolvedValue({ data: null }),
+  deleteDictItem: vi.fn().mockResolvedValue({ data: null }),
+  getEnabledDicts: vi.fn().mockResolvedValue({ data: [] }),
+  getDictOptions: vi.fn().mockResolvedValue({ data: [] }),
+  listAllDictTypes: vi.fn().mockResolvedValue({ data: [] }),
+  listAllDictItems: vi.fn().mockResolvedValue({ data: [] }),
 }))
 
 beforeEach(() => {
@@ -180,9 +205,11 @@ describe('Menus', () => {
 
   it('叶子菜单默认在当前标签页打开（不带 target）', () => {
     render(
-      <MemoryRouter>
-        <MenuItemLink item={{ key: 'home', title: '首页', path: '/' }} />
-      </MemoryRouter>
+      <SidebarProvider>
+        <MemoryRouter>
+          <MenuItemLink item={{ key: 'home', title: '首页', path: '/' }} />
+        </MemoryRouter>
+      </SidebarProvider>
     )
 
     const link = screen.getByRole('link', { name: '首页' })
@@ -193,21 +220,61 @@ describe('Menus', () => {
 
   it('openIn=newTab 时在新浏览器标签页打开（target=_blank + rel=noreferrer）', () => {
     render(
-      <MemoryRouter>
-        <MenuItemLink
-          item={{
-            key: 'bookmarks',
-            title: '书签管理',
-            path: '/browser/bookmarks',
-            openIn: 'newTab',
-          }}
-        />
-      </MemoryRouter>
+      <SidebarProvider>
+        <MemoryRouter>
+          <MenuItemLink
+            item={{
+              key: 'bookmarks',
+              title: '书签管理',
+              path: '/browser/bookmarks',
+              openIn: 'newTab',
+            }}
+          />
+        </MemoryRouter>
+      </SidebarProvider>
     )
 
     const link = screen.getByRole('link', { name: '书签管理' })
     expect(link).toHaveAttribute('href', '/browser/bookmarks')
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noreferrer')
+  })
+
+  it('移动端点击菜单链接后自动收起侧边栏', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 375,
+    })
+    try {
+      function Harness() {
+        const { openMobile, setOpenMobile } = useSidebar()
+        return (
+          <>
+            <span data-testid='mobile-open'>{String(openMobile)}</span>
+            <button onClick={() => setOpenMobile(true)}>open</button>
+            <MemoryRouter>
+              <MenuItemLink item={{ key: 'home', title: '首页', path: '/' }} />
+            </MemoryRouter>
+          </>
+        )
+      }
+
+      render(
+        <SidebarProvider>
+          <Harness />
+        </SidebarProvider>
+      )
+
+      fireEvent.click(screen.getByText('open'))
+      expect(screen.getByTestId('mobile-open').textContent).toBe('true')
+
+      fireEvent.click(screen.getByRole('link', { name: '首页' }))
+      expect(screen.getByTestId('mobile-open').textContent).toBe('false')
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: 1024,
+      })
+    }
   })
 })
