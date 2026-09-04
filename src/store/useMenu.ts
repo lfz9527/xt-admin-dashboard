@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage, devtools } from 'zustand/middleware'
 import { logger } from './middleware/logger'
+import { IS_PROD } from '@/constants'
 type State = {
   sidebarOpen: boolean
   /** 内容区最大化：隐藏侧边栏与顶部 Header，为临时 UI 态不做持久化 */
@@ -30,7 +31,9 @@ const useMenu = create<State & Action>()(
           storage: createJSONStorage(() => localStorage),
           partialize: (s) => ({ sidebarOpen: s.sidebarOpen }),
         }
-      )
+      ),
+      // 生产环境不连接 Redux DevTools
+      { name: 'useMenu', enabled: !IS_PROD }
     ),
     'useMenu'
   )

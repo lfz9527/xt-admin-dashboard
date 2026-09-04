@@ -62,7 +62,7 @@ export function getRoles(params: RoleListParams, signal?: AbortSignal) {
 
 /** 角色详情（需鉴权） */
 export function getRole(id: string, signal?: AbortSignal) {
-  return http.get<RoleItem>(`/roles/${id}`, { signal })
+  return http.get<RoleItem>(`/roles/${encodeURIComponent(id)}`, { signal })
 }
 
 /** 创建角色（需鉴权） */

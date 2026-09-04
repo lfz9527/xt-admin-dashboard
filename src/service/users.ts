@@ -97,7 +97,7 @@ export function getUsers(params: UserListParams, signal?: AbortSignal) {
 
 /** 查询用户（需鉴权） */
 export function getUser(id: string, signal?: AbortSignal) {
-  return http.get<UserItem>(`/users/${id}`, { signal })
+  return http.get<UserItem>(`/users/${encodeURIComponent(id)}`, { signal })
 }
 
 /** 新增用户（需鉴权；管理员创建，不需要验证码） */

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/utils/common'
 
 interface UploadThingAvatarProps {
@@ -104,6 +104,13 @@ export function UploadThingAvatar({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // 预览地址是 blob: 对象 URL，用完必须 revoke，否则 File 数据一直滞留内存
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -115,16 +122,23 @@ export function UploadThingAvatar({
       }
 
       setError(null)
-      setPreviewUrl(URL.createObjectURL(file))
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev)
+        return URL.createObjectURL(file)
+      })
 
       if (onUpload) {
         try {
           setIsUploading(true)
           const url = await onUpload(file)
           onChange?.(url)
+          // 上传成功后组件改用远程 value 展示，本地预览即可释放
+          setPreviewUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return null
+          })
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Upload failed')
-          setPreviewUrl(null)
         } finally {
           setIsUploading(false)
         }
@@ -135,6 +149,7 @@ export function UploadThingAvatar({
     [onChange, onUpload]
   )
 
+  // 上传失败时保留预览（此时已随上面 setPreviewUrl 更新），无需额外处理
   const displayUrl = previewUrl || value
 
   return (

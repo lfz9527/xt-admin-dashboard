@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
 import type { AuthUser } from '@/service/auth'
+import { IS_PROD } from '@/constants'
 import { EncryptionManager } from '@/utils/EncryptionManager'
 
 import { logger } from './middleware/logger'
@@ -78,7 +79,9 @@ const useAuthor = create<State & Action>()(
           name: 'app-author',
           storage: createJSONStorage(() => localStorage),
         }
-      )
+      ),
+      // 生产环境不连接 Redux DevTools，避免 token 等敏感 state 被扩展读取
+      { name: 'useAuthor', enabled: !IS_PROD }
     ),
     'useAuthor'
   )

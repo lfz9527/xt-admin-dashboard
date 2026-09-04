@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage, devtools } from 'zustand/middleware'
 import { logger } from './middleware/logger'
 import { getSystemTheme } from '@/utils/common'
+import { IS_PROD } from '@/constants'
 import { type Theme } from '@/types/setting'
 
 type State = {
@@ -24,7 +25,9 @@ const useSetting = create<State & Action>()(
           name: 'app-setting',
           storage: createJSONStorage(() => localStorage),
         }
-      )
+      ),
+      // 生产环境不连接 Redux DevTools
+      { name: 'useSetting', enabled: !IS_PROD }
     ),
     'useSetting'
   )

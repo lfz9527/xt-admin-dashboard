@@ -284,7 +284,10 @@ export function getEnabledDicts(signal?: AbortSignal) {
  * 仅返回启用项，停用节点连同其子树整体隐藏。
  */
 export function getDictOptions(dictKey: string, signal?: AbortSignal) {
-  return http.get<DictOptionNode[]>(`/dicts/${dictKey}/items`, { signal })
+  return http.get<DictOptionNode[]>(
+    `/dicts/${encodeURIComponent(dictKey)}/items`,
+    { signal }
+  )
 }
 
 // ── 前端管理数据收集 ─────────────────────────────────────
