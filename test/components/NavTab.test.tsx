@@ -2,12 +2,14 @@ import { act, render, screen, fireEvent } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
 import { NavTabProvider, useNavTab, NavTab, type Tab } from '@/layout/NavTab'
+import useMenu from '@/store/useMenu'
 
 let resizeObserverCallbacks: ResizeObserverCallback[] = []
 const originalResizeObserver = window.ResizeObserver
 
 beforeEach(() => {
   resizeObserverCallbacks = []
+  useMenu.setState({ maximized: false })
   window.ResizeObserver = class {
     constructor(callback: ResizeObserverCallback) {
       resizeObserverCallbacks.push(callback)
@@ -931,6 +933,76 @@ describe('NavTab', () => {
     )
 
     expect(screen.getByRole('button', { name: '刷新' })).toBeDisabled()
+  })
+
+  it('功能区含最大化按钮，点击切换最大化状态与图标', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const actions = document.querySelector('[data-slot="nav-tab-actions"]')
+    expect(actions).not.toBeNull()
+    const toggle = screen.getByRole('button', { name: '最大化' })
+    expect(actions).toContainElement(toggle)
+    expect(useMenu.getState().maximized).toBe(false)
+
+    fireEvent.click(toggle)
+    expect(useMenu.getState().maximized).toBe(true)
+    expect(screen.getByRole('button', { name: '还原' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '还原' }))
+    expect(useMenu.getState().maximized).toBe(false)
+    expect(screen.getByRole('button', { name: '最大化' })).toBeInTheDocument()
+  })
+
+  it('功能区刷新与最大化按钮之间有竖向分隔线', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const actions = document.querySelector('[data-slot="nav-tab-actions"]')!
+    const refresh = actions.querySelector('[aria-label="刷新"]')!
+    const separator = actions.querySelector('[data-slot="separator"]')!
+    const maximize = actions.querySelector('[aria-label="最大化"]')!
+
+    expect(separator).not.toBeNull()
+    // 分隔线位于刷新按钮与最大化按钮之间
+    expect(
+      refresh.compareDocumentPosition(separator) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(
+      separator.compareDocumentPosition(maximize) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('useMenu 最大化状态不持久化到 localStorage', () => {
+    localStorage.removeItem('app-menu')
+    useMenu.setState({ maximized: true })
+    // persist 写入时经 partialize 仅保留 sidebarOpen
+    const persisted = JSON.parse(localStorage.getItem('app-menu') ?? '{}')
+    expect(persisted.state).not.toHaveProperty('maximized')
   })
 
   it('右键菜单关闭当前标签', () => {

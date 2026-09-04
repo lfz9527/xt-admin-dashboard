@@ -1,15 +1,18 @@
 import { Outlet } from 'react-router'
 import Header from '@/components/Header'
+import { useMenu } from '@/store'
 import { NavTab, useNavTab } from './NavTab'
 
 export default function Main() {
   const { activeTabId, refreshCounts } = useNavTab()
+  const maximized = useMenu((s) => s.maximized)
   // key 随当前标签的刷新计数变化，计数改变即重挂载内容，实现标签页「刷新」
   const refreshKey = activeTabId ? (refreshCounts[activeTabId] ?? 0) : 0
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden'>
-      <Header />
+      {/* 最大化时隐藏顶部栏（头像/面包屑所在行），聚焦内容 */}
+      {!maximized && <Header />}
 
       <section className='h-9.5 w-full border-b transition-all'>
         <NavTab />

@@ -93,7 +93,9 @@ function Sidebar({
           'group-data-[side=right]:rotate-180',
           variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
-            : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)'
+            : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
+          // 最大化时占位归零，内容区占满剩余宽度
+          '[[data-maximized=true]_&]:w-0'
         )}
       />
       <div
@@ -105,6 +107,8 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l',
+          // 最大化时整体隐藏侧边栏
+          '[[data-maximized=true]_&]:hidden',
           className
         )}
         {...props}
@@ -181,6 +185,8 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
         'md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0',
         'md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm',
         'md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
+        // 最大化时左侧与其余三边一致留 8px，覆盖常态 ml-0 与 collapsed 的 ml-2
+        'md:[[data-maximized=true]_&]:ml-2!',
         className
       )}
       {...props}

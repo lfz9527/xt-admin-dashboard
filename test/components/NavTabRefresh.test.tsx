@@ -3,12 +3,16 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { NavTabProvider, NavTabSync, type Tab } from '@/layout/NavTab'
 import Main from '@/layout/main'
+import useMenu from '@/store/useMenu'
 
-vi.mock('@/components/Header', () => ({ default: () => null }))
+vi.mock('@/components/Header', () => ({
+  default: () => <div data-testid='app-header'>header</div>,
+}))
 
 const originalResizeObserver = window.ResizeObserver
 
 beforeEach(() => {
+  useMenu.setState({ maximized: false })
   window.ResizeObserver = class {
     observe() {}
     disconnect() {}
@@ -169,5 +173,33 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(screen.getByTestId('pathname').textContent).toBe('/two')
     expect(b.getMounts()).toBe(1)
     expect(a.getMounts()).toBe(1)
+  })
+
+  it('点击功能区最大化按钮隐藏顶部 Header，还原后恢复', () => {
+    const a = makePage()
+    const b = makePage()
+
+    renderHarness({
+      defaultTabs: [
+        { id: '/', title: 'Tab A' },
+        { id: '/two', title: 'Tab B' },
+      ],
+      defaultActiveTabId: '/',
+      pageA: <a.Page />,
+      pageB: <b.Page />,
+    })
+
+    expect(screen.getByTestId('app-header')).toBeInTheDocument()
+    expect(useMenu.getState().maximized).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', { name: '最大化' }))
+    expect(useMenu.getState().maximized).toBe(true)
+    expect(screen.queryByTestId('app-header')).not.toBeInTheDocument()
+    // 最大化时内容区仍在（聚焦内容）
+    expect(screen.getByTestId('mounts').textContent).toBe('1')
+
+    fireEvent.click(screen.getByRole('button', { name: '还原' }))
+    expect(useMenu.getState().maximized).toBe(false)
+    expect(screen.getByTestId('app-header')).toBeInTheDocument()
   })
 })
