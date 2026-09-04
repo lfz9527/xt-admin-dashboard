@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import ErrorBoundary from '@/components/ErrorBoundary'
 import GlobalCrash from '@/components/ErrorBoundary/GlobalCrash'
+import { IS_PROD } from '@/constants'
 import App from './app'
 import '@/styles/tailwind.css'
 
@@ -14,8 +15,11 @@ if (import.meta.env.VITE_USE_ERUDA) {
 }
 
 const root = createRoot(document.getElementById('root')!, {
+  // 错误详情（含堆栈与组件树）仅在开发环境输出控制台；生产环境不打印，
+  // 避免向打开 devtools 的用户泄露内部实现，将来接入日志上报时单独收口
   // 捕获 ErrorBoundary 内部的错误
   onCaughtError: (error, errorInfo) => {
+    if (IS_PROD) return
     console.group('[onCaughtError]')
     console.error('error:', error)
     console.error('componentStack:', errorInfo.componentStack)
@@ -23,6 +27,7 @@ const root = createRoot(document.getElementById('root')!, {
   },
   // 捕获未捕获的错误（全局错误）
   onUncaughtError: (error, errorInfo) => {
+    if (IS_PROD) return
     console.group('[onUncaughtError]')
     console.error('error:', error)
     console.error('componentStack:', errorInfo.componentStack)
@@ -30,6 +35,7 @@ const root = createRoot(document.getElementById('root')!, {
   },
   // 捕获可恢复的错误（不会崩溃）
   onRecoverableError: (error) => {
+    if (IS_PROD) return
     console.warn('recoverable error', error)
   },
   // 用于生成唯一 ID 前缀

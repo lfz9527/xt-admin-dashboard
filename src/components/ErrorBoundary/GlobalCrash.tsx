@@ -1,6 +1,8 @@
 // GlobalCrash.tsx
 import { useState, type ErrorInfo } from 'react'
 
+import { IS_PROD } from '@/constants'
+
 interface GlobalCrashProps {
   error: Error
   errorInfo?: ErrorInfo | null
@@ -43,6 +45,8 @@ const btnClass =
 
 const GlobalCrash = ({ error, errorInfo, reset }: GlobalCrashProps) => {
   const [showDetail, setShowDetail] = useState(false)
+  // 堆栈与错误详情可能泄露内部实现，仅非生产环境向用户展示
+  const showDetailBlock = !IS_PROD
 
   const handleRefresh = () => {
     window.location.reload()
@@ -63,14 +67,16 @@ const GlobalCrash = ({ error, errorInfo, reset }: GlobalCrashProps) => {
           如果问题持续出现，请联系技术支持。
         </p>
 
-        <div className='mb-6 rounded-lg bg-[rgb(245,244,237)] px-4 py-3 text-left'>
-          <p className='mb-1 text-[11px] font-medium tracking-wider text-[rgb(115,114,108)] uppercase'>
-            错误信息
-          </p>
-          <p className='text-xs break-all text-[rgb(127,44,40)]'>
-            {error.message}
-          </p>
-        </div>
+        {showDetailBlock && (
+          <div className='mb-6 rounded-lg bg-[rgb(245,244,237)] px-4 py-3 text-left'>
+            <p className='mb-1 text-[11px] font-medium tracking-wider text-[rgb(115,114,108)] uppercase'>
+              错误信息
+            </p>
+            <p className='text-xs break-all text-[rgb(127,44,40)]'>
+              {error.message}
+            </p>
+          </div>
+        )}
 
         <div className='flex justify-center gap-2'>
           <button
@@ -79,15 +85,17 @@ const GlobalCrash = ({ error, errorInfo, reset }: GlobalCrashProps) => {
           >
             {reset ? '重试' : '刷新页面'}
           </button>
-          <button
-            onClick={() => setShowDetail((v) => !v)}
-            className={btnClass}
-          >
-            {showDetail ? '收起详情' : '查看详情'}
-          </button>
+          {showDetailBlock && (
+            <button
+              onClick={() => setShowDetail((v) => !v)}
+              className={btnClass}
+            >
+              {showDetail ? '收起详情' : '查看详情'}
+            </button>
+          )}
         </div>
 
-        {showDetail && (
+        {showDetailBlock && showDetail && (
           <div className='mt-5 max-h-[200px] overflow-y-auto rounded-lg bg-[rgb(245,244,237)] px-4 py-3 text-left'>
             <pre className='text-[11px] leading-relaxed whitespace-pre-wrap text-[rgb(61,61,58)]'>
               {error.stack}

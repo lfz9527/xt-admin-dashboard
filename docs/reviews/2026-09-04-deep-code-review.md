@@ -92,7 +92,7 @@
 ### 安全加固
 
 - **P2-7 · 错误详情向用户与控制台透传**:
-  `src/main.tsx:18-30` 生产构建仍 console.error 完整 error 对象 + componentStack;`src/components/ErrorBoundary/GlobalCrash.tsx:71,93-94`、`DefaultFallback.tsx:6` 向终端用户渲染 `error.message/stack`;列表页 `src/pages/system/users/index.tsx:257`、`roles/index.tsx:220`、`src/pages/browser/bookmarks/index.tsx:230` 直接渲染服务端错误原文。建议生产仅显示通用文案、stack 仅开发可见;`src/service/http/adapters/FetchAdapter.ts:104`、`HttpError.ts:26` 携带完整 config(含 Authorization 头),将来接入日志上报时禁止整对象上报。
+  `src/main.tsx:18-30` 生产构建仍 console.error 完整 error 对象 + componentStack;`src/components/ErrorBoundary/GlobalCrash.tsx:71,93-94`、`DefaultFallback.tsx:6` 向终端用户渲染 `error.message/stack`;列表页 `src/pages/system/users/index.tsx:257`、`roles/index.tsx:220`、`src/pages/browser/bookmarks/index.tsx:230` 直接渲染服务端错误原文。建议生产仅显示通用文案、stack 仅开发可见;`src/service/http/adapters/FetchAdapter.ts:104`、`HttpError.ts:26` 携带完整 config(含 Authorization 头),将来接入日志上报时禁止整对象上报。✅ 已修复(用户可见堆栈与控制台透传部分),详见文末「修复记录」;列表页渲染的为后端业务文案(区分于技术堆栈),按管理后台惯例保留。
 - **P2-8 · 书签 URL 无协议白名单**:
   保存校验仅非空+最长 2048(`src/features/bookmark/types.ts:4-23`),渲染 `<a href={selectedNode.url} target='_blank' rel='noreferrer'>`(`src/pages/browser/bookmarks/index.tsx:284-291`)——`javascript:`/`data:` 协议可在应用上下文执行(`rel='noreferrer'` 本身到位,无反向 tabnabbing);favicon 直连后端字段作 img src(`:152-157,268-272`)。建议保存/渲染双重 `http(s)` 白名单校验。
 
@@ -152,6 +152,21 @@
 ---
 
 ## 修复记录
+
+### P2-7 · 错误详情向用户与控制台透传
+
+- **修复时间**:2026-09-05
+- **修复方式**:按「开发可见、生产收口」原则对三处泄露面补环境门控(沿用 store devtools 的 `IS_PROD` 先例,Vite 生产构建静态替换 `import.meta.env.PROD` 后门控代码可被摇树):
+  1. `GlobalCrash.tsx`:新增 `showDetailBlock = !IS_PROD`,「错误信息」块(`error.message`)、「查看详情」按钮与堆栈展开区(`error.stack` + `componentStack`)均仅非生产渲染;生产环境用户只看到通用文案 + 重试/刷新按钮,崩溃页布局其余部分不变;
+  2. `DefaultFallback.tsx`:`error.message` 的 `<pre>` 仅非生产渲染,标题与重试按钮不变;
+  3. `main.tsx`:三个 root 回调(`onCaughtError`/`onUncaughtError`/`onRecoverableError`)在生产环境直接返回,不再向控制台输出完整 error 对象与 componentStack,并注明将来接入日志上报时需单独收口。
+- **明确保留**(与报告原文的差异说明):
+  - 列表页(users/roles/bookmarks)渲染的 `error.message` 来源为 `request.ts` 用后端响应体 `result.message` 构造的业务文案(如「账号已被禁用」),属管理后台标准交互,非技术堆栈,不在此收口;
+  - `HttpError.config`(含 Authorization 头)当前仅存于内存错误对象,项目无日志上报通道、无泄露出口;已在 main.tsx 注释中记录将来接入上报时的收口要求。
+- **修复证据**:
+  - `pnpm exec vitest run` 覆盖 ErrorBoundary 全部 5 个测试文件(GlobalCrash/DefaultFallback/ErrorBoundary/RouteErrorBoundary/useErrorBoundary),17 用例全部通过(vitest 下 `import.meta.env.PROD === false`,开发分支行为与既有断言一致);
+  - `pnpm lint`、`pnpm compile` 通过;
+  - diff 摘要:3 文件 +32/-16,均为门控逻辑,无业务行为变化。
 
 ### P2-6 · ui→components 向上依赖(Toast 引 Loading)
 
