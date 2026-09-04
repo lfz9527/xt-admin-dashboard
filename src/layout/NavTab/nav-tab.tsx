@@ -363,22 +363,21 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                 {
                   left: pillStyle.left,
                   width: pillStyle.width,
-                  '--svg-size': 7,
                 } as React.CSSProperties
               }
             >
               <div className='bg-menu-accent size-full rounded-tl-sm rounded-tr-sm' />
               <svg
                 className='fill-menu-accent absolute bottom-0 -left-0.75 transition-all duration-150'
-                height='var(--svg-size)'
-                width='var(--svg-size)'
+                height='7'
+                width='7'
               >
                 <path d='M 0 7 A 7 7 0 0 0 7 0 L 7 7 Z'></path>
               </svg>
               <svg
                 className='fill-menu-accent absolute -right-0.75 bottom-0 transition-all duration-150'
-                height='var(--svg-size)'
-                width='var(--svg-size)'
+                height='7'
+                width='7'
               >
                 <path d='M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z'></path>
               </svg>
