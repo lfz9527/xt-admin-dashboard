@@ -87,7 +87,7 @@
 - **P2-5 · Header/UserCenterDialog 归属漂移**:
   位于共享 `src/components/` 却直连 features/auth、router(types/routes/menu/permissions×4)、service、store 多域(`src/components/Header/index.tsx:10-24`、`UserCenterDialog.tsx:8-17`),且重复了菜单三角静态导入;`src/layout/baseLayout.tsx:6` 直连 `features/auth/hooks`。建议 Header 下沉 `layout/` 或经 store/路由派生收口。✅ 已修复,详见文末「修复记录」。
 - **P2-6 · 基础层向上依赖**:
-  `src/ui/Toast/index.tsx:9,40` 值导入并渲染 `src/components/Loading`(唯一 ui→components 边);`src/components/Dropdown` 仅剩 `renderDropdownItem` helper 存活、组件体死代码(见 P3 清单)。
+  `src/ui/Toast/index.tsx:9,40` 值导入并渲染 `src/components/Loading`(唯一 ui→components 边);`src/components/Dropdown` 仅剩 `renderDropdownItem` helper 存活、组件体死代码(见 P3 清单)。Toast 引 Loading 部分已修复,详见文末「修复记录」;Dropdown 死代码部分按 P3-4 约定保留不动。
 
 ### 安全加固
 
@@ -152,6 +152,16 @@
 ---
 
 ## 修复记录
+
+### P2-6 · ui→components 向上依赖(Toast 引 Loading)
+
+- **修复时间**:2026-09-05
+- **修复方式**:`src/ui/Toast/index.tsx` 中 sonner 的 `loading` 图标由 `@/components/Loading` 换成同层的基础原语 `@/ui/Spinner`(Loader2Icon + animate-spin,自带 `role='status'`),删除对 components 层的唯一值导入;全仓唯一的 ui→components 逆向边就此消除,`src/ui/` 对 `src/components/` 的引用归零。Loading 组件本体及其余 4 处消费方(DataTable/LazyImport/bookmarks/dict)不动。
+- **修复证据**:
+  - 全仓 grep:`src/ui/` 下 `from '@/components/'` 0 命中;
+  - `pnpm lint`、`pnpm compile` 通过;
+  - `pnpm exec vitest run` 覆盖 5 个涉及 toast 的测试文件(bookmarks/dict/login/roles/users),64 用例全部通过;
+  - diff 摘要:1 文件,导入行 1 处替换 + `loading` 图标 JSX 1 处替换(Loading 的 `size={16}` prop 移除,Spinner 默认 size-4 即 16px,视觉尺寸一致)。
 
 ### P2-5 · Header/UserCenterDialog 归属漂移
 

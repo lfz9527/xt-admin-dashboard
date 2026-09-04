@@ -6,7 +6,7 @@ import {
   CircleAlert,
 } from 'lucide-react'
 import { Toaster as Sonner, toast as sonnerToast } from 'sonner'
-import Loading from '@/components/Loading'
+import { Spinner } from '@/ui/Spinner'
 
 const IconCls = 'size-4 shrink-0'
 
@@ -36,12 +36,7 @@ function Toaster() {
           />
         ),
         error: <XCircleIcon className={cn(IconCls, 'text-red-500')} />,
-        loading: (
-          <Loading
-            className={cn(IconCls)}
-            size={16}
-          />
-        ),
+        loading: <Spinner className={cn(IconCls)} />,
       }}
     />
   )
