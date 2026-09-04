@@ -1,7 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
-import { ChevronsUp, Maximize2, Minimize2, RefreshCw, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ChevronsUp,
+  Maximize2,
+  Minimize2,
+  Pin,
+  RefreshCw,
+  X,
+} from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { useMenu } from '@/store'
+import useAuthor from '@/store/useAuthor'
+import routes from '@/router/routes'
+import { firstLeafMenu, routeToMenus } from '@/router/menu'
+import { createRoleChecker } from '@/router/permissions'
 import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
@@ -17,10 +28,25 @@ import { ScrollArea } from '@/ui/ScrollArea'
 import { Separator } from '@/ui/Separator'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
-  const { tabs, activeTabId, removeTab, removeTabs, refreshTab } = useNavTab()
+  const {
+    tabs,
+    activeTabId,
+    addTab,
+    removeTab,
+    removeTabs,
+    setActiveTab,
+    refreshTab,
+    togglePin,
+  } = useNavTab()
   const maximized = useMenu((s) => s.maximized)
   const toggleMaximize = useMenu((s) => s.toggleMaximize)
+  const roleKey = useAuthor((s) => s.roleKey)
   const navigate = useNavigate()
+  // 权限过滤后的侧边栏菜单中，自上而下第一个可打开的菜单（当前路由表即首页）
+  const firstMenu = useMemo(
+    () => firstLeafMenu(routeToMenus(routes, createRoleChecker(roleKey))),
+    [roleKey]
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef(new Map<string, HTMLDivElement>())
@@ -149,7 +175,24 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
 
   function handleCloseAll() {
     if (!activeTabId) return
-    closeBatch(tabs.map((t) => t.id).filter((id) => id !== activeTabId))
+    // 固定标签不允许关闭，其余标签全部关闭（含激活标签）
+    const pinnedTabs = tabs.filter((t) => t.pinned)
+    const activeWasPinned = pinnedTabs.some((t) => t.id === activeTabId)
+    removeTabs(tabs.map((t) => t.id))
+
+    if (activeWasPinned) return
+    // 激活标签被关闭：默认激活关闭后存活标签中的第一个（最左侧固定标签）
+    const firstAlive = pinnedTabs[0]
+    if (firstAlive) {
+      setActiveTab(firstAlive.id)
+      navigate(firstAlive.id)
+      return
+    }
+    // 关闭完成后一个标签都不存在：默认打开菜单自上而下第一个菜单（新建并激活）
+    if (firstMenu?.path) {
+      addTab({ id: firstMenu.path, title: firstMenu.title })
+      navigate(firstMenu.path)
+    }
   }
 
   function handleRefresh(id: string) {
@@ -193,8 +236,11 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
           >
             {tabs.map((tab, index) => {
               const isActive = tab.id === activeTabId
-              const isFirst = index === 0
-              const isLast = index === tabs.length - 1
+              // 该侧存在非固定（可关闭）标签时批量关闭才可用：全为固定或为空均禁用
+              const leftCloseable = tabs.slice(0, index).some((t) => !t.pinned)
+              const rightCloseable = tabs
+                .slice(index + 1)
+                .some((t) => !t.pinned)
 
               return (
                 <ContextMenu key={tab.id}>
@@ -223,20 +269,39 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                       text={tab.title}
                       className='min-w-0 flex-1 select-none'
                     />
-                    {tab.closable && tabs.length > 1 && (
+                    {tab.pinned ? (
                       <span
-                        data-slot='nav-tab-close'
+                        data-slot='nav-tab-pin'
+                        aria-label='取消固定'
+                        title='取消固定'
                         className={cn(
                           'flex-center size-4 rounded',
                           'group-data-[active=true]:hover:bg-menu-accent'
                         )}
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleClose(tab.id)
+                          togglePin(tab.id)
                         }}
                       >
-                        <X className='size-3' />
+                        <Pin className='size-3 fill-current' />
                       </span>
+                    ) : (
+                      tab.closable &&
+                      tabs.length > 1 && (
+                        <span
+                          data-slot='nav-tab-close'
+                          className={cn(
+                            'flex-center size-4 rounded',
+                            'group-data-[active=true]:hover:bg-menu-accent'
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleClose(tab.id)
+                          }}
+                        >
+                          <X className='size-3' />
+                        </span>
+                      )
                     )}
                     {!isActive && (
                       <Separator
@@ -249,29 +314,40 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                     <ContextMenuItem onClick={() => handleRefresh(tab.id)}>
                       刷新
                     </ContextMenuItem>
+                    {/* 与标签栏右侧功能区按钮联动：隐藏侧边栏与顶部栏 */}
+                    <ContextMenuItem onClick={toggleMaximize}>
+                      {maximized ? '还原' : '最大化'}
+                    </ContextMenuItem>
                     <ContextMenuSeparator />
+                    {/* 固定与关闭互斥：pinned 标签仅能通过 Pin 图标取消固定 */}
                     <ContextMenuItem
-                      disabled={tabs.length <= 1 || !tab.closable}
+                      disabled={!tab.closable || tab.pinned}
+                      onClick={() => togglePin(tab.id)}
+                    >
+                      固定
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      disabled={tabs.length <= 1 || !tab.closable || tab.pinned}
                       onClick={() => handleClose(tab.id)}
                     >
                       关闭
                     </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem
-                      disabled={isFirst}
+                      disabled={!leftCloseable}
                       onClick={() => handleCloseLeft(tab.id)}
                     >
                       关闭左侧标签页
                     </ContextMenuItem>
                     <ContextMenuItem
-                      disabled={isLast}
+                      disabled={!rightCloseable}
                       onClick={() => handleCloseRight(tab.id)}
                     >
                       关闭右侧标签页
                     </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem
-                      disabled={tabs.length <= 1}
+                      disabled={tabs.every((t) => t.pinned)}
                       onClick={handleCloseAll}
                     >
                       关闭全部标签页

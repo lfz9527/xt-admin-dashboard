@@ -1209,7 +1209,7 @@ describe('NavTab', () => {
     expect(screen.getByTestId('pathname').textContent).toBe('/two')
   })
 
-  it('右键菜单关闭全部标签页仅保留当前激活', () => {
+  it('无固定标签时关闭全部清空标签并默认打开第一个菜单（首页）', () => {
     function Page() {
       const { tabs } = useNavTab()
       return (
@@ -1243,9 +1243,11 @@ describe('NavTab', () => {
     fireEvent.contextMenu(tab1)
     fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
 
+    // 无固定标签时全部关闭（含激活标签），随后自动打开菜单第一个菜单（首页）
     expect(screen.getByTestId('count').textContent).toBe('1')
-    expect(screen.getByText('Tab 2')).toBeInTheDocument()
+    expect(screen.getByText('首页')).toBeInTheDocument()
     expect(screen.queryByText('Tab 1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tab 2')).not.toBeInTheDocument()
     expect(screen.queryByText('Tab 3')).not.toBeInTheDocument()
   })
 
@@ -1303,11 +1305,11 @@ describe('NavTab', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('只有一个标签时右键菜单的关闭项禁用', () => {
+  it('只有一个标签时右键菜单的关闭与关闭全部项均禁用（固定标签不可关）', () => {
     render(
       <MemoryRouter>
         <NavTabProvider
-          defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+          defaultTabs={[{ id: '1', title: 'Tab 1', pinned: true }]}
           defaultActiveTabId='1'
         >
           <NavTab />

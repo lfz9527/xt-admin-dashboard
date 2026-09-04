@@ -44,11 +44,13 @@ function renderHarness({
   defaultActiveTabId,
   pageA,
   pageB,
+  initialEntries = ['/'],
 }: {
   defaultTabs: Tab[]
   defaultActiveTabId: string
   pageA: React.ReactNode
   pageB: React.ReactNode
+  initialEntries?: string[]
 }) {
   const router = createMemoryRouter(
     [
@@ -70,7 +72,7 @@ function renderHarness({
         ],
       },
     ],
-    { initialEntries: ['/'] }
+    { initialEntries }
   )
   render(<RouterProvider router={router} />)
   return router
@@ -201,5 +203,135 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     fireEvent.click(screen.getByRole('button', { name: '还原' }))
     expect(useMenu.getState().maximized).toBe(false)
     expect(screen.getByTestId('app-header')).toBeInTheDocument()
+  })
+
+  it('右键菜单项可最大化隐藏 Header，菜单文案随状态变为还原，点击后恢复', () => {
+    const a = makePage()
+    const b = makePage()
+
+    renderHarness({
+      defaultTabs: [
+        { id: '/', title: 'Tab A' },
+        { id: '/two', title: 'Tab B' },
+      ],
+      defaultActiveTabId: '/',
+      pageA: <a.Page />,
+      pageB: <b.Page />,
+    })
+
+    expect(screen.getByTestId('app-header')).toBeInTheDocument()
+
+    const tabA = screen
+      .getByText('Tab A')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tabA)
+    fireEvent.click(screen.getByRole('menuitem', { name: '最大化' }))
+
+    expect(useMenu.getState().maximized).toBe(true)
+    expect(screen.queryByTestId('app-header')).not.toBeInTheDocument()
+    expect(screen.getByTestId('mounts').textContent).toBe('1')
+
+    // 再次右键同一标签，菜单项应显示「还原」并可恢复布局
+    fireEvent.contextMenu(tabA)
+    fireEvent.click(screen.getByRole('menuitem', { name: '还原' }))
+
+    expect(useMenu.getState().maximized).toBe(false)
+    expect(screen.getByTestId('app-header')).toBeInTheDocument()
+  })
+
+  it('无固定标签时关闭全部清空标签并默认打开第一个菜单（首页）', () => {
+    const a = makePage()
+    const b = makePage()
+
+    renderHarness({
+      defaultTabs: [
+        { id: '/', title: 'Tab A' },
+        { id: '/two', title: 'Tab B' },
+      ],
+      defaultActiveTabId: '/two',
+      pageA: <a.Page />,
+      pageB: <b.Page />,
+      initialEntries: ['/two'],
+    })
+
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
+    expect(b.getMounts()).toBe(1)
+
+    const tabB = screen
+      .getByText('Tab B')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tabB)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
+
+    // 激活标签 Tab B 一并关闭；标签全部关闭后自动打开菜单第一个菜单（首页）
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    expect(a.getMounts()).toBe(1)
+    expect(screen.queryByText('Tab B')).not.toBeInTheDocument()
+    expect(screen.getByText('首页')).toBeInTheDocument()
+  })
+
+  it('固定标签存活时关闭全部激活第一个固定标签并跳转', () => {
+    const a = makePage()
+    const b = makePage()
+
+    renderHarness({
+      defaultTabs: [
+        { id: '/', title: 'Tab A', pinned: true },
+        { id: '/two', title: 'Tab B' },
+      ],
+      defaultActiveTabId: '/two',
+      pageA: <a.Page />,
+      pageB: <b.Page />,
+      initialEntries: ['/two'],
+    })
+
+    expect(b.getMounts()).toBe(1)
+
+    const tabB = screen
+      .getByText('Tab B')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tabB)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
+
+    // 激活标签 Tab B 被关闭，激活转移到剩余的第一个（固定）标签 '/'
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    expect(a.getMounts()).toBe(1)
+    expect(screen.queryByText('Tab B')).not.toBeInTheDocument()
+    expect(screen.getByText('Tab A')).toBeInTheDocument()
+    expect(
+      screen
+        .getByText('Tab A')
+        .closest('[data-slot="nav-tab-item"]')
+        ?.getAttribute('data-active')
+    ).toBe('true')
+  })
+
+  it('激活标签为固定标签时关闭全部保持其激活且不重复跳转', () => {
+    const a = makePage()
+    const b = makePage()
+
+    renderHarness({
+      defaultTabs: [
+        { id: '/', title: 'Tab A', pinned: true },
+        { id: '/two', title: 'Tab B' },
+      ],
+      defaultActiveTabId: '/',
+      pageA: <a.Page />,
+      pageB: <b.Page />,
+    })
+
+    expect(a.getMounts()).toBe(1)
+
+    const tabA = screen
+      .getByText('Tab A')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tabA)
+    fireEvent.click(screen.getByRole('menuitem', { name: '关闭全部标签页' }))
+
+    // 激活标签是固定标签未被关闭：保持激活，仅关闭其余标签
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    expect(a.getMounts()).toBe(1)
+    expect(screen.queryByText('Tab B')).not.toBeInTheDocument()
+    expect(screen.getByText('Tab A')).toBeInTheDocument()
   })
 })
