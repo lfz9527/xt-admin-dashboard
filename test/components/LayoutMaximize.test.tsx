@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import BaseLayout from '@/layout/baseLayout'
 import useMenu from '@/store/useMenu'
 
-vi.mock('@/components/Header', () => ({
+vi.mock('@/layout/Header', () => ({
   default: () => <div data-testid='app-header'>header</div>,
 }))
 vi.mock('@/features/auth/hooks', async (importOriginal) => ({

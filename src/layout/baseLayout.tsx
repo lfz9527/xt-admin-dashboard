@@ -3,7 +3,7 @@ import { MenuProvider, Menu, MenuContent } from '@/components/Menu'
 import { useMenu } from '@/store'
 import { NavTabProvider } from './NavTab/context'
 import { NavTabSync } from './NavTab/sync'
-import { useUserInfo } from '@/features/auth/hooks'
+import { useUserInfo } from '@/features/auth/hooks/useUserInfo'
 
 export default function BaseLayout() {
   const sidebarOpen = useMenu((s) => s.sidebarOpen)

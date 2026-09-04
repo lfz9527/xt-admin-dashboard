@@ -5,7 +5,7 @@ import { NavTabProvider, NavTabSync, type Tab } from '@/layout/NavTab'
 import Main from '@/layout/main'
 import useMenu from '@/store/useMenu'
 
-vi.mock('@/components/Header', () => ({
+vi.mock('@/layout/Header', () => ({
   default: () => <div data-testid='app-header'>header</div>,
 }))
 

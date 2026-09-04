@@ -1,11 +1,11 @@
 import { Outlet } from 'react-router'
 import { useMenu } from '@/store'
 import { Lazy } from '@/components/LazyImport'
-import { HeaderSkeleton } from '@/components/Header/Skeleton'
+import { HeaderSkeleton } from './Header/Skeleton'
 import { useNavTab } from './NavTab/context'
 import { NavTabSkeleton } from './NavTab/skeleton'
 
-const Header = Lazy(() => import('@/components/Header'), <HeaderSkeleton />)
+const Header = Lazy(() => import('./Header'), <HeaderSkeleton />)
 // NavTab 懒加载（模块为具名导出，经 .then 映射为默认导出以适配 React.lazy）。
 // 需直连 nav-tab 模块、绕过 barrel（index.ts）：barrel 被静态导入时动态导入不会拆包
 const NavTab = Lazy(

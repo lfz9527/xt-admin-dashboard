@@ -8,7 +8,7 @@ import {
   type CSSProperties,
 } from 'react'
 
-import { useIsMobile } from '@/hooks'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { cn } from '@/utils/common'
 
 const SIDEBAR_WIDTH = '16rem'

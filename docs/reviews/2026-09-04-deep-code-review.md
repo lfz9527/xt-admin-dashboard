@@ -81,11 +81,11 @@
 - **P2-2 · store ↔ service 双向依赖**:
   `src/service/request.ts:3` 值依赖 `src/store/useAuthor`(token 读取),而 `src/store/useDictStore.ts:3-7` 值依赖 `src/service/dict`;叠加 `request.ts:69` 动态 `import('@/router')`(401 跳登录)。建议 token 改为注入式/回调式获取切断 service→store;useDictStore 保持 store→service 单向即可。
 - **P2-3 · hooks 全量桶拖垮依赖边界**:
-  `src/hooks/index.ts` 全量 `export *`,29 个文件经它导入;`src/ui/Sidebar/context.tsx:11` 仅需 `useIsMobile` 却经桶连带执行整个 store/service 初始化链(useTheme → store → useDictStore → service/dict)。建议 ui 层直引单文件、桶按需拆分。
+  `src/hooks/index.ts` 全量 `export *`,29 个文件经它导入;`src/ui/Sidebar/context.tsx:11` 仅需 `useIsMobile` 却经桶连带执行整个 store/service 初始化链(useTheme → store → useDictStore → service/dict)。建议 ui 层直引单文件、桶按需拆分。✅ 已修复,详见文末「修复记录」。
 - **P2-4 · 双原语库并存(迁移尾巴)**:
-  `@base-ui/react` 被 19 文件使用,`radix-ui` 仅剩 `src/ui/Sidebar/sidebar.tsx:7` 一处(`import { Slot } from 'radix-ui'`,同文件其他原语已来自 base-ui)。建议把 `Slot` 迁移到 base-ui 后移除 radix-ui 依赖。
+  `@base-ui/react` 被 19 文件使用,`radix-ui` 仅剩 `src/ui/Sidebar/sidebar.tsx:7` 一处(`import { Slot } from 'radix-ui'`,同文件其他原语已来自 base-ui)。建议把 `Slot` 迁移到 base-ui 后移除 radix-ui 依赖。✅ 已修复,详见文末「修复记录」。
 - **P2-5 · Header/UserCenterDialog 归属漂移**:
-  位于共享 `src/components/` 却直连 features/auth、router(types/routes/menu/permissions×4)、service、store 多域(`src/components/Header/index.tsx:10-24`、`UserCenterDialog.tsx:8-17`),且重复了菜单三角静态导入;`src/layout/baseLayout.tsx:6` 直连 `features/auth/hooks`。建议 Header 下沉 `layout/` 或经 store/路由派生收口。
+  位于共享 `src/components/` 却直连 features/auth、router(types/routes/menu/permissions×4)、service、store 多域(`src/components/Header/index.tsx:10-24`、`UserCenterDialog.tsx:8-17`),且重复了菜单三角静态导入;`src/layout/baseLayout.tsx:6` 直连 `features/auth/hooks`。建议 Header 下沉 `layout/` 或经 store/路由派生收口。✅ 已修复,详见文末「修复记录」。
 - **P2-6 · 基础层向上依赖**:
   `src/ui/Toast/index.tsx:9,40` 值导入并渲染 `src/components/Loading`(唯一 ui→components 边);`src/components/Dropdown` 仅剩 `renderDropdownItem` helper 存活、组件体死代码(见 P3 清单)。
 
@@ -153,6 +153,20 @@
 
 ## 修复记录
 
+### P2-5 · Header/UserCenterDialog 归属漂移
+
+- **修复时间**:2026-09-04(审查当日)
+- **修复方式**:按报告建议将 Header 整体下沉至 layout 层,并收口 baseLayout 的跨层直连:
+  - `src/components/Header/`(index.tsx、UserCenterDialog.tsx、Skeleton.tsx)整体 `git mv` 至 `src/layout/Header/`,Header 本就是布局顶栏、仅被 `layout/main.tsx` 单点消费,归属 layout 后其对 features/auth、router(derivedMenus/types)、service(request)、store(useAuthor)的多域依赖成为层内自洽引用,共享 `src/components/` 不再被单个布局组件「借用」;
+  - `src/layout/main.tsx` 导入同步改为相对路径 `./Header`、`./Header/Skeleton`;
+  - `src/layout/baseLayout.tsx` 的 `useUserInfo` 导入从 `@/features/auth/hooks` 桶改为直引单文件 `@/features/auth/hooks/useUserInfo`,避免 layout 经桶连带加载整个 auth hooks 链(与 P2-3 同一收口思路);
+  - 两个测试文件的 Header mock 路径同步更新:`test/components/NavTabRefresh.test.tsx:8`、`test/components/LayoutMaximize.test.tsx:7` 改为 `vi.mock('@/layout/Header')`。
+- **修复证据**:
+  - 全仓 grep:`components/Header` 旧路径 0 残留;`src/components/` 层不再直连 `features/auth`(此前仅 Header 一处);
+  - `pnpm compile`(tsc -b)、`pnpm lint` 通过;
+  - `pnpm exec vitest run` 覆盖 NavTabRefresh/LayoutMaximize/Header/Menu/useMenuBreadcrumb 5 个测试文件,38 用例中 31 通过;7 个失败均为 P1-1 既有懒加载回归(Header 6 例 + Menu 1 例,前次核查已确认先于本次改动存在),非本次引入;
+  - diff 摘要:3 文件整体迁移(git mv 保留历史),`main.tsx`/`baseLayout.tsx`/2 个测试文件各 1-2 行导入修正,组件行为无变化。
+
 ### P3-1 · `useLatest` 重复导出
 
 - **修复时间**:2026-09-04(审查当日)
@@ -194,6 +208,29 @@
   - diff 摘要:3 个消费方各 -3/+1 行 import 与 `useMemo` 调用体,行为语义(按 roleKey 派生菜单)完全不变。
 
 ---
+
+### P2-3 · ui 层经 hooks 全量桶拖垮依赖边界
+
+- **修复时间**:2026-09-04(审查当日)
+- **修复方式**:`src/ui/Sidebar/context.tsx` 的 `useIsMobile` 导入从 `@/hooks` 桶改为直引单文件 `@/hooks/useIsMobile`。修复前该桶导入连带执行整个 hooks 桶模块图(useTheme → store/useSetting → useDictStore → service/dict → request → store/useAuthor),使 ui 基础层隐式耦合 store/service;修复后 `useIsMobile.ts` 自身仅依赖 react、`@/constants`(纯常量,仅依赖 package.json)与同目录 `useEventListener`(仅依赖 react),为干净的叶子链。
+- **修复证据**:
+  - 全仓 grep 复核:`src/ui/` 下经 `@/hooks` 桶的导入为 0(此前唯一一处即 Sidebar/context.tsx);其余 28 个桶消费方均在 app/components/features/pages/router 层,按原样保留;
+  - `pnpm compile`、`pnpm lint` 通过;
+  - `pnpm exec vitest run test/components/NavTabSync.test.tsx test/components/Menu.test.tsx test/layout` 12 用例中 11 通过,唯一失败 `叶子菜单在自身路由激活时点亮` 为 P1-1 既有懒加载回归(前次核查已确认先于本次改动存在),非本次引入;
+  - diff 摘要:1 文件 1 行,`@/hooks` → `@/hooks/useIsMobile`。
+
+### P2-4 · 双原语库并存(radix-ui 迁移尾巴)
+
+- **修复时间**:2026-09-04(审查当日,提交 `9f0e9b5`)
+- **修复方式**:移除最后一处 radix-ui 引用并卸载依赖:
+  - `src/ui/Sidebar/sidebar.tsx`:删除 `import { Slot } from 'radix-ui'`,`SidebarMenuButton` 从 `asChild` + `Slot.Root` 模式改为 base-ui 的 `render` + `useRender`/`mergeProps` 模式(类型改为 `useRender.ComponentProps<'button'>`),行为语义(渲染为自定义元素而非 button)不变;
+  - `package.json` 移除 `radix-ui` 依赖(pnpm-lock 同步收敛);
+  - `src/components/Menu/menus.tsx` 同提交内小幅适配。
+- **修复证据**:
+  - 全仓 grep:`src/` 无任何 `from 'radix-ui'` 引用,`package.json` 无 radix-ui 条目;
+  - 消费侧无残留:`asChild` 在 src/ 下 0 命中(仅 hasChildren 变量名巧合);
+  - `pnpm compile`、`pnpm lint` 通过;`pnpm exec vitest run test/components` 23 个测试文件 220/227 通过(7 个失败为 P1-1 既有懒加载回归,非本次引入);
+  - diff 摘要:4 文件,`sidebar.tsx` +22/-17 核心改造,`menus.tsx` 小幅适配。
 
 ### P3-6 · xt-commit-kit 引用关系核实
 
