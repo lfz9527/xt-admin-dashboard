@@ -22,10 +22,12 @@ function LazyImport({
 
 export default LazyImport
 
-export function Lazy(factory: () => Module) {
+// fallback 不传时沿用 LazyImport 默认占位（整页加载场景）；小块区域可自行传入小占位，
+// 避免默认的高占位把布局撑高
+export function Lazy(factory: () => Module, fallback?: ReactNode) {
   const Component = lazy(factory)
   return (
-    <LazyImport>
+    <LazyImport fallback={fallback}>
       <Component />
     </LazyImport>
   )

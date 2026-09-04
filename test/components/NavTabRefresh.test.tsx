@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { NavTabProvider, NavTabSync, type Tab } from '@/layout/NavTab'
 import Main from '@/layout/main'
@@ -39,7 +39,7 @@ function LocationDisplay() {
   return <span data-testid='pathname'>{pathname}</span>
 }
 
-function renderHarness({
+async function renderHarness({
   defaultTabs,
   defaultActiveTabId,
   pageA,
@@ -75,15 +75,19 @@ function renderHarness({
     { initialEntries }
   )
   render(<RouterProvider router={router} />)
+  // Main 中 NavTab 为懒加载组件，等待标签栏挂载完成后再继续交互
+  await waitFor(() => {
+    expect(document.querySelector('[data-slot="nav-tab"]')).toBeTruthy()
+  })
   return router
 }
 
 describe('NavTab 刷新（Main 内容重挂载）', () => {
-  it('右键刷新激活标签时页面内容重新挂载', () => {
+  it('右键刷新激活标签时页面内容重新挂载', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -106,11 +110,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(b.getMounts()).toBe(0)
   })
 
-  it('右键刷新非激活标签时先跳转到该标签并挂载页面', () => {
+  it('右键刷新非激活标签时先跳转到该标签并挂载页面', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -133,11 +137,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(a.getMounts()).toBe(1)
   })
 
-  it('点击功能区刷新按钮重新挂载当前页面', () => {
+  it('点击功能区刷新按钮重新挂载当前页面', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -157,11 +161,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(b.getMounts()).toBe(0)
   })
 
-  it('仅切换标签不触发刷新时正常跳转', () => {
+  it('仅切换标签不触发刷新时正常跳转', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -177,11 +181,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(a.getMounts()).toBe(1)
   })
 
-  it('点击功能区最大化按钮隐藏顶部 Header，还原后恢复', () => {
+  it('点击功能区最大化按钮隐藏顶部 Header，还原后恢复', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -205,11 +209,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(screen.getByTestId('app-header')).toBeInTheDocument()
   })
 
-  it('右键菜单项可最大化隐藏 Header，菜单文案随状态变为还原，点击后恢复', () => {
+  it('右键菜单项可最大化隐藏 Header，菜单文案随状态变为还原，点击后恢复', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -239,11 +243,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(screen.getByTestId('app-header')).toBeInTheDocument()
   })
 
-  it('无固定标签时关闭全部清空标签并默认打开第一个菜单（首页）', () => {
+  it('无固定标签时关闭全部清空标签并默认打开第一个菜单（首页）', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A' },
         { id: '/two', title: 'Tab B' },
@@ -270,11 +274,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     expect(screen.getByText('首页')).toBeInTheDocument()
   })
 
-  it('固定标签存活时关闭全部激活第一个固定标签并跳转', () => {
+  it('固定标签存活时关闭全部激活第一个固定标签并跳转', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A', pinned: true },
         { id: '/two', title: 'Tab B' },
@@ -306,11 +310,11 @@ describe('NavTab 刷新（Main 内容重挂载）', () => {
     ).toBe('true')
   })
 
-  it('激活标签为固定标签时关闭全部保持其激活且不重复跳转', () => {
+  it('激活标签为固定标签时关闭全部保持其激活且不重复跳转', async () => {
     const a = makePage()
     const b = makePage()
 
-    renderHarness({
+    await renderHarness({
       defaultTabs: [
         { id: '/', title: 'Tab A', pinned: true },
         { id: '/two', title: 'Tab B' },

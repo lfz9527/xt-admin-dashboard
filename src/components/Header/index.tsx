@@ -1,6 +1,6 @@
 import { Fullscreen, LogOut, Moon, Shrink, Sun, User } from 'lucide-react'
 import { useMatches, useLocation } from 'react-router'
-import { Suspense, lazy, useState, useMemo } from 'react'
+import { Suspense, useState, useMemo } from 'react'
 import { SidebarTrigger } from '@/ui/Sidebar'
 import { Button } from '@/ui/Button'
 import { useFullscreen, useTheme, useIsMobile } from '@/hooks'
@@ -22,9 +22,7 @@ import type { RouteMeta } from '@/router/types'
 import routes from '@/router/routes'
 import { routeToMenus } from '@/router/menu'
 import { createRoleChecker } from '@/router/permissions'
-
-// 个人中心弹窗按需加载，避免把表单链路（zod / react-hook-form / Dialog 等）打进首屏
-const UserCenterDialog = lazy(() => import('./UserCenterDialog'))
+import UserCenterDialog from './UserCenterDialog'
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
