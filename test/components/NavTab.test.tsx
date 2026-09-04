@@ -2,12 +2,14 @@ import { act, render, screen, fireEvent } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
 import { NavTabProvider, useNavTab, NavTab, type Tab } from '@/layout/NavTab'
+import useMenu from '@/store/useMenu'
 
 let resizeObserverCallbacks: ResizeObserverCallback[] = []
 const originalResizeObserver = window.ResizeObserver
 
 beforeEach(() => {
   resizeObserverCallbacks = []
+  useMenu.setState({ maximized: false })
   window.ResizeObserver = class {
     constructor(callback: ResizeObserverCallback) {
       resizeObserverCallbacks.push(callback)
@@ -205,6 +207,78 @@ describe('NavTabProvider + useNavTab', () => {
 
     fireEvent.click(screen.getByText('Switch'))
     expect(screen.getByTestId('active').textContent).toBe('2')
+  })
+
+  it('refreshTab 递增指定标签的刷新计数', () => {
+    function Refresher() {
+      const { refreshTab, refreshCounts } = useNavTab()
+      return (
+        <div>
+          <button onClick={() => refreshTab('1')}>Refresh</button>
+          <span data-testid='count'>{refreshCounts['1'] ?? 0}</span>
+          <span data-testid='other'>{refreshCounts['2'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+        >
+          <Refresher />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByText('Refresh'))
+    fireEvent.click(screen.getByText('Refresh'))
+    expect(screen.getByTestId('count').textContent).toBe('2')
+    expect(screen.getByTestId('other').textContent).toBe('0')
+  })
+
+  it('关闭标签后清理其刷新计数', () => {
+    function Harness() {
+      const { refreshTab, removeTab, removeTabs, refreshCounts } = useNavTab()
+      return (
+        <div>
+          <button onClick={() => refreshTab('1')}>Refresh 1</button>
+          <button onClick={() => refreshTab('2')}>Refresh 2</button>
+          <button onClick={() => removeTab('1')}>Remove 1</button>
+          <button onClick={() => removeTabs(['2'])}>Remove 2</button>
+          <span data-testid='count1'>{refreshCounts['1'] ?? 0}</span>
+          <span data-testid='count2'>{refreshCounts['2'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+        >
+          <Harness />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByText('Refresh 1'))
+    fireEvent.click(screen.getByText('Refresh 2'))
+    expect(screen.getByTestId('count1').textContent).toBe('1')
+    expect(screen.getByTestId('count2').textContent).toBe('1')
+
+    fireEvent.click(screen.getByText('Remove 1'))
+    expect(screen.getByTestId('count1').textContent).toBe('0')
+
+    fireEvent.click(screen.getByText('Remove 2'))
+    expect(screen.getByTestId('count2').textContent).toBe('0')
   })
 })
 
@@ -716,7 +790,7 @@ describe('NavTab', () => {
     expect(pageItem.querySelector('[data-slot="nav-tab-close"]')).not.toBeNull()
   })
 
-  it('右键标签弹出包含四个菜单项的菜单', () => {
+  it('右键标签弹出包含刷新与四个关闭项的菜单', () => {
     const defaultTabs: Tab[] = [
       { id: '1', title: 'Tab 1' },
       { id: '2', title: 'Tab 2' },
@@ -740,6 +814,7 @@ describe('NavTab', () => {
 
     fireEvent.contextMenu(tab2)
 
+    expect(screen.getByRole('menuitem', { name: '刷新' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: '关闭' })).toBeInTheDocument()
     expect(
       screen.getByRole('menuitem', { name: '关闭左侧标签页' })
@@ -750,6 +825,225 @@ describe('NavTab', () => {
     expect(
       screen.getByRole('menuitem', { name: '关闭全部标签页' })
     ).toBeInTheDocument()
+  })
+
+  it('右键菜单刷新激活标签：路径不变且刷新计数增加', () => {
+    function Page() {
+      const { pathname } = useLocation()
+      const { refreshCounts } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='pathname'>{pathname}</span>
+          <span data-testid='refresh-count'>{refreshCounts['/'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '/', title: 'Tab 1' },
+      { id: '/two', title: 'Tab 2' },
+    ]
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='/'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab1 = screen
+      .getByText('Tab 1')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab1)
+    fireEvent.click(screen.getByRole('menuitem', { name: '刷新' }))
+
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    expect(screen.getByTestId('refresh-count').textContent).toBe('1')
+  })
+
+  it('右键菜单刷新非激活标签：跳转到该标签路径且不重复挂载计数', () => {
+    function Page() {
+      const { pathname } = useLocation()
+      const { refreshCounts } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='pathname'>{pathname}</span>
+          <span data-testid='refresh-count'>{refreshCounts['/two'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    const defaultTabs: Tab[] = [
+      { id: '/', title: 'Tab 1' },
+      { id: '/two', title: 'Tab 2' },
+    ]
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <NavTabProvider
+          defaultTabs={defaultTabs}
+          defaultActiveTabId='/'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const tab2 = screen
+      .getByText('Tab 2')
+      .closest('[data-slot="nav-tab-item"]')!
+    fireEvent.contextMenu(tab2)
+    fireEvent.click(screen.getByRole('menuitem', { name: '刷新' }))
+
+    // 跳转后内容即为全新挂载，无需额外刷新计数
+    expect(screen.getByTestId('pathname').textContent).toBe('/two')
+    expect(screen.getByTestId('refresh-count').textContent).toBe('0')
+  })
+
+  it('标签栏右侧功能区包含刷新按钮', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const actions = document.querySelector('[data-slot="nav-tab-actions"]')
+    expect(actions).not.toBeNull()
+    expect(actions).toContainElement(
+      screen.getByRole('button', { name: '刷新' })
+    )
+  })
+
+  it('点击功能区刷新按钮刷新当前激活标签', () => {
+    function Page() {
+      const { pathname } = useLocation()
+      const { refreshCounts } = useNavTab()
+      return (
+        <div>
+          <NavTab />
+          <span data-testid='pathname'>{pathname}</span>
+          <span data-testid='refresh-count'>{refreshCounts['/'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '/', title: 'Tab 1' },
+            { id: '/two', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='/'
+        >
+          <Page />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '刷新' }))
+
+    expect(screen.getByTestId('pathname').textContent).toBe('/')
+    expect(screen.getByTestId('refresh-count').textContent).toBe('1')
+  })
+
+  it('无激活标签时功能区刷新按钮禁用', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[{ id: '1', title: 'Tab 1' }]}
+          defaultActiveTabId={null}
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('button', { name: '刷新' })).toBeDisabled()
+  })
+
+  it('功能区含最大化按钮，点击切换最大化状态与图标', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const actions = document.querySelector('[data-slot="nav-tab-actions"]')
+    expect(actions).not.toBeNull()
+    const toggle = screen.getByRole('button', { name: '最大化' })
+    expect(actions).toContainElement(toggle)
+    expect(useMenu.getState().maximized).toBe(false)
+
+    fireEvent.click(toggle)
+    expect(useMenu.getState().maximized).toBe(true)
+    expect(screen.getByRole('button', { name: '还原' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '还原' }))
+    expect(useMenu.getState().maximized).toBe(false)
+    expect(screen.getByRole('button', { name: '最大化' })).toBeInTheDocument()
+  })
+
+  it('功能区刷新与最大化按钮之间有竖向分隔线', () => {
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+          ]}
+          defaultActiveTabId='1'
+        >
+          <NavTab />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    const actions = document.querySelector('[data-slot="nav-tab-actions"]')!
+    const refresh = actions.querySelector('[aria-label="刷新"]')!
+    const separator = actions.querySelector('[data-slot="separator"]')!
+    const maximize = actions.querySelector('[aria-label="最大化"]')!
+
+    expect(separator).not.toBeNull()
+    // 分隔线位于刷新按钮与最大化按钮之间
+    expect(
+      refresh.compareDocumentPosition(separator) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(
+      separator.compareDocumentPosition(maximize) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('useMenu 最大化状态不持久化到 localStorage', () => {
+    localStorage.removeItem('app-menu')
+    useMenu.setState({ maximized: true })
+    // persist 写入时经 partialize 仅保留 sidebarOpen
+    const persisted = JSON.parse(localStorage.getItem('app-menu') ?? '{}')
+    expect(persisted.state).not.toHaveProperty('maximized')
   })
 
   it('右键菜单关闭当前标签', () => {

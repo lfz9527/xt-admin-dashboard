@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronsUp, X } from 'lucide-react'
+import { ChevronsUp, Maximize2, Minimize2, RefreshCw, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
+import { useMenu } from '@/store'
 import { useNavTab } from './context'
 import { cn } from '@/utils/common'
 import AutoEllipsis from '@/components/AutoEllipsis'
@@ -16,7 +17,9 @@ import { ScrollArea } from '@/ui/ScrollArea'
 import { Separator } from '@/ui/Separator'
 
 export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
-  const { tabs, activeTabId, removeTab, removeTabs } = useNavTab()
+  const { tabs, activeTabId, removeTab, removeTabs, refreshTab } = useNavTab()
+  const maximized = useMenu((s) => s.maximized)
+  const toggleMaximize = useMenu((s) => s.toggleMaximize)
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -149,6 +152,16 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
     closeBatch(tabs.map((t) => t.id).filter((id) => id !== activeTabId))
   }
 
+  function handleRefresh(id: string) {
+    if (id === activeTabId) {
+      // 激活标签内容已挂载，通过计数变化强制重挂载实现刷新
+      refreshTab(id)
+      return
+    }
+    // 非激活标签内容尚未挂载，跳转后即为全新挂载，无需再计数重挂载
+    navigate(id)
+  }
+
   return (
     <div
       data-slot='nav-tab'
@@ -233,6 +246,10 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
                     )}
                   </ContextMenuTrigger>
                   <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handleRefresh(tab.id)}>
+                      刷新
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
                     <ContextMenuItem
                       disabled={tabs.length <= 1 || !tab.closable}
                       onClick={() => handleClose(tab.id)}
@@ -304,6 +321,37 @@ export function NavTab({ className, ...props }: React.ComponentProps<'div'>) {
             <ChevronsUp className='size-4 rotate-90' />
           </Button>
         )}
+        {/* 标签栏右侧功能区：当前提供刷新与最大化当前激活标签页的能力 */}
+        <div
+          data-slot='nav-tab-actions'
+          className='flex h-full shrink-0 items-center gap-1 border-l px-1.5'
+        >
+          <Button
+            aria-label='刷新'
+            className='rounded-sm'
+            disabled={!activeTabId}
+            onClick={() => activeTabId && handleRefresh(activeTabId)}
+            size='icon-sm'
+            variant='ghost'
+          >
+            <RefreshCw className='size-4' />
+          </Button>
+          <Separator orientation='vertical' />
+          <Button
+            aria-label={maximized ? '还原' : '最大化'}
+            title={maximized ? '还原' : '最大化'}
+            className='rounded-sm'
+            onClick={toggleMaximize}
+            size='icon-sm'
+            variant='ghost'
+          >
+            {maximized ? (
+              <Minimize2 className='size-4' />
+            ) : (
+              <Maximize2 className='size-4' />
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )
