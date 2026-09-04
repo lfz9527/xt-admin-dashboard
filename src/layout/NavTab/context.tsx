@@ -70,6 +70,13 @@ export function NavTabProvider({
       const index = prev.findIndex((t) => t.id === id)
       const remaining = prev.filter((t) => t.id !== id)
 
+      // 关闭标签后同步清理其刷新计数，避免计数在会话内只增不减
+      setRefreshCounts((prevCounts) => {
+        const next = { ...prevCounts }
+        delete next[id]
+        return next
+      })
+
       setActiveTabId((prevActive) => {
         if (prevActive !== id) return prevActive
         if (remaining.length === 0) return null
@@ -88,6 +95,15 @@ export function NavTabProvider({
       const remaining = prev.filter((t) => !idSet.has(t.id))
       // 至少保留一个标签页
       if (remaining.length === 0) return prev
+
+      // 关闭标签后同步清理其刷新计数，避免计数在会话内只增不减
+      setRefreshCounts((prevCounts) => {
+        const next = { ...prevCounts }
+        ids.forEach((id) => {
+          delete next[id]
+        })
+        return next
+      })
 
       setActiveTabId((prevActive) => {
         if (prevActive && !idSet.has(prevActive)) return prevActive

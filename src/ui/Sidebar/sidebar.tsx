@@ -94,7 +94,7 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
-          // 最大化时占位归零，内容区占满剩余宽度
+          // 最大化时占位归零，内容区占满剩余宽度（仅桌面布局；移动端侧边栏为 Sheet 覆盖层不受影响）
           '[[data-maximized=true]_&]:w-0'
         )}
       />
@@ -107,7 +107,7 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l',
-          // 最大化时整体隐藏侧边栏
+          // 最大化时整体隐藏侧边栏（仅桌面布局；移动端侧边栏为 Sheet 覆盖层不受影响）
           '[[data-maximized=true]_&]:hidden',
           className
         )}

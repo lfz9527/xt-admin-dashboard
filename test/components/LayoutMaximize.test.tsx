@@ -7,7 +7,8 @@ import useMenu from '@/store/useMenu'
 vi.mock('@/components/Header', () => ({
   default: () => <div data-testid='app-header'>header</div>,
 }))
-vi.mock('@/features/auth/hooks', () => ({
+vi.mock('@/features/auth/hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/auth/hooks')>()),
   useUserInfo: () => undefined,
 }))
 

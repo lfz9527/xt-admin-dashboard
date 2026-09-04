@@ -6,7 +6,10 @@ import { NavTab, useNavTab } from './NavTab'
 export default function Main() {
   const { activeTabId, refreshCounts } = useNavTab()
   const maximized = useMenu((s) => s.maximized)
-  // key 随当前标签的刷新计数变化，计数改变即重挂载内容，实现标签页「刷新」
+  // key 随当前标签的刷新计数变化，计数改变即重挂载内容，实现标签页「刷新」。
+  // key 不含路径，切换标签与同路由参数变化保持既有重挂载语义；已知边界：在计数
+  // 不同的标签间切换会重挂载内容区（对共享同一路由元素的参数页表现为整页重挂载
+  // 而非参数更新，属可接受且数据更干净的行为）
   const refreshKey = activeTabId ? (refreshCounts[activeTabId] ?? 0) : 0
 
   return (

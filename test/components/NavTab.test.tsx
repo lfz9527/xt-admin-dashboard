@@ -239,6 +239,47 @@ describe('NavTabProvider + useNavTab', () => {
     expect(screen.getByTestId('count').textContent).toBe('2')
     expect(screen.getByTestId('other').textContent).toBe('0')
   })
+
+  it('关闭标签后清理其刷新计数', () => {
+    function Harness() {
+      const { refreshTab, removeTab, removeTabs, refreshCounts } = useNavTab()
+      return (
+        <div>
+          <button onClick={() => refreshTab('1')}>Refresh 1</button>
+          <button onClick={() => refreshTab('2')}>Refresh 2</button>
+          <button onClick={() => removeTab('1')}>Remove 1</button>
+          <button onClick={() => removeTabs(['2'])}>Remove 2</button>
+          <span data-testid='count1'>{refreshCounts['1'] ?? 0}</span>
+          <span data-testid='count2'>{refreshCounts['2'] ?? 0}</span>
+        </div>
+      )
+    }
+
+    render(
+      <MemoryRouter>
+        <NavTabProvider
+          defaultTabs={[
+            { id: '1', title: 'Tab 1' },
+            { id: '2', title: 'Tab 2' },
+            { id: '3', title: 'Tab 3' },
+          ]}
+        >
+          <Harness />
+        </NavTabProvider>
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByText('Refresh 1'))
+    fireEvent.click(screen.getByText('Refresh 2'))
+    expect(screen.getByTestId('count1').textContent).toBe('1')
+    expect(screen.getByTestId('count2').textContent).toBe('1')
+
+    fireEvent.click(screen.getByText('Remove 1'))
+    expect(screen.getByTestId('count1').textContent).toBe('0')
+
+    fireEvent.click(screen.getByText('Remove 2'))
+    expect(screen.getByTestId('count2').textContent).toBe('0')
+  })
 })
 
 describe('NavTab', () => {
