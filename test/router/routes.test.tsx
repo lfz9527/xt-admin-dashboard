@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { FileText } from 'lucide-react'
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -49,6 +50,29 @@ describe('application routes', () => {
     expect(
       findRoute(routes, (route) => route.path === '/forgot-password')
     ).toBeUndefined()
+  })
+
+  it('keeps resume route at the same level as login without extra wrappers', () => {
+    const guardChildren = routes[0].children ?? []
+    const loginIndex = guardChildren.findIndex(
+      (route) => route.path === '/login'
+    )
+    const resumeIndex = guardChildren.findIndex(
+      (route) => route.path === '/resume'
+    )
+    const resume = guardChildren[resumeIndex]
+
+    expect(resume).toBeDefined()
+    expect(resume?.children).toBeUndefined()
+    // 与 login 同级：直接挂在 BasicGuard 下，不包 Layout/权限守卫
+    expect(resumeIndex).toBe(loginIndex + 1)
+    expect(resume?.meta).toEqual({
+      title: '我的简历',
+      menuKey: 'resume',
+      icon: FileText,
+      openIn: 'newTab',
+      menuOrder: 1,
+    })
   })
 
   it('keeps 404 routes outside the application layout', () => {

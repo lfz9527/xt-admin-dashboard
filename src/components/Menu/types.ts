@@ -9,6 +9,10 @@ export interface MenuItemData {
   icon?: LucideIcon
   /** 路由路径，叶子节点跳转 */
   path?: string
+  /** 打开方式，与路由 meta.openIn 对应；newTab 时在新浏览器标签页打开 */
+  openIn?: 'newTab'
+  /** 同级菜单排序权重，与路由 meta.menuOrder 对应；升序，未配置排最后 */
+  menuOrder?: number
   /** 子菜单项 */
   children?: MenuItemData[]
 }
