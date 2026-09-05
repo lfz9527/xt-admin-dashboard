@@ -129,7 +129,7 @@
 
 ## 测试覆盖薄弱区域
 
-- **`src/service` 测试仍薄弱**:P2-2 修复已新增 request 认证注入与 401 回调的 2 个拦截器测试;HttpClient、FetchAdapter、错误归一化等其余关键路径仍无直接测试,建议继续补齐。
+- **`src/service` 已补充基础契约测试**:新增 `test/service/endpoints.test.ts`,覆盖 auth、users、roles、dict、bookmarks 主要接口的 HTTP 方法、路径、请求参数、请求体与 `AbortSignal`,并覆盖路径参数编码及字典分页聚合;原有 `test/service/request.test.ts` 继续覆盖 token 注入与 401 处理。后续仍可补充 `HttpClient` 重试、超时和适配器错误归一化测试。
 - **`src/ui` 30 个组件目录仅 2 个测试**(Form、Switch);AlertDialog/Dialog/DropdownMenu/Sheet/Toast/Sidebar/Select 等交互原语零覆盖,主要依赖下游间接覆盖。
 - **store 缺 useMenu、useSetting 测试**(persist 逻辑);features 的 5 个 FormDialog/DeleteDialog 无直接测试(经页面用例间接覆盖)。
 - **覆盖良好的区域**:hooks 工具链、router(守卫/菜单派生/路由结构)、pages 主流程、NavTab 系列(7 个测试文件,近期改动均有配套)。
