@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { House, Globe, Settings2 } from 'lucide-react'
-import { render, screen, act, fireEvent } from '@testing-library/react'
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router'
 import { SidebarProvider, useSidebar } from '@/ui/Sidebar'
 import { ProgressProvider } from '@bprogress/react'
@@ -189,9 +189,13 @@ describe('Menus', () => {
       </SidebarProvider>
     )
 
-    const usersLink = (await screen.findAllByRole('link', { name: '用户管理' }))
-      .map((link) => link as HTMLElement)
-      .find((link) => link.getAttribute('data-active') === 'true')
+    let usersLink: HTMLElement | undefined
+    await waitFor(() => {
+      usersLink = (
+        screen.getAllByRole('link', { name: '用户管理' }) as HTMLElement[]
+      ).find((link) => link.closest('button')?.hasAttribute('data-active'))
+      expect(usersLink).toBeDefined()
+    })
     expect(usersLink).toBeDefined()
     expect(usersLink).toHaveAttribute('href', '/system/users')
   })

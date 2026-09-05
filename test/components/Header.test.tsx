@@ -166,7 +166,8 @@ function renderApp(initialEntry: string) {
 /** 等待 Header 渲染完成且用户信息已写入 store */
 async function waitForHeaderReady() {
   await waitFor(() => {
-    expect(document.querySelector('header')).not.toBeNull()
+    expect(document.querySelector('button.rounded-full')).not.toBeNull()
+    expect(screen.getByRole('button', { name: '全屏' })).toBeInTheDocument()
   })
   await waitFor(() => {
     expect(useAuthor.getState().user?.nickname).toBe('admin')
