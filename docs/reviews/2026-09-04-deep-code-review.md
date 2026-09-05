@@ -3,7 +3,7 @@
 - **审查日期**:2026-09-04
 - **审查对象**:xt-admin-dashboard(React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Zustand 后台管理仪表盘)
 - **审查范围**:`src/` 193 个 TS/TSX 文件(约 1.6 万行)、`test/` 57 个测试文件(约 9 千行)、`package.json` 依赖清单、Vite/ESLint/Stylelint 构建配置、Git 提交历史与 `.loop/reviews` 变更审查记录
-- **审查基线**:`pnpm compile` 通过;`pnpm lint` 通过;全量测试 413/420 通过(7 个失败为当日引入的回归,见 P1-1)
+- **审查基线**:`pnpm compile` 通过;`pnpm lint` 通过;全量测试 413/420 通过(7 个失败为当日引入的回归,见 P1-1)。截至 2026-09-06,P1-1 已修复,关联测试 15/15 通过。
 - **审查方法**:deep-code-review 技能(资产地图 → 模块依赖 → 语义聚类/重复分析 → 架构健康 → 技术债 → 安全边界)
 
 > 方法说明:deep-code-review 技能引用的 `../code-review-rules/` 规则库在本机不存在,本次以仓库 `AGENTS.md`、工程既有约定与通用工程准则作为审查基准。无历史深度审查报告可供趋势对比;`.loop/reviews` 中的记录为单次 Loop 变更审查,已在相关条目中引用。
@@ -16,8 +16,8 @@
 
 主要问题集中在四类:
 
-1. **当日提交引入的测试回归**(需立即修复,P1-1);
-2. **凭据持久化与前端权限信任模型的安全硬伤**(P1-2/P1-3);
+1. **当日提交引入的测试回归**(P1-1,已于 2026-09-06 修复);
+2. **凭据持久化与前端权限信任模型的安全风险**(P1-2/P1-3);其中 P1-2 因业务明确要求记住账号密码,已接受风险并保留现状;
 3. **一条静态循环依赖与 store/service 双向耦合**(P2-1/P2-2,均已修复);
 4. **约 2500+ 行的可治理重复模板**(P2-9/P2-10);另有零消费组件/函数与预留依赖,按约定允许存在、仅作提醒(P3 条目)。
 
@@ -25,20 +25,20 @@
 
 ---
 
-## P1 Findings(必须处理)
+## P1 Findings(必须处理或明确接受风险)
 
-### P1-1 · Header 懒加载提交导致 7 个测试回归,当日引入
+### P1-1 · Header 懒加载提交导致 7 个测试回归,当日引入 ✅ 已修复
 
 - **证据**:
   - `test/components/Header.test.tsx` 6 例失败,断言 `button.rounded-full` 为 null(见 `test/components/Header.test.tsx:184`、`:206`);
   - `test/components/Menu.test.tsx` 1 例失败:`renders complete detail breadcrumbs from real routes and derived menus`(见 `test/components/Menu.test.tsx:152`);
   - 运行期伴随 `No HydrateFallback element provided` 告警;
   - 提交 `741e403`(2026-09-04 16:32,Header 与 NavTab 改为 `React.lazy` 懒加载)仅同步适配了 NavTabRefresh 测试与 Menu mock(后续 `1bc6021`),**Header.test.tsx 与 Menu 面包屑用例未同步等待懒加载完成**。
-- **影响**:测试基线红 7 例;懒加载改造的测试适配存在遗漏,暴露「改动后验证范围」偏窄的问题。
-- **建议**:在 `Header.test.tsx` 渲染处等待 Header 异步挂载(与 NavTabRefresh 的适配方式一致);回归验证 `pnpm exec vitest run test/components/Header.test.tsx test/components/Menu.test.tsx`。
+- **影响**:修复前测试基线红 7 例;懒加载改造的测试适配存在遗漏,暴露「改动后验证范围」偏窄的问题。
+- **处理状态**:已在 2026-09-06 修复测试等待时序,不再将 Header 占位骨架或尚未完成的菜单激活状态当作最终渲染结果。
 - **置信度**:高(失败机制与提交改动直接对应)。
 
-### P1-2 · 「记住密码」为可逆持久化:硬编码密钥 + 密文同存 localStorage
+### P1-2 · 「记住密码」为可逆持久化:硬编码密钥 + 密文同存 localStorage ⚠️ 业务要求保留
 
 - **证据**:
   - `src/store/useAuthor.ts:30` 密钥硬编码 `new EncryptionManager('xt-admin-dashboard-login-key')`(注释自认「前端演示应用使用固定密钥」);
@@ -47,7 +47,9 @@
   - 401 登出(`src/service/request.ts:56-62`)与手动登出均不清理 `account/encryptedPassword`,残留随设备长期存在;
   - 加密原语本身正确(AES-GCM + 随机 IV,`test/utils/EncryptionManager.test.ts` 覆盖),问题只在密钥随 bundle 分发,持码者可解密还原明文。
 - **影响**:共享设备或任意 XSS 场景可还原管理员密码明文;登出后凭据仍可解密留存。
-- **建议**:移除密码落盘——仅记住账号,或改用浏览器凭据管理 API;登出链路统一清理凭据。需产品决策确认。
+- **处置状态**:2026-09-06 经业务确认,系统必须提供「记住账号密码」能力,本项不修改代码、不纳入当前整改范围。
+- **风险接受说明**:业务方接受固定客户端密钥无法形成真正保密边界、共享设备或 XSS 场景下密码可能被还原的风险;当前 AES-GCM 仅降低凭据被直接肉眼读取的概率,不应视为安全凭据存储。
+- **后续约束**:若业务要求或部署环境发生变化,应重新评估移除密码落盘、改用浏览器凭据管理或服务端安全会话方案。
 
 ### P1-3 · token/user/roleKey 明文持久化且可篡改,前端权限防线可一键绕过
 
@@ -143,8 +145,8 @@
 
 建议按序执行(前两项可在 1-2 小时内完成):
 
-1. **修复 P1-1 测试回归**,并补齐「懒加载改动需全量跑 components 测试」的提交前检查习惯;
-2. **安全三件套**:凭据去落盘/登出清理(P1-2)、与后端确认 RBAC 并收窄 roleKey 信任(P1-3)、.env 出库 + 补 .gitignore(P1-4);
+1. **P1-1 已完成修复**;继续保持「懒加载改动需覆盖受影响组件及相邻测试」的提交前检查习惯;
+2. **继续处理安全项**:P1-2 已按业务要求接受风险并保留现状;继续与后端确认 RBAC 并收窄 roleKey 信任(P1-3)、完成 .env 出库 + 补 .gitignore(P1-4);
 3. **P2-1/P2-2 均已完成修复**:菜单派生已收敛出 routes,请求层认证状态已改为由应用入口注入;
 4. 重复治理按「先树工具 → 再 FormDialog 体系 → 后列表页骨架」推进(P2-9/P2-10),两项均已完成,后续继续以现有页面测试为回归护栏;
 5. 零消费组件/函数(P3-2~P3-4)按约定允许存在、无需处理,仅作提醒;补齐 service 拦截器测试。
@@ -165,6 +167,19 @@
   - `src/service/` 对 `src/store/` 的导入为 0;`src/store/useAuthor.ts` 对 service 的引用仅为类型导入,运行期擦除;
   - `pnpm exec vitest run test/service/request.test.ts test/features/authSession.test.ts test/store/useDictStore.test.ts test/hooks/useRequest.test.ts test/components/Header.test.tsx`:5 个测试文件、26 个用例全部通过;
   - `pnpm lint`、`pnpm compile` 通过。
+
+### P1-1 · Header 懒加载测试回归
+
+- **修复时间**:2026-09-06
+- **修复提交**:`f65dffc`(`fix: 修复懒加载组件测试回归`)
+- **修复方式**:
+  1. `test/components/Header.test.tsx` 将就绪条件从占位 `<header>` 改为真实 Header 的头像按钮和全屏按钮,确保懒加载内容完成后再执行交互断言;
+  2. `test/components/Menu.test.tsx` 等待用户管理叶子菜单的激活状态完成,并按当前 DOM 结构从链接的父级按钮读取 `data-active`;
+  3. 保持生产代码与业务行为不变,仅补齐懒加载异步时序对应的测试等待。
+- **修复证据**:
+  - `pnpm exec vitest run test/components/Header.test.tsx test/components/Menu.test.tsx`:2 个测试文件、15 个用例全部通过;
+  - `pnpm lint`、`pnpm compile` 通过;
+  - 工作区提交前 `git diff --check` 通过。
 
 ### P2-9 · CRUD 弹窗体系同构
 
