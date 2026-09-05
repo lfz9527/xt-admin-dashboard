@@ -1,7 +1,5 @@
-import { useRequest } from '@/hooks'
-import { Confirm } from '@/components/Confirm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteRole, deleteRoles } from '@/service/roles'
-import { toast } from '@/ui/Toast'
 
 type DeleteRoleDialogProps = {
   open: boolean
@@ -28,26 +26,19 @@ export default function DeleteRoleDialog({
   ids,
   names,
 }: DeleteRoleDialogProps) {
-  const { runAsync, loading } = useRequest(removeRoles, { immediate: false })
-
-  async function onConfirm() {
-    if (ids.length === 0) return
-    try {
-      await runAsync(ids)
-      toast.success('删除成功')
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   const isSingle = ids.length === 1 && names.length === 1
 
   return (
-    <Confirm
+    <DeleteConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      disabled={ids.length === 0}
+      onDelete={(signal) =>
+        ids.length === 0
+          ? Promise.resolve({ data: null })
+          : removeRoles(ids, signal)
+      }
       title={isSingle ? '删除角色' : '批量删除角色'}
       description={
         isSingle ? (
@@ -62,10 +53,6 @@ export default function DeleteRoleDialog({
           </>
         )
       }
-      destructive
-      confirmText={loading ? '删除中...' : '确认删除'}
-      confirmLoading={loading}
-      onConfirm={onConfirm}
     />
   )
 }

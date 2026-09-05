@@ -1,11 +1,18 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
-import { Modal } from '@/components/Modal'
+import { FormDialog } from '@/components/FormDialog'
+import { DictSelectField } from '@/components/DictSelectField'
 import { SelectData } from '@/components/SelectData'
-import { useRequest, useDictOptions } from '@/hooks'
-import { createDictItem, updateDictItem, type DictItem } from '@/service/dict'
+import { useFormDialog } from '@/hooks'
+import {
+  createDictItem,
+  updateDictItem,
+  type CreateDictItemParams,
+  type DictItem,
+  type UpdateDictItemParams,
+} from '@/service/dict'
 import { DialogDescription } from '@/ui/Dialog'
 import {
   Form,
@@ -17,7 +24,6 @@ import {
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
 import { Textarea } from '@/ui/Textarea'
-import { toast } from '@/ui/Toast'
 
 import { dictItemFormSchema, type DictItemFormValues } from '../types'
 import {
@@ -65,36 +71,53 @@ export default function DictItemFormDialog({
     resolver: zodResolver(dictItemFormSchema),
     defaultValues,
   })
-  const { runAsync: createAsync, loading: createLoading } = useRequest(
-    createDictItem,
-    { immediate: false }
+  const formDefaultValues = useMemo(
+    () => ({ ...defaultValues, parentId: String(defaultParentId) }),
+    [defaultParentId]
   )
-  const { runAsync: updateAsync, loading: updateLoading } = useRequest(
-    updateDictItem,
-    { immediate: false }
-  )
-  const loading = createLoading || updateLoading
+  const { loading, submit } = useFormDialog<
+    DictItemFormValues,
+    DictItem,
+    CreateDictItemParams,
+    UpdateDictItemParams
+  >({
+    form,
+    open,
+    entity: item,
+    defaultValues: formDefaultValues,
+    getEditValues: (currentItem) => ({
+      parentId: String(currentItem.parentId),
+      label: currentItem.label,
+      value: currentItem.value,
+      status: currentItem.status,
+      sort: currentItem.sort,
+      remark: currentItem.remark,
+    }),
+    create: createDictItem,
+    update: updateDictItem,
+    getCreateParams: (values) => ({
+      dictTypeId,
+      ...(values.parentId !== '0' ? { parentId: Number(values.parentId) } : {}),
+      label: values.label,
+      value: values.value,
+      status: values.status,
+      sort: values.sort,
+      remark: values.remark,
+    }),
+    getUpdateParams: (currentItem, values) => ({
+      id: Number(currentItem.id),
+      dictTypeId,
+      parentId: Number(values.parentId),
+      label: values.label,
+      value: values.value,
+      status: values.status,
+      sort: values.sort,
+      remark: values.remark,
+    }),
+    onOpenChange,
+    onSuccess,
+  })
   // 状态选项从「通用状态」字典读取，避免在表单中写死启用/停用
-  const { options: statusOptions } = useDictOptions('sys_normal_disable')
-
-  // 每次打开按模式重置表单，避免残留上次输入
-  useEffect(() => {
-    if (open) {
-      form.reset(
-        item
-          ? {
-              parentId: String(item.parentId),
-              label: item.label,
-              value: item.value,
-              status: item.status,
-              sort: item.sort,
-              remark: item.remark,
-            }
-          : { ...defaultValues, parentId: String(defaultParentId) }
-      )
-    }
-  }, [open, item, defaultParentId, form])
-
   // 编辑时父级下拉排除自身及子孙节点（后端禁止移动到自身/子孙下）
   const parentOptions = useMemo(() => {
     const excluded = new Set<number>()
@@ -105,50 +128,14 @@ export default function DictItemFormDialog({
     return buildParentOptions(tree, excluded)
   }, [item, tree])
 
-  async function onSubmit(values: DictItemFormValues) {
-    try {
-      if (isEdit) {
-        // 后端 DTO 校验 id 必须为数字；parentId 显式提交（0 表示根级）
-        await updateAsync({
-          id: Number(item.id),
-          dictTypeId,
-          parentId: Number(values.parentId),
-          label: values.label,
-          value: values.value,
-          status: values.status,
-          sort: values.sort,
-          remark: values.remark,
-        })
-        toast.success('保存成功')
-      } else {
-        await createAsync({
-          dictTypeId,
-          ...(values.parentId !== '0'
-            ? { parentId: Number(values.parentId) }
-            : {}),
-          label: values.label,
-          value: values.value,
-          status: values.status,
-          sort: values.sort,
-          remark: values.remark,
-        })
-        toast.success('创建成功')
-      }
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   return (
-    <Modal
+    <FormDialog
       open={open}
       title={isEdit ? '编辑字典项' : '新增字典项'}
-      onCancel={() => onOpenChange(false)}
-      confirmLoading={loading}
-      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
-      okButtonProps={{ type: 'submit', form: 'dict-item-form' }}
+      onOpenChange={onOpenChange}
+      formId='dict-item-form'
+      loading={loading}
+      loadingText={isEdit ? '保存中...' : '创建中...'}
       className='sm:max-w-md'
     >
       <DialogDescription>
@@ -161,7 +148,7 @@ export default function DictItemFormDialog({
         <form
           id='dict-item-form'
           className='flex flex-col gap-4'
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(submit)}
         >
           <FormField
             control={form.control}
@@ -212,21 +199,11 @@ export default function DictItemFormDialog({
               </FormItem>
             )}
           />
-          <FormField
+          <DictSelectField
             control={form.control}
             name='status'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel showRequired={false}>状态</FormLabel>
-                <SelectData
-                  options={statusOptions}
-                  value={String(field.value)}
-                  onChange={(value) => field.onChange(Number(value))}
-                  className='w-full'
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            label='状态'
+            dictKey='sys_normal_disable'
           />
           <FormField
             control={form.control}
@@ -271,6 +248,6 @@ export default function DictItemFormDialog({
           />
         </form>
       </Form>
-    </Modal>
+    </FormDialog>
   )
 }

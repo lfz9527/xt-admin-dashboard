@@ -2,11 +2,18 @@ import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
-import { Modal } from '@/components/Modal'
+import { FormDialog } from '@/components/FormDialog'
+import { DictSelectField } from '@/components/DictSelectField'
 import { SelectData } from '@/components/SelectData'
-import { useRequest, useDictOptions } from '@/hooks'
+import { useDictOptions, useFormDialog, useRequest } from '@/hooks'
 import { getRoles } from '@/service/roles'
-import { createUser, updateUser, type UserItem } from '@/service/users'
+import {
+  createUser,
+  updateUser,
+  type CreateUserParams,
+  type UpdateUserParams,
+  type UserItem,
+} from '@/service/users'
 import { DialogDescription } from '@/ui/Dialog'
 import {
   Form,
@@ -17,7 +24,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import { toast } from '@/ui/Toast'
 
 import {
   createUserSchema,
@@ -54,19 +60,48 @@ export default function UserFormDialog({
     resolver: zodResolver(isEdit ? updateUserSchema : createUserSchema),
     defaultValues,
   })
-  const { runAsync: createAsync, loading: createLoading } = useRequest(
-    createUser,
-    { immediate: false }
-  )
-  const { runAsync: updateAsync, loading: updateLoading } = useRequest(
-    updateUser,
-    { immediate: false }
-  )
-  const loading = createLoading || updateLoading
+  const { loading, submit } = useFormDialog<
+    UserFormValues,
+    UserItem,
+    CreateUserParams,
+    UpdateUserParams
+  >({
+    form,
+    open,
+    entity: user,
+    defaultValues,
+    getEditValues: (item) => ({
+      nickname: item.nickname,
+      email: item.email,
+      password: '',
+      gender: item.gender,
+      roleId: item.roleId,
+      status: item.status,
+    }),
+    create: createUser,
+    update: updateUser,
+    getCreateParams: (values) => ({
+      nickname: values.nickname,
+      email: values.email,
+      password: values.password,
+      gender: values.gender,
+      roleId: values.roleId == null ? undefined : Number(values.roleId),
+      status: values.status,
+    }),
+    getUpdateParams: (item, values) => ({
+      id: Number(item.id),
+      nickname: values.nickname,
+      email: values.email,
+      gender: values.gender,
+      roleId: values.roleId == null ? undefined : Number(values.roleId),
+      status: values.status,
+    }),
+    onOpenChange,
+    onSuccess,
+  })
 
   // 性别/状态选项从字典读取，避免在表单中写死
   const { options: genderOptions } = useDictOptions('sys_user_sex')
-  const { options: statusOptions } = useDictOptions('sys_normal_disable')
 
   // 角色下拉数据：分页接口，取第一页（pageSize 100 为接口上限）
   const {
@@ -80,63 +115,15 @@ export default function UserFormDialog({
     if (open) loadRoles({ page: 1, pageSize: 100 })
   }, [open, loadRoles])
 
-  // 每次打开按模式重置表单，避免残留上次输入
-  useEffect(() => {
-    if (open) {
-      form.reset(
-        user
-          ? {
-              nickname: user.nickname,
-              email: user.email,
-              password: '',
-              gender: user.gender,
-              roleId: user.roleId,
-              status: user.status,
-            }
-          : defaultValues
-      )
-    }
-  }, [open, user, form])
-
-  async function onSubmit(values: UserFormValues) {
-    try {
-      if (isEdit) {
-        // 编辑不允许修改密码；角色必填，校验已保证非空；后端 DTO 校验 id/roleId 必须为数字
-        await updateAsync({
-          id: Number(user.id),
-          nickname: values.nickname,
-          email: values.email,
-          gender: values.gender,
-          roleId: values.roleId == null ? undefined : Number(values.roleId),
-          status: values.status,
-        })
-        toast.success('保存成功')
-      } else {
-        await createAsync({
-          nickname: values.nickname,
-          email: values.email,
-          password: values.password,
-          gender: values.gender,
-          roleId: values.roleId == null ? undefined : Number(values.roleId),
-          status: values.status,
-        })
-        toast.success('创建成功')
-      }
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   return (
-    <Modal
+    <FormDialog
       open={open}
       title={isEdit ? '编辑用户' : '新增用户'}
-      onCancel={() => onOpenChange(false)}
-      confirmLoading={loading}
-      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
-      okButtonProps={{ type: 'submit', form: 'user-form' }}
+      onOpenChange={onOpenChange}
+      formId='user-form'
+      loading={loading}
+      submitText='确认'
+      loadingText={isEdit ? '保存中...' : '创建中...'}
       className='sm:max-w-md'
     >
       {!isEdit && (
@@ -149,7 +136,7 @@ export default function UserFormDialog({
         <form
           id='user-form'
           className='flex flex-col gap-4'
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(submit)}
         >
           <FormField
             control={form.control}
@@ -239,24 +226,14 @@ export default function UserFormDialog({
               </FormItem>
             )}
           />
-          <FormField
+          <DictSelectField
             control={form.control}
             name='status'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel showRequired={false}>状态</FormLabel>
-                <SelectData
-                  options={statusOptions}
-                  value={String(field.value)}
-                  onChange={(value) => field.onChange(Number(value))}
-                  className='w-full'
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            label='状态'
+            dictKey='sys_normal_disable'
           />
         </form>
       </Form>
-    </Modal>
+    </FormDialog>
   )
 }

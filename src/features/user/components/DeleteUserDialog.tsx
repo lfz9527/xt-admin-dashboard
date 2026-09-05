@@ -1,7 +1,5 @@
-import { useRequest } from '@/hooks'
-import { Confirm } from '@/components/Confirm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteUser, deleteUsers } from '@/service/users'
-import { toast } from '@/ui/Toast'
 
 type DeleteUserDialogProps = {
   open: boolean
@@ -28,26 +26,19 @@ export default function DeleteUserDialog({
   ids,
   names,
 }: DeleteUserDialogProps) {
-  const { runAsync, loading } = useRequest(removeUsers, { immediate: false })
-
-  async function onConfirm() {
-    if (ids.length === 0) return
-    try {
-      await runAsync(ids)
-      toast.success('删除成功')
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   const isSingle = ids.length === 1 && names.length === 1
 
   return (
-    <Confirm
+    <DeleteConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      disabled={ids.length === 0}
+      onDelete={(signal) =>
+        ids.length === 0
+          ? Promise.resolve({ data: null })
+          : removeUsers(ids, signal)
+      }
       title={isSingle ? '删除用户' : '批量删除用户'}
       description={
         isSingle ? (
@@ -62,10 +53,6 @@ export default function DeleteUserDialog({
           </>
         )
       }
-      destructive
-      confirmText={loading ? '删除中...' : '确认删除'}
-      confirmLoading={loading}
-      onConfirm={onConfirm}
     />
   )
 }

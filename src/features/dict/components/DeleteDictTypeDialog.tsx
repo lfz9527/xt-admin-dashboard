@@ -1,7 +1,5 @@
-import { useRequest } from '@/hooks'
-import { Confirm } from '@/components/Confirm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteDictType, type DictTypeItem } from '@/service/dict'
-import { toast } from '@/ui/Toast'
 
 type DeleteDictTypeDialogProps = {
   open: boolean
@@ -18,26 +16,17 @@ export default function DeleteDictTypeDialog({
   onSuccess,
   type,
 }: DeleteDictTypeDialogProps) {
-  const { runAsync, loading } = useRequest(deleteDictType, {
-    immediate: false,
-  })
-
-  async function onConfirm() {
-    if (!type) return
-    try {
-      await runAsync(Number(type.id))
-      toast.success('删除成功')
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   return (
-    <Confirm
+    <DeleteConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      disabled={!type}
+      onDelete={(signal) =>
+        type
+          ? deleteDictType(Number(type.id), signal)
+          : Promise.resolve({ data: null })
+      }
       title='删除字典类型'
       description={
         type ? (
@@ -47,10 +36,6 @@ export default function DeleteDictTypeDialog({
           </>
         ) : undefined
       }
-      destructive
-      confirmText={loading ? '删除中...' : '确认删除'}
-      confirmLoading={loading}
-      onConfirm={onConfirm}
     />
   )
 }

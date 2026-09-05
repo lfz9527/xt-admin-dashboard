@@ -1,13 +1,14 @@
-import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
-import { Modal } from '@/components/Modal'
-import { SelectData } from '@/components/SelectData'
-import { useRequest, useDictOptions } from '@/hooks'
+import { FormDialog } from '@/components/FormDialog'
+import { DictSelectField } from '@/components/DictSelectField'
+import { useFormDialog } from '@/hooks'
 import {
   createDictType,
   updateDictType,
+  type CreateDictTypeParams,
+  type UpdateDictTypeParams,
   type DictTypeItem,
 } from '@/service/dict'
 import { DialogDescription } from '@/ui/Dialog'
@@ -21,7 +22,6 @@ import {
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
 import { Textarea } from '@/ui/Textarea'
-import { toast } from '@/ui/Toast'
 
 import { dictTypeFormSchema, type DictTypeFormValues } from '../types'
 
@@ -53,73 +53,45 @@ export default function DictTypeFormDialog({
     resolver: zodResolver(dictTypeFormSchema),
     defaultValues,
   })
-  const { runAsync: createAsync, loading: createLoading } = useRequest(
-    createDictType,
-    { immediate: false }
-  )
-  const { runAsync: updateAsync, loading: updateLoading } = useRequest(
-    updateDictType,
-    { immediate: false }
-  )
-  const loading = createLoading || updateLoading
-  // 状态选项从「通用状态」字典读取，避免在表单中写死启用/停用
-  const { options: statusOptions } = useDictOptions('sys_normal_disable')
-
-  // 每次打开按模式重置表单，避免残留上次输入
-  useEffect(() => {
-    if (open) {
-      form.reset(
-        type
-          ? {
-              name: type.name,
-              dictKey: type.dictKey,
-              status: type.status,
-              sort: type.sort,
-              remark: type.remark,
-            }
-          : defaultValues
-      )
-    }
-  }, [open, type, form])
-
-  async function onSubmit(values: DictTypeFormValues) {
-    try {
-      if (isEdit) {
-        // 后端 DTO 校验 id 必须为数字，列表返回的字符串 id 需转换
-        await updateAsync({
-          id: Number(type.id),
-          name: values.name,
-          dictKey: values.dictKey,
-          status: values.status,
-          sort: values.sort,
-          remark: values.remark,
-        })
-        toast.success('保存成功')
-      } else {
-        await createAsync({
-          name: values.name,
-          dictKey: values.dictKey,
-          status: values.status,
-          sort: values.sort,
-          remark: values.remark,
-        })
-        toast.success('创建成功')
-      }
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
+  const { loading, submit } = useFormDialog<
+    DictTypeFormValues,
+    DictTypeItem,
+    CreateDictTypeParams,
+    UpdateDictTypeParams
+  >({
+    form,
+    open,
+    entity: type,
+    defaultValues,
+    getEditValues: (item) => ({
+      name: item.name,
+      dictKey: item.dictKey,
+      status: item.status,
+      sort: item.sort,
+      remark: item.remark,
+    }),
+    create: createDictType,
+    update: updateDictType,
+    getCreateParams: (values) => values,
+    getUpdateParams: (item, values) => ({
+      id: Number(item.id),
+      name: values.name,
+      dictKey: values.dictKey,
+      status: values.status,
+      sort: values.sort,
+      remark: values.remark,
+    }),
+    onOpenChange,
+    onSuccess,
+  })
   return (
-    <Modal
+    <FormDialog
       open={open}
       title={isEdit ? '编辑字典类型' : '新增字典类型'}
-      onCancel={() => onOpenChange(false)}
-      confirmLoading={loading}
-      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
-      okButtonProps={{ type: 'submit', form: 'dict-type-form' }}
+      onOpenChange={onOpenChange}
+      formId='dict-type-form'
+      loading={loading}
+      loadingText={isEdit ? '保存中...' : '创建中...'}
       className='sm:max-w-md'
     >
       <DialogDescription>
@@ -132,7 +104,7 @@ export default function DictTypeFormDialog({
         <form
           id='dict-type-form'
           className='flex flex-col gap-4'
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(submit)}
         >
           <FormField
             control={form.control}
@@ -166,21 +138,11 @@ export default function DictTypeFormDialog({
               </FormItem>
             )}
           />
-          <FormField
+          <DictSelectField
             control={form.control}
             name='status'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel showRequired={false}>状态</FormLabel>
-                <SelectData
-                  options={statusOptions}
-                  value={String(field.value)}
-                  onChange={(value) => field.onChange(Number(value))}
-                  className='w-full'
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            label='状态'
+            dictKey='sys_normal_disable'
           />
           <FormField
             control={form.control}
@@ -225,6 +187,6 @@ export default function DictTypeFormDialog({
           />
         </form>
       </Form>
-    </Modal>
+    </FormDialog>
   )
 }

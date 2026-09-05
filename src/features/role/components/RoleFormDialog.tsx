@@ -1,11 +1,16 @@
-import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
-import { Modal } from '@/components/Modal'
-import { SelectData } from '@/components/SelectData'
-import { useRequest, useDictOptions } from '@/hooks'
-import { createRole, updateRole, type RoleItem } from '@/service/roles'
+import { FormDialog } from '@/components/FormDialog'
+import { DictSelectField } from '@/components/DictSelectField'
+import { useFormDialog } from '@/hooks'
+import {
+  createRole,
+  updateRole,
+  type CreateRoleParams,
+  type RoleItem,
+  type UpdateRoleParams,
+} from '@/service/roles'
 import { DialogDescription } from '@/ui/Dialog'
 import {
   Form,
@@ -17,7 +22,6 @@ import {
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
 import { Textarea } from '@/ui/Textarea'
-import { toast } from '@/ui/Toast'
 
 import { createRoleSchema, type CreateRoleValues } from '../types'
 
@@ -48,64 +52,43 @@ export default function RoleFormDialog({
     resolver: zodResolver(createRoleSchema),
     defaultValues,
   })
-  const { runAsync: createAsync, loading: createLoading } = useRequest(
-    createRole,
-    { immediate: false }
-  )
-  const { runAsync: updateAsync, loading: updateLoading } = useRequest(
-    updateRole,
-    { immediate: false }
-  )
-  const loading = createLoading || updateLoading
+  const { loading, submit } = useFormDialog<
+    CreateRoleValues,
+    RoleItem,
+    CreateRoleParams,
+    UpdateRoleParams
+  >({
+    form,
+    open,
+    entity: role,
+    defaultValues,
+    getEditValues: (item) => ({
+      name: item.name,
+      roleKey: item.roleKey,
+      status: item.status,
+      remark: item.remark,
+    }),
+    create: createRole,
+    update: updateRole,
+    getCreateParams: (values) => values,
+    getUpdateParams: (item, values) => ({
+      id: Number(item.id),
+      name: values.name,
+      status: values.status,
+      remark: values.remark,
+    }),
+    onOpenChange,
+    onSuccess,
+  })
   // 状态选项从「通用状态」字典读取，避免在表单中写死启用/停用
-  const { options: statusOptions } = useDictOptions('sys_normal_disable')
-
-  // 每次打开按模式重置表单，避免残留上次输入
-  useEffect(() => {
-    if (open) {
-      form.reset(
-        role
-          ? {
-              name: role.name,
-              roleKey: role.roleKey,
-              status: role.status,
-              remark: role.remark,
-            }
-          : defaultValues
-      )
-    }
-  }, [open, role, form])
-
-  async function onSubmit(values: CreateRoleValues) {
-    try {
-      if (isEdit) {
-        // roleKey 创建后不可修改，更新不传该字段；后端 DTO 校验 id 必须为数字
-        await updateAsync({
-          id: Number(role.id),
-          name: values.name,
-          status: values.status,
-          remark: values.remark,
-        })
-        toast.success('保存成功')
-      } else {
-        await createAsync(values)
-        toast.success('创建成功')
-      }
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   return (
-    <Modal
+    <FormDialog
       open={open}
       title={isEdit ? '编辑角色' : '新增角色'}
-      onCancel={() => onOpenChange(false)}
-      confirmLoading={loading}
-      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
-      okButtonProps={{ type: 'submit', form: 'role-form' }}
+      onOpenChange={onOpenChange}
+      formId='role-form'
+      loading={loading}
+      loadingText={isEdit ? '保存中...' : '创建中...'}
       className='sm:max-w-md'
     >
       <DialogDescription>角色编码创建后不可修改</DialogDescription>
@@ -116,7 +99,7 @@ export default function RoleFormDialog({
         <form
           id='role-form'
           className='flex flex-col gap-4'
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(submit)}
         >
           <FormField
             control={form.control}
@@ -151,21 +134,11 @@ export default function RoleFormDialog({
               </FormItem>
             )}
           />
-          <FormField
+          <DictSelectField
             control={form.control}
             name='status'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel showRequired={false}>状态</FormLabel>
-                <SelectData
-                  options={statusOptions}
-                  value={String(field.value)}
-                  onChange={(value) => field.onChange(Number(value))}
-                  className='w-full'
-                />
-                <FormMessage />
-              </FormItem>
-            )}
+            label='状态'
+            dictKey='sys_normal_disable'
           />
           <FormField
             control={form.control}
@@ -186,6 +159,6 @@ export default function RoleFormDialog({
           />
         </form>
       </Form>
-    </Modal>
+    </FormDialog>
   )
 }

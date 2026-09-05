@@ -1,7 +1,5 @@
-import { useRequest } from '@/hooks'
-import { Confirm } from '@/components/Confirm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteBookmark, type BookmarkNode } from '@/service/bookmarks'
-import { toast } from '@/ui/Toast'
 
 type DeleteBookmarkDialogProps = {
   open: boolean
@@ -23,29 +21,20 @@ export default function DeleteBookmarkDialog({
   onSuccess,
   node,
 }: DeleteBookmarkDialogProps) {
-  const { runAsync, loading } = useRequest(deleteBookmark, {
-    immediate: false,
-  })
-
-  async function onConfirm() {
-    if (!node) return
-    try {
-      await runAsync(Number(node.id))
-      toast.success('删除成功')
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   const isFolder = node?.type === 1
   const subtreeCount = node ? countSubtree(node) - 1 : 0
 
   return (
-    <Confirm
+    <DeleteConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      disabled={!node}
+      onDelete={(signal) =>
+        node
+          ? deleteBookmark(Number(node.id), signal)
+          : Promise.resolve({ data: null })
+      }
       title={isFolder ? '删除文件夹' : '删除收藏'}
       description={
         isFolder ? (
@@ -60,10 +49,6 @@ export default function DeleteBookmarkDialog({
           </>
         )
       }
-      destructive
-      confirmText={loading ? '删除中...' : '确认删除'}
-      confirmLoading={loading}
-      onConfirm={onConfirm}
     />
   )
 }

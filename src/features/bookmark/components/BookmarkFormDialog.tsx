@@ -1,13 +1,15 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, useWatch } from 'react-hook-form'
 
-import { Modal } from '@/components/Modal'
+import { FormDialog } from '@/components/FormDialog'
 import { SelectData } from '@/components/SelectData'
-import { useRequest } from '@/hooks'
+import { useFormDialog } from '@/hooks'
 import {
   createBookmark,
   updateBookmark,
+  type CreateBookmarkParams,
+  type UpdateBookmarkParams,
   type BookmarkNode,
 } from '@/service/bookmarks'
 import { DialogDescription } from '@/ui/Dialog'
@@ -20,7 +22,6 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
-import { toast } from '@/ui/Toast'
 
 import { bookmarkFormSchema, type BookmarkFormValues } from '../types'
 
@@ -81,36 +82,47 @@ export default function BookmarkFormDialog({
   tree,
   defaultParentId,
 }: BookmarkFormDialogProps) {
-  const isEdit = !!node
   const form = useForm<BookmarkFormValues>({
     resolver: zodResolver(bookmarkFormSchema),
     defaultValues,
   })
-  const { runAsync: createAsync, loading: createLoading } = useRequest(
-    createBookmark,
-    { immediate: false }
+  const formDefaultValues = useMemo(
+    () => ({ ...defaultValues, parentId: String(defaultParentId) }),
+    [defaultParentId]
   )
-  const { runAsync: updateAsync, loading: updateLoading } = useRequest(
-    updateBookmark,
-    { immediate: false }
-  )
-  const loading = createLoading || updateLoading
-
-  // 每次打开按模式重置表单，避免残留上次输入
-  useEffect(() => {
-    if (open) {
-      form.reset(
-        node
-          ? {
-              type: node.type,
-              title: node.title,
-              url: node.url,
-              parentId: String(node.parentId),
-            }
-          : { ...defaultValues, parentId: String(defaultParentId) }
-      )
-    }
-  }, [open, node, defaultParentId, form])
+  const { isEdit, loading, submit } = useFormDialog<
+    BookmarkFormValues,
+    BookmarkNode,
+    CreateBookmarkParams,
+    UpdateBookmarkParams
+  >({
+    form,
+    open,
+    entity: node,
+    defaultValues: formDefaultValues,
+    getEditValues: (currentNode) => ({
+      type: currentNode.type,
+      title: currentNode.title,
+      url: currentNode.url,
+      parentId: String(currentNode.parentId),
+    }),
+    create: createBookmark,
+    update: updateBookmark,
+    getCreateParams: (values) => ({
+      type: values.type,
+      title: values.title,
+      ...(values.type === 2 ? { url: values.url } : {}),
+      ...(values.parentId !== '0' ? { parentId: Number(values.parentId) } : {}),
+    }),
+    getUpdateParams: (currentNode, values) => ({
+      id: Number(currentNode.id),
+      title: values.title,
+      ...(values.type === 2 ? { url: values.url } : {}),
+      parentId: Number(values.parentId),
+    }),
+    onOpenChange,
+    onSuccess,
+  })
 
   // 编辑时父级下拉排除自身与子孙节点
   const folderOptions = useMemo(
@@ -122,48 +134,17 @@ export default function BookmarkFormDialog({
     [tree, node]
   )
 
-  async function onSubmit(values: BookmarkFormValues) {
-    try {
-      if (isEdit) {
-        await updateAsync({
-          id: Number(node.id),
-          title: values.title,
-          // 文件夹传空 url 会被后端拒绝，仅收藏类型提交 url
-          ...(values.type === 2 ? { url: values.url } : {}),
-          // 后端以 0 表示根级
-          parentId: Number(values.parentId),
-        })
-        toast.success('保存成功')
-      } else {
-        await createAsync({
-          type: values.type,
-          title: values.title,
-          ...(values.type === 2 ? { url: values.url } : {}),
-          // 根级不传 parentId（后端默认 0）
-          ...(values.parentId !== '0'
-            ? { parentId: Number(values.parentId) }
-            : {}),
-        })
-        toast.success('创建成功')
-      }
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   // 类型切换时控制网址字段显隐；useWatch 订阅可被 React Compiler 安全记忆
   const watchType = useWatch({ control: form.control, name: 'type' })
 
   return (
-    <Modal
+    <FormDialog
       open={open}
       title={isEdit ? '编辑书签' : '新增书签'}
-      onCancel={() => onOpenChange(false)}
-      confirmLoading={loading}
-      okText={loading ? (isEdit ? '保存中...' : '创建中...') : '确认'}
-      okButtonProps={{ type: 'submit', form: 'bookmark-form' }}
+      onOpenChange={onOpenChange}
+      formId='bookmark-form'
+      loading={loading}
+      loadingText={isEdit ? '保存中...' : '创建中...'}
       className='sm:max-w-md'
     >
       <DialogDescription>
@@ -177,7 +158,7 @@ export default function BookmarkFormDialog({
           id='bookmark-form'
           // min-w-0：DialogContent 为 grid 布局，默认 min-width:auto 会让超长父级名把轨道撑破溢出弹窗
           className='flex min-w-0 flex-col gap-4'
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(submit)}
         >
           <FormField
             control={form.control}
@@ -254,6 +235,6 @@ export default function BookmarkFormDialog({
           />
         </form>
       </Form>
-    </Modal>
+    </FormDialog>
   )
 }

@@ -1,7 +1,5 @@
-import { useRequest } from '@/hooks'
-import { Confirm } from '@/components/Confirm'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteDictItem } from '@/service/dict'
-import { toast } from '@/ui/Toast'
 
 import { countItemSubtree, type DictItemTreeNode } from '../utils'
 
@@ -20,29 +18,20 @@ export default function DeleteDictItemDialog({
   onSuccess,
   node,
 }: DeleteDictItemDialogProps) {
-  const { runAsync, loading } = useRequest(deleteDictItem, {
-    immediate: false,
-  })
-
-  async function onConfirm() {
-    if (!node) return
-    try {
-      await runAsync(Number(node.id))
-      toast.success('删除成功')
-      onOpenChange(false)
-      onSuccess()
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }
-
   const hasChildren = node ? node.children.length > 0 : false
   const subtreeCount = node ? countItemSubtree(node) - 1 : 0
 
   return (
-    <Confirm
+    <DeleteConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      disabled={!node}
+      onDelete={(signal) =>
+        node
+          ? deleteDictItem(Number(node.id), signal)
+          : Promise.resolve({ data: null })
+      }
       title='删除字典项'
       description={
         node ? (
@@ -56,10 +45,6 @@ export default function DeleteDictItemDialog({
           )
         ) : undefined
       }
-      destructive
-      confirmText={loading ? '删除中...' : '确认删除'}
-      confirmLoading={loading}
-      onConfirm={onConfirm}
     />
   )
 }
