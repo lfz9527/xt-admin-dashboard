@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/ui/Form'
 import { Input } from '@/ui/Input'
+import { collectTreeSubtreeIds, walkTree } from '@/utils/tree'
 
 import { bookmarkFormSchema, type BookmarkFormValues } from '../types'
 
@@ -43,35 +44,6 @@ const defaultValues: BookmarkFormValues = {
   title: '',
   url: '',
   parentId: '0',
-}
-
-/** 收集全部文件夹节点（编辑时排除自身及其子孙，后端禁止移动到自身/子孙下） */
-function collectFolderOptions(
-  nodes: BookmarkNode[],
-  excluded: Set<number>
-): { value: string; label: string }[] {
-  const options: { value: string; label: string }[] = []
-  const walk = (items: BookmarkNode[]) => {
-    for (const item of items) {
-      if (item.type === 1 && !excluded.has(item.id)) {
-        options.push({ value: String(item.id), label: item.title })
-        walk(item.children)
-      }
-    }
-  }
-  walk(nodes)
-  return options
-}
-
-/** 收集节点自身及全部子孙 id */
-function collectSubtreeIds(node: BookmarkNode): Set<number> {
-  const ids = new Set<number>()
-  const walk = (item: BookmarkNode) => {
-    ids.add(item.id)
-    item.children.forEach(walk)
-  }
-  walk(node)
-  return ids
 }
 
 export default function BookmarkFormDialog({
@@ -125,14 +97,17 @@ export default function BookmarkFormDialog({
   })
 
   // 编辑时父级下拉排除自身与子孙节点
-  const folderOptions = useMemo(
-    () =>
-      collectFolderOptions(
-        tree,
-        node ? collectSubtreeIds(node) : new Set<number>()
-      ),
-    [tree, node]
-  )
+  const folderOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = []
+    const excluded = node ? collectTreeSubtreeIds(node) : new Set<number>()
+    walkTree(tree, (item) => {
+      if (item.type !== 1) return false
+      if (!excluded.has(item.id)) {
+        options.push({ value: String(item.id), label: item.title })
+      }
+    })
+    return options
+  }, [tree, node])
 
   // 类型切换时控制网址字段显隐；useWatch 订阅可被 React Compiler 安全记忆
   const watchType = useWatch({ control: form.control, name: 'type' })

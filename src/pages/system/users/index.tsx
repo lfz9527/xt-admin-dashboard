@@ -1,23 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 
+import { BatchDeleteToolbar } from '@/components/BatchDeleteToolbar'
 import { DataTable, type DataTableFeatures } from '@/components/DataTable'
 import DeleteUserDialog from '@/features/user/components/DeleteUserDialog'
 import UserFormDialog from '@/features/user/components/UserFormDialog'
-import { useRequest, useDictOptions } from '@/hooks'
+import { useDictOptions, useOptimisticStatus, usePagedList } from '@/hooks'
 import { getUsers, updateUser, type UserItem } from '@/service/users'
 import { Button } from '@/ui/Button'
 import { Switch } from '@/ui/Switch'
-import { toast } from '@/ui/Toast'
 import { formatDateTime } from '@/utils/date'
 
 export default function Users() {
   const navigate = useNavigate()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
   const [formOpen, setFormOpen] = useState(false)
   /** 正在编辑的用户；null 为新增模式 */
   const [editingUser, setEditingUser] = useState<UserItem | null>(null)
@@ -28,60 +26,31 @@ export default function Users() {
   } | null>(null)
   /** 表格多选选中行（key 为行 id），供批量删除使用 */
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
-  const selectedCount = Object.keys(rowSelection).length
-  const { data, loading, error, run, mutate, refresh } = useRequest(getUsers, {
-    immediate: false,
+  const {
+    data,
+    loading,
+    error,
+    refresh,
+    pagination,
+    mutateItems,
+    reloadFirstPage,
+  } = usePagedList(getUsers)
+  const selectedIds = useMemo(
+    () => Object.keys(rowSelection).map(Number),
+    [rowSelection]
+  )
+  const {
+    handleStatusChange: handleUserStatusChange,
+    isSwitching: isUserStatusSwitching,
+  } = useOptimisticStatus(updateUser, {
+    mutateItems,
+    getParams: (user, nextStatus) => ({
+      id: Number(user.id),
+      status: nextStatus,
+    }),
   })
-  const { runAsync: updateStatusAsync, loading: updateStatusLoading } =
-    useRequest(updateUser, {
-      immediate: false,
-    })
-  /** 正在切换状态的用户 id（仅该行显示 loading） */
-  const [switchingId, setSwitchingId] = useState<UserItem['id'] | null>(null)
   // 性别回显文案从字典读取，避免写死
   const { labelOf: genderLabelOf } = useDictOptions('sys_user_sex')
-
-  // 行内切换启用/停用：先乐观更新本地列表，接口失败时回滚
-  const handleStatusChange = useCallback(
-    async (user: UserItem, checked: boolean) => {
-      const nextStatus = checked ? 0 : 1
-      const prevStatus = user.status
-      const applyStatus = (status: number) =>
-        mutate((prev) => ({
-          ...(prev ?? { list: [], total: 0 }),
-          list: (prev?.list ?? []).map((item) =>
-            item.id === user.id ? { ...item, status } : item
-          ),
-        }))
-      applyStatus(nextStatus)
-      setSwitchingId(user.id)
-      try {
-        // 后端更新接口 DTO 校验 id 必须为数字，列表返回的字符串 id 需转换
-        await updateStatusAsync({
-          id: Number(user.id),
-          status: nextStatus,
-        })
-        toast.success('状态更新成功')
-      } catch (err) {
-        applyStatus(prevStatus)
-        toast.error((err as Error).message)
-      } finally {
-        setSwitchingId(null)
-      }
-    },
-    [mutate, updateStatusAsync]
-  )
-
-  useEffect(() => {
-    run({ page, pageSize })
-  }, [page, pageSize, run])
-
-  // 删除后当前页变空且不是第 1 页时回退，避免停留在空页
-  useEffect(() => {
-    if (data && data.list.length === 0 && data.total > 0 && page > 1) {
-      setPage(1)
-    }
-  }, [data, page])
 
   const columns = useMemo<ColumnDef<DataTableFeatures, UserItem>[]>(
     () => [
@@ -118,8 +87,10 @@ export default function Users() {
             <Switch
               aria-label='切换状态'
               checked={user.status === 0}
-              loading={updateStatusLoading && switchingId === user.id}
-              onCheckedChange={(checked) => handleStatusChange(user, checked)}
+              loading={isUserStatusSwitching(user)}
+              onCheckedChange={(checked) =>
+                handleUserStatusChange(user, checked)
+              }
             />
           )
         },
@@ -192,13 +163,7 @@ export default function Users() {
         ),
       },
     ],
-    [
-      handleStatusChange,
-      navigate,
-      updateStatusLoading,
-      switchingId,
-      genderLabelOf,
-    ]
+    [handleUserStatusChange, isUserStatusSwitching, navigate, genderLabelOf]
   )
 
   return (
@@ -212,32 +177,10 @@ export default function Users() {
         onRowSelectionChange={setRowSelection}
         title='用户列表'
         toolRender={() => (
-          <>
-            {selectedCount > 0 && (
-              <>
-                <span className='text-muted-foreground self-center text-sm'>
-                  已选 {selectedCount} 项
-                </span>
-                {/* 后端批量删除接口单次最多 50 条，超过时禁用并提示 */}
-                {selectedCount > 50 && (
-                  <span className='text-muted-foreground self-center text-sm'>
-                    单次最多删除 50 条
-                  </span>
-                )}
-                <Button
-                  variant='destructive'
-                  disabled={selectedCount > 50}
-                  onClick={() =>
-                    setDeleteTarget({
-                      ids: Object.keys(rowSelection).map(Number),
-                      names: [],
-                    })
-                  }
-                >
-                  批量删除
-                </Button>
-              </>
-            )}
+          <BatchDeleteToolbar
+            selectedIds={selectedIds}
+            onDelete={(ids) => setDeleteTarget({ ids, names: [] })}
+          >
             <Button
               onClick={() => {
                 setEditingUser(null)
@@ -247,7 +190,7 @@ export default function Users() {
               <Plus className='size-4' />
               新增用户
             </Button>
-          </>
+          </BatchDeleteToolbar>
         )}
         onRefresh={refresh}
         loading={loading}
@@ -257,17 +200,7 @@ export default function Users() {
             <span className='text-destructive text-sm'>{error.message}</span>
           ) : undefined
         }
-        pagination={{
-          total: data?.total ?? 0,
-          page,
-          pageSize,
-          onChange: (nextPage, nextPageSize) => {
-            // 切换每页条数时回到第 1 页（业务决定，组件不干预）
-            const isSizeChanged = nextPageSize !== pageSize
-            setPage(isSizeChanged ? 1 : nextPage)
-            setPageSize(nextPageSize)
-          },
-        }}
+        pagination={pagination}
       />
       <UserFormDialog
         open={formOpen}
@@ -276,11 +209,10 @@ export default function Users() {
         onSuccess={() => {
           if (editingUser) {
             // 编辑刷新当前页
-            run({ page, pageSize })
+            refresh()
           } else {
             // 新用户按创建时间排序位置不定，回第 1 页并重新拉取
-            setPage(1)
-            run({ page: 1, pageSize })
+            reloadFirstPage()
           }
         }}
       />
@@ -300,7 +232,7 @@ export default function Users() {
               return next
             })
           }
-          run({ page, pageSize })
+          refresh()
         }}
       />
     </div>

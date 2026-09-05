@@ -104,7 +104,7 @@
   - users(308 行)/roles(271 行)两页约 250 行同构:分页状态、乐观切换+失败回滚(`users/index.tsx:45-73` 与 `roles/index.tsx:41-70` 逐字同构)、删空页回退、批量删除工具栏;
   - dict(582 行)/bookmarks(362 行)两树页重复折叠/toggle/hover 动作按钮/loading-error-empty 三段式骨架;
   - 树算法被重复书写:bookmark 页内 `findNode/countSubtree`(`bookmarks/index.tsx:15-27`)与 dialog 内 `collectFolderOptions/collectSubtreeIds`(`BookmarkFormDialog.tsx:48-74`),对应 `src/features/dict/utils.ts` 中同款实现,约 60 行。
-  - 建议先统合共享 tree 工具,再抽 `usePagedList`/`useTree` 与页面骨架。
+  - 建议先统合共享 tree 工具,再抽 `usePagedList`/`useTree` 与页面骨架。✅ 已修复,详见文末「修复记录」。
 
 ---
 
@@ -134,7 +134,7 @@
 
 ## 复杂度与维护性观察
 
-- **大文件**:dict 页 582 行、`src/ui/Sidebar/sidebar.tsx` 525 行、`src/components/DataTable/index.tsx` 500 行、`src/layout/NavTab/nav-tab.tsx` 433 行。NavTab 是最近 6 个提交的活跃区,已拆 context/sync/actions 子模块,方向正确;dict 页与 Sidebar 仍建议按 P2-9/P2-10 拆分。
+- **大文件**:dict 页当前 368 行、`src/ui/Sidebar/sidebar.tsx` 525 行、`src/components/DataTable/index.tsx` 500 行、`src/layout/NavTab/nav-tab.tsx` 433 行。NavTab 是最近 6 个提交的活跃区,已拆 context/sync/actions 子模块,方向正确;dict 页已按 P2-10 拆分,Sidebar 后续仍可继续治理。
 - **工程治理亮点**:无 TODO/FIXME/调试残留;console 输出集中于 `main.tsx` 错误边界与开发态中间件(有 IS_PROD 门控);`utils/`、`types/`、`constants/` 依赖方向干净;features 之间无跨域引用;提交信息遵循 cz 规范且为原子提交;`src/utils/common.ts`(46 处引用)与 `@/hooks` 桶(29 处)为耦合热点,API 稳定性要求高。
 
 ## 趋势与治理路线
@@ -146,12 +146,39 @@
 1. **修复 P1-1 测试回归**,并补齐「懒加载改动需全量跑 components 测试」的提交前检查习惯;
 2. **安全三件套**:凭据去落盘/登出清理(P1-2)、与后端确认 RBAC 并收窄 roleKey 信任(P1-3)、.env 出库 + 补 .gitignore(P1-4);
 3. 断 service↔store 双向环(P2-2),并把菜单派生收敛出 routes(P2-1 环);
-4. 重复治理按「先树工具 → 再 FormDialog 体系 → 后列表页骨架」推进(P2-9/P2-10),每步以现有页面测试为回归护栏;
+4. 重复治理按「先树工具 → 再 FormDialog 体系 → 后列表页骨架」推进(P2-9/P2-10),两项均已完成,后续继续以现有页面测试为回归护栏;
 5. 零消费组件/函数(P3-2~P3-4)按约定允许存在、无需处理,仅作提醒;补齐 service 拦截器测试。
 
 ---
 
 ## 修复记录
+
+### P2-9 · CRUD 弹窗体系同构
+
+- **修复时间**:2026-09-06
+- **修复方式**:按「公共生命周期、公共弹窗外壳、业务字段留在 feature 内」的边界完成重复治理:
+  1. 新增 `src/components/FormDialog/index.tsx`,统一受控 `Modal`、表单提交按钮、取消回调和 loading 文案;
+  2. 新增 `src/hooks/useFormDialog.ts`,统一新增/编辑模式判断、打开时表单 reset、create/update 请求、成功 toast、关闭弹窗与 `onSuccess` 回调;业务侧继续负责 schema、编辑值映射和请求参数转换;
+  3. 新增 `src/components/DeleteConfirmDialog/index.tsx`,复用既有 `Confirm`,统一删除请求、加载态、成功反馈和异常提示,并继续通过 `useRequest` 发起请求;
+  4. 新增 `src/components/DictSelectField/index.tsx`,统一字典选项加载、`SelectData` 与 React Hook Form 的 `FormItem` 绑定,收敛用户、角色、字典类型、字典项四处 `sys_normal_disable` 状态字段;
+  5. 迁移用户、角色、字典类型、字典项、书签共 5 个表单弹窗和 5 个删除弹窗,保留各业务字段、树形选项及请求参数转换逻辑不变;
+- **修复证据**:
+  - 相关页面测试:`pnpm exec vitest run test/pages/system/users.test.tsx test/pages/system/roles.test.tsx test/pages/system/dict.test.tsx test/pages/browser/bookmarks.test.tsx`,4 个测试文件、46 个用例全部通过;
+  - `pnpm compile`(tsc -b)、`pnpm lint`、Prettier 格式检查及 `git diff --check` 通过;
+  - 提交 `80535f9`(`refactor: 抽取 CRUD 弹窗与字典字段公共组件`),共 15 个文件变更,其中新增 4 个公共实现文件,删除 514 行重复弹窗模板代码。
+
+### P2-10 · 列表页与树页双重复线
+
+- **修复时间**:2026-09-06
+- **修复方式**:按「树公共契约 → 树业务适配 → 列表公共状态」完成治理,公共树组件参考 Ant Design Tree 的受控 API 设计,未引入 antd 依赖:
+  1. 新增 `src/utils/tree.ts`,统一树节点查找、子树统计、子树 ID 收集和带深度的遍历;字典保留 `buildDictItemTree`、`buildParentOptions` 等领域算法,书签表单/删除弹窗复用公共算法;
+  2. 新增 `src/components/Tree/index.tsx`,将 `TreeView`、`TreePanel`、`TreeNodeAction` 组成统一树公共组件包;支持 `treeData`、`fieldNames`、`expandedKeys`、`selectedKeys`、`loadedKeys`、`loadingKeys`、`loadData`、`isLeaf`、标题/操作渲染等受控能力;当前字典和书签仍使用全量数据,已为未来懒加载保留契约;
+  3. 新增 `src/hooks/useTreeState.ts`,统一树页面展开/选中 key 管理;字典项树、书签树下沉为各自 feature 组件,业务操作不进入公共树组件;树页面 Loading/Error/Empty 三段式状态由同一 Tree 公共组件包中的 `TreePanel` 统一承载;
+  4. 新增 `src/hooks/usePagedList.ts`、`src/hooks/useOptimisticStatus.ts`、`src/components/BatchDeleteToolbar/index.tsx`,收敛用户、角色的分页、删空页回退、状态乐观更新/失败回滚、50 条批量删除限制和工具栏模板;请求仍统一经 `useRequest` 发起;
+- **修复证据**:
+  - 相关页面与公共能力测试:`pnpm exec vitest run test/pages/system/users.test.tsx test/pages/system/roles.test.tsx test/pages/system/dict.test.tsx test/pages/browser/bookmarks.test.tsx test/features/dict.test.ts test/components/TreeView.test.tsx test/utils/tree.test.ts`,7 个测试文件、60 个用例全部通过;
+  - `pnpm compile`(tsc -b)、`pnpm lint`、Prettier 格式检查及 `git diff --check` 通过;
+  - 用户、角色、字典、书签页面保留原有交互和请求边界,新增 TreeView 懒加载契约测试,未新增 antd 或其他树组件依赖。
 
 ### P2-7 · 错误详情向用户与控制台透传
 

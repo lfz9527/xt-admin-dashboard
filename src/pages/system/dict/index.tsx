@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 
-import Loading from '@/components/Loading'
+import { TreeNodeAction, TreePanel } from '@/components/Tree'
 import DeleteDictItemDialog from '@/features/dict/components/DeleteDictItemDialog'
 import DeleteDictTypeDialog from '@/features/dict/components/DeleteDictTypeDialog'
 import DictItemFormDialog from '@/features/dict/components/DictItemFormDialog'
+import DictItemTree from '@/features/dict/components/DictItemTree'
 import DictTypeFormDialog from '@/features/dict/components/DictTypeFormDialog'
 import { buildDictItemTree, type DictItemTreeNode } from '@/features/dict/utils'
-import { useRequest } from '@/hooks'
+import { useOptimisticStatus, useRequest, useTreeState } from '@/hooks'
 import {
   listAllDictItems,
   listAllDictTypes,
@@ -21,41 +22,12 @@ import useDictStore from '@/store/useDictStore'
 import { Button } from '@/ui/Button'
 import { Empty, EmptyHeader, EmptyTitle } from '@/ui/Empty'
 import { Switch } from '@/ui/Switch'
-import { toast } from '@/ui/Toast'
 import { cn } from '@/utils/common'
-
-/** 树节点 hover 动作按钮（独立于行主体，避免嵌套交互元素） */
-function NodeAction({
-  label,
-  destructive = false,
-  onClick,
-  children,
-}: {
-  label: string
-  destructive?: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type='button'
-      aria-label={label}
-      className={cn(
-        'text-muted-foreground hover:bg-background rounded p-0.5',
-        destructive ? 'hover:text-destructive' : 'hover:text-foreground'
-      )}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  )
-}
 
 type TypeRowProps = {
   type: DictTypeItem
   selected: boolean
-  statusLoading: boolean
-  switchingId: string | null
+  isStatusLoading: (type: DictTypeItem) => boolean
   onSelect: (type: DictTypeItem) => void
   onEdit: (type: DictTypeItem) => void
   onDelete: (type: DictTypeItem) => void
@@ -66,8 +38,7 @@ type TypeRowProps = {
 function TypeRow({
   type,
   selected,
-  statusLoading,
-  switchingId,
+  isStatusLoading,
   onSelect,
   onEdit,
   onDelete,
@@ -93,143 +64,26 @@ function TypeRow({
             size='sm'
             aria-label='切换状态'
             checked={type.status === 0}
-            loading={statusLoading && switchingId === type.id}
+            loading={isStatusLoading(type)}
             onCheckedChange={(checked) => onStatusChange(type, checked)}
           />
         </span>
         <span className='hidden items-center gap-0.5 group-hover:flex'>
-          <NodeAction
+          <TreeNodeAction
             label='编辑'
             onClick={() => onEdit(type)}
           >
             <Pencil className='size-3.5' />
-          </NodeAction>
-          <NodeAction
+          </TreeNodeAction>
+          <TreeNodeAction
             label='删除'
             destructive
             onClick={() => onDelete(type)}
           >
             <Trash2 className='size-3.5' />
-          </NodeAction>
+          </TreeNodeAction>
         </span>
       </div>
-    </div>
-  )
-}
-
-type ItemTreeNodeProps = {
-  node: DictItemTreeNode
-  expanded: Set<number>
-  statusLoading: boolean
-  switchingId: string | null
-  onToggle: (id: number) => void
-  onAddChild: (node: DictItemTreeNode) => void
-  onEdit: (node: DictItemTreeNode) => void
-  onDelete: (node: DictItemTreeNode) => void
-  onStatusChange: (node: DictItemTreeNode, checked: boolean) => void
-}
-
-/** 右侧字典项树节点：可展开收起；hover 显示新增子项/编辑/删除 */
-function ItemTreeNode({
-  node,
-  expanded,
-  statusLoading,
-  switchingId,
-  onToggle,
-  onAddChild,
-  onEdit,
-  onDelete,
-  onStatusChange,
-}: ItemTreeNodeProps) {
-  const isExpanded = expanded.has(Number(node.id))
-  const hasChildren = node.children.length > 0
-  const itemStatusLoading = statusLoading && switchingId === node.id
-
-  return (
-    <div className='group'>
-      <div
-        className={cn(
-          'flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm',
-          'hover:bg-accent'
-        )}
-      >
-        {hasChildren ? (
-          <button
-            type='button'
-            aria-label={isExpanded ? '收起' : '展开'}
-            className='text-muted-foreground rounded-sm p-0.5'
-            onClick={(event) => {
-              event.stopPropagation()
-              onToggle(Number(node.id))
-            }}
-          >
-            <ChevronRight
-              className={cn(
-                'size-3.5 shrink-0 transition-transform duration-150',
-                isExpanded && 'rotate-90'
-              )}
-            />
-          </button>
-        ) : (
-          <span className='size-3.5 shrink-0' />
-        )}
-        <span className='min-w-0 truncate'>{node.label}</span>
-        {node.value && (
-          <span className='text-muted-foreground shrink-0 text-xs'>
-            {node.value}
-          </span>
-        )}
-        <div className='ml-auto flex shrink-0 items-center'>
-          <span className='group-hover:hidden'>
-            <Switch
-              size='sm'
-              aria-label='切换状态'
-              checked={node.status === 0}
-              loading={itemStatusLoading}
-              onCheckedChange={(checked) => onStatusChange(node, checked)}
-            />
-          </span>
-          <span className='hidden items-center gap-0.5 group-hover:flex'>
-            <NodeAction
-              label='新增子项'
-              onClick={() => onAddChild(node)}
-            >
-              <Plus className='size-3.5' />
-            </NodeAction>
-            <NodeAction
-              label='编辑'
-              onClick={() => onEdit(node)}
-            >
-              <Pencil className='size-3.5' />
-            </NodeAction>
-            <NodeAction
-              label='删除'
-              destructive
-              onClick={() => onDelete(node)}
-            >
-              <Trash2 className='size-3.5' />
-            </NodeAction>
-          </span>
-        </div>
-      </div>
-      {hasChildren && isExpanded && (
-        <div className='border-border/60 ml-3 border-l pl-2'>
-          {node.children.map((child) => (
-            <ItemTreeNode
-              key={child.id}
-              node={child}
-              expanded={expanded}
-              statusLoading={statusLoading}
-              switchingId={switchingId}
-              onToggle={onToggle}
-              onAddChild={onAddChild}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onStatusChange={onStatusChange}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -252,11 +106,11 @@ export default function Dict() {
     loading: itemLoading,
     error: itemError,
     run: runItems,
-    mutate: mutateItems,
+    mutate: mutateItemData,
   } = useRequest(listAllDictItems, { immediate: false })
   const items = itemData ?? []
   const itemTree = useMemo(() => buildDictItemTree(items), [items])
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const { expandedKeys, setExpandedKeys } = useTreeState()
 
   // ── 弹窗状态 ─────────────────────────────────────────
   const [typeFormOpen, setTypeFormOpen] = useState(false)
@@ -276,15 +130,6 @@ export default function Dict() {
   const [deleteItemTarget, setDeleteItemTarget] =
     useState<DictItemTreeNode | null>(null)
 
-  // ── 状态切换请求 ─────────────────────────────────────
-  const { runAsync: updateTypeStatusAsync, loading: updateTypeStatusLoading } =
-    useRequest(updateDictTypeStatus, { immediate: false })
-  const [switchingTypeId, setSwitchingTypeId] = useState<string | null>(null)
-
-  const { runAsync: updateItemStatusAsync, loading: updateItemStatusLoading } =
-    useRequest(updateDictItemStatus, { immediate: false })
-  const [switchingItemId, setSwitchingItemId] = useState<string | null>(null)
-
   // 初始加载字典类型
   useEffect(() => {
     runTypes()
@@ -299,14 +144,14 @@ export default function Dict() {
 
   // 选中类型变化 → 重置展开状态并加载其字典项
   useEffect(() => {
-    setExpanded(new Set())
+    setExpandedKeys([])
     // 切换类型时清空旧数据，避免加载期间短暂展示上一类型的项
-    mutateItems([])
+    mutateItemData([])
     if (selectedTypeId == null) {
       return
     }
     runItems(Number(selectedTypeId))
-  }, [selectedTypeId, runItems, mutateItems])
+  }, [selectedTypeId, runItems, mutateItemData, setExpandedKeys])
 
   const selectedType = useMemo(
     () =>
@@ -316,65 +161,38 @@ export default function Dict() {
     [types, selectedTypeId]
   )
 
-  // 行内切换字典类型状态：先乐观更新本地列表，接口失败时回滚
-  const handleTypeStatusChange = useCallback(
-    async (type: DictTypeItem, checked: boolean) => {
-      const nextStatus = checked ? 0 : 1
-      const prevStatus = type.status
-      mutateTypes((prev) =>
-        (prev ?? []).map((item) =>
-          item.id === type.id ? { ...item, status: nextStatus } : item
-        )
-      )
-      setSwitchingTypeId(type.id)
-      try {
-        await updateTypeStatusAsync({ id: Number(type.id), status: nextStatus })
-        toast.success('状态更新成功')
-        // 字典选项已变更，同步刷新全局字典 store
-        useDictStore.getState().refresh()
-      } catch (err) {
-        mutateTypes((prev) =>
-          (prev ?? []).map((item) =>
-            item.id === type.id ? { ...item, status: prevStatus } : item
-          )
-        )
-        toast.error((err as Error).message)
-      } finally {
-        setSwitchingTypeId(null)
-      }
+  const mutateTypeItems = useCallback(
+    (updater: (items: readonly DictTypeItem[]) => DictTypeItem[]) => {
+      mutateTypes((prev) => updater(prev ?? []))
     },
-    [mutateTypes, updateTypeStatusAsync]
+    [mutateTypes]
   )
-
-  // 行内切换字典项状态：先乐观更新本地列表，接口失败时回滚
-  const handleItemStatusChange = useCallback(
-    async (node: DictItemTreeNode, checked: boolean) => {
-      const nextStatus = checked ? 0 : 1
-      const prevStatus = node.status
-      mutateItems((prev) =>
-        (prev ?? []).map((item) =>
-          item.id === node.id ? { ...item, status: nextStatus } : item
-        )
-      )
-      setSwitchingItemId(node.id)
-      try {
-        await updateItemStatusAsync({ id: Number(node.id), status: nextStatus })
-        toast.success('状态更新成功')
-        // 字典选项已变更，同步刷新全局字典 store
-        useDictStore.getState().refresh()
-      } catch (err) {
-        mutateItems((prev) =>
-          (prev ?? []).map((item) =>
-            item.id === node.id ? { ...item, status: prevStatus } : item
-          )
-        )
-        toast.error((err as Error).message)
-      } finally {
-        setSwitchingItemId(null)
-      }
+  const mutateDictItems = useCallback(
+    (updater: (items: readonly DictItem[]) => DictItem[]) => {
+      mutateItemData((prev) => updater(prev ?? []))
     },
-    [mutateItems, updateItemStatusAsync]
+    [mutateItemData]
   )
+  const refreshDictOptions = useCallback(() => {
+    // 字典选项已变更，同步刷新全局字典 store。
+    useDictStore.getState().refresh()
+  }, [])
+  const typeStatus = useOptimisticStatus(updateDictTypeStatus, {
+    mutateItems: mutateTypeItems,
+    getParams: (type, nextStatus) => ({
+      id: Number(type.id),
+      status: nextStatus,
+    }),
+    onSuccess: refreshDictOptions,
+  })
+  const itemStatus = useOptimisticStatus(updateDictItemStatus, {
+    mutateItems: mutateDictItems,
+    getParams: (node, nextStatus) => ({
+      id: Number(node.id),
+      status: nextStatus,
+    }),
+    onSuccess: refreshDictOptions,
+  })
 
   // ── 交互回调 ─────────────────────────────────────────
   const handleAddType = useCallback(() => {
@@ -427,18 +245,6 @@ export default function Dict() {
     }
   }, [selectedTypeId, runItems])
 
-  const toggleNode = useCallback((id: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }, [])
-
   return (
     <div className='flex h-full min-h-0'>
       {/* 左栏：字典类型 */}
@@ -454,37 +260,27 @@ export default function Dict() {
           </Button>
         </div>
         <div className='flex-1 overflow-auto p-2'>
-          {typeLoading ? (
-            <div className='grid place-items-center py-10'>
-              <Loading />
-            </div>
-          ) : typeError ? (
-            <div className='text-destructive px-2 py-4 text-sm'>
-              {typeError.message}
-            </div>
-          ) : types.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>暂无字典类型</EmptyTitle>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            types.map((type) => (
+          <TreePanel
+            loading={typeLoading}
+            error={typeError?.message}
+            empty={types.length === 0}
+            emptyTitle='暂无字典类型'
+          >
+            {types.map((type) => (
               <TypeRow
                 key={type.id}
                 type={type}
                 selected={String(type.id) === selectedTypeId}
-                statusLoading={updateTypeStatusLoading}
-                switchingId={switchingTypeId}
+                isStatusLoading={typeStatus.isSwitching}
                 onSelect={(item) => {
                   setSelectedTypeId(String(item.id))
                 }}
                 onEdit={handleEditType}
                 onDelete={setDeleteTypeTarget}
-                onStatusChange={handleTypeStatusChange}
+                onStatusChange={typeStatus.handleStatusChange}
               />
-            ))
-          )}
+            ))}
+          </TreePanel>
         </div>
       </div>
 
@@ -513,35 +309,24 @@ export default function Dict() {
                 </EmptyHeader>
               </Empty>
             </div>
-          ) : itemLoading ? (
-            <div className='grid place-items-center py-10'>
-              <Loading />
-            </div>
-          ) : itemError ? (
-            <div className='text-destructive px-2 py-4 text-sm'>
-              {itemError.message}
-            </div>
-          ) : itemTree.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>暂无字典项</EmptyTitle>
-              </EmptyHeader>
-            </Empty>
           ) : (
-            itemTree.map((node) => (
-              <ItemTreeNode
-                key={node.id}
-                node={node}
-                expanded={expanded}
-                statusLoading={updateItemStatusLoading}
-                switchingId={switchingItemId}
-                onToggle={toggleNode}
+            <TreePanel
+              loading={itemLoading}
+              error={itemError?.message}
+              empty={itemTree.length === 0}
+              emptyTitle='暂无字典项'
+            >
+              <DictItemTree
+                nodes={itemTree}
+                expandedKeys={expandedKeys}
+                onExpand={setExpandedKeys}
+                isStatusLoading={itemStatus.isSwitching}
                 onAddChild={(item) => handleAddItem(Number(item.id))}
                 onEdit={handleEditItem}
                 onDelete={setDeleteItemTarget}
-                onStatusChange={handleItemStatusChange}
+                onStatusChange={itemStatus.handleStatusChange}
               />
-            ))
+            </TreePanel>
           )}
         </div>
       </div>

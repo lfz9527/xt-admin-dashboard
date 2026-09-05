@@ -1,4 +1,10 @@
 import type { DictItem } from '@/service/dict'
+import {
+  collectTreeSubtreeIds,
+  countTreeSubtree,
+  findTreeNode as findTreeNodeInTree,
+  walkTree,
+} from '@/utils/tree'
 
 /** 管理树节点：在字典项基础上附加 children（同级按 sort、id 升序） */
 export type DictItemTreeNode = DictItem & { children: DictItemTreeNode[] }
@@ -32,35 +38,22 @@ export function buildDictItemTree(items: DictItem[]): DictItemTreeNode[] {
   return roots
 }
 
-/** 在树中按 id 查找节点 */
+/** 在字典项树中按 id 查找节点。 */
 export function findTreeNode(
   nodes: DictItemTreeNode[],
   id: number
 ): DictItemTreeNode | null {
-  for (const node of nodes) {
-    if (Number(node.id) === id) return node
-    const found = findTreeNode(node.children, id)
-    if (found) return found
-  }
-  return null
+  return findTreeNodeInTree(nodes, id)
 }
 
-/** 统计节点子树节点数（含自身） */
+/** 统计字典项子树节点数（含自身）。 */
 export function countItemSubtree(node: DictItemTreeNode): number {
-  return (
-    1 + node.children.reduce((sum, child) => sum + countItemSubtree(child), 0)
-  )
+  return countTreeSubtree(node)
 }
 
-/** 收集节点自身及全部子孙 id（用于编辑时排除，防止移动到自身/子孙下） */
+/** 收集字典项节点自身及全部子孙 id。 */
 export function collectItemSubtreeIds(node: DictItemTreeNode): Set<number> {
-  const ids = new Set<number>()
-  const walk = (item: DictItemTreeNode) => {
-    ids.add(Number(item.id))
-    item.children.forEach(walk)
-  }
-  walk(node)
-  return ids
+  return collectTreeSubtreeIds(node, (item) => Number(item.id))
 }
 
 /**
@@ -73,18 +66,14 @@ export function buildParentOptions(
   excluded: Set<number>
 ): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = []
-  const walk = (nodes: DictItemTreeNode[], level: number) => {
-    for (const node of nodes) {
-      // 命中排除集合：跳过该节点及其整个子树（不允许选为父级）
-      if (excluded.has(Number(node.id))) continue
-      // 用不换行空格模拟层级缩进
-      options.push({
-        value: String(node.id),
-        label: `${'\u00a0\u00a0'.repeat(level)}${node.label}`,
-      })
-      walk(node.children, level + 1)
-    }
-  }
-  walk(tree, 0)
+  walkTree(tree, (node, { depth }) => {
+    // 命中排除集合：跳过该节点及其整个子树（不允许选为父级）。
+    if (excluded.has(Number(node.id))) return false
+    // 用不换行空格模拟层级缩进。
+    options.push({
+      value: String(node.id),
+      label: `${'\u00a0\u00a0'.repeat(depth)}${node.label}`,
+    })
+  })
   return options
 }

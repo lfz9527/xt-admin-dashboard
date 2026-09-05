@@ -1,5 +1,6 @@
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { deleteBookmark, type BookmarkNode } from '@/service/bookmarks'
+import { countTreeSubtree } from '@/utils/tree'
 
 type DeleteBookmarkDialogProps = {
   open: boolean
@@ -10,11 +11,6 @@ type DeleteBookmarkDialogProps = {
   node: BookmarkNode | null
 }
 
-/** 统计节点及其全部子孙数量 */
-function countSubtree(node: BookmarkNode): number {
-  return 1 + node.children.reduce((sum, child) => sum + countSubtree(child), 0)
-}
-
 export default function DeleteBookmarkDialog({
   open,
   onOpenChange,
@@ -22,7 +18,7 @@ export default function DeleteBookmarkDialog({
   node,
 }: DeleteBookmarkDialogProps) {
   const isFolder = node?.type === 1
-  const subtreeCount = node ? countSubtree(node) - 1 : 0
+  const subtreeCount = node ? countTreeSubtree(node) - 1 : 0
 
   return (
     <DeleteConfirmDialog
