@@ -4,8 +4,15 @@ import { createRoot } from 'react-dom/client'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import GlobalCrash from '@/components/ErrorBoundary/GlobalCrash'
 import { IS_PROD } from '@/constants'
+import { authLogout, getAuthToken } from '@/features/auth/session'
+import { configureAuthHandlers } from '@/service/request'
 import App from './app'
 import '@/styles/tailwind.css'
+
+configureAuthHandlers({
+  getToken: getAuthToken,
+  onUnauthorized: authLogout,
+})
 
 // 移动端调试控制台是否启用仅由 .env 的 VITE_USE_ERUDA 控制
 if (import.meta.env.VITE_USE_ERUDA) {

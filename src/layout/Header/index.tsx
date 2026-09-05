@@ -7,7 +7,7 @@ import { useFullscreen, useTheme, useIsMobile } from '@/hooks'
 import { Breadcrumb, useMenuBreadcrumb } from '@/components/Breadcrumb'
 import { Separator } from '@/ui/Separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/Avatar'
-import { authLogout } from '@/service/request'
+import { authLogout } from '@/features/auth/session'
 import {
   DropdownMenu,
   DropdownMenuContent,

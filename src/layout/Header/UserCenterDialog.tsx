@@ -12,7 +12,7 @@ import {
   type ForgotPasswordValues,
 } from '@/features/auth/types'
 import { useRequest, useDictOptions } from '@/hooks'
-import { authLogout } from '@/service/request'
+import { authLogout } from '@/features/auth/session'
 import { updateProfile, uploadAvatar } from '@/service/users'
 import useAuthor from '@/store/useAuthor'
 import { Button } from '@/ui/Button'

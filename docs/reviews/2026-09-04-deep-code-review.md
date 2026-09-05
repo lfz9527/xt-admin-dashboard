@@ -18,7 +18,7 @@
 
 1. **当日提交引入的测试回归**(需立即修复,P1-1);
 2. **凭据持久化与前端权限信任模型的安全硬伤**(P1-2/P1-3);
-3. **一条静态循环依赖与 store/service 双向耦合**(P2-1/P2-2);
+3. **一条静态循环依赖与 store/service 双向耦合**(P2-1/P2-2,均已修复);
 4. **约 2500+ 行的可治理重复模板**(P2-9/P2-10);另有零消费组件/函数与预留依赖,按约定允许存在、仅作提醒(P3 条目)。
 
 未发现 P0(无数据损坏、无系统性不可用)。
@@ -79,7 +79,7 @@
 - **P2-1 · 全项目唯一静态循环依赖**:
   `src/router/routes.tsx:16 → src/layout/index.tsx → src/layout/baseLayout.tsx → src/components/Menu/menu.tsx → src/components/Menu/menus.tsx:16 → 回 routes.tsx`,闭环上全为值导入。当前靠 `menus.tsx` 在组件体内惰性读取 `routes` + 页面全 `React.lazy` 规避;任何把该访问提前到模块顶层的改动都会在加载期崩溃。**置信度高**。建议把菜单派生(`routeToMenus`)收敛为独立叶子模块或经 store 注入。✅ 已修复,详见文末「修复记录」。
 - **P2-2 · store ↔ service 双向依赖**:
-  `src/service/request.ts:3` 值依赖 `src/store/useAuthor`(token 读取),而 `src/store/useDictStore.ts:3-7` 值依赖 `src/service/dict`;叠加 `request.ts:69` 动态 `import('@/router')`(401 跳登录)。建议 token 改为注入式/回调式获取切断 service→store;useDictStore 保持 store→service 单向即可。
+  `src/service/request.ts:3` 值依赖 `src/store/useAuthor`(token 读取),而 `src/store/useDictStore.ts:3-7` 值依赖 `src/service/dict`;叠加 `request.ts:69` 动态 `import('@/router')`(401 跳登录)。建议 token 改为注入式/回调式获取切断 service→store;useDictStore 保持 store→service 单向即可。✅ 已修复,详见文末「修复记录」。
 - **P2-3 · hooks 全量桶拖垮依赖边界**:
   `src/hooks/index.ts` 全量 `export *`,29 个文件经它导入;`src/ui/Sidebar/context.tsx:11` 仅需 `useIsMobile` 却经桶连带执行整个 store/service 初始化链(useTheme → store → useDictStore → service/dict)。建议 ui 层直引单文件、桶按需拆分。✅ 已修复,详见文末「修复记录」。
 - **P2-4 · 双原语库并存(迁移尾巴)**:
@@ -127,7 +127,7 @@
 
 ## 测试覆盖薄弱区域
 
-- **`src/service` 全层 0 测试**:57 个测试文件中无任何 service/HttpClient/request/拦截器测试——401 处理、拦截器链、错误归一化是全项目最关键且最容易回归的路径,建议优先补拦截器级测试。
+- **`src/service` 测试仍薄弱**:P2-2 修复已新增 request 认证注入与 401 回调的 2 个拦截器测试;HttpClient、FetchAdapter、错误归一化等其余关键路径仍无直接测试,建议继续补齐。
 - **`src/ui` 30 个组件目录仅 2 个测试**(Form、Switch);AlertDialog/Dialog/DropdownMenu/Sheet/Toast/Sidebar/Select 等交互原语零覆盖,主要依赖下游间接覆盖。
 - **store 缺 useMenu、useSetting 测试**(persist 逻辑);features 的 5 个 FormDialog/DeleteDialog 无直接测试(经页面用例间接覆盖)。
 - **覆盖良好的区域**:hooks 工具链、router(守卫/菜单派生/路由结构)、pages 主流程、NavTab 系列(7 个测试文件,近期改动均有配套)。
@@ -145,13 +145,26 @@
 
 1. **修复 P1-1 测试回归**,并补齐「懒加载改动需全量跑 components 测试」的提交前检查习惯;
 2. **安全三件套**:凭据去落盘/登出清理(P1-2)、与后端确认 RBAC 并收窄 roleKey 信任(P1-3)、.env 出库 + 补 .gitignore(P1-4);
-3. 断 service↔store 双向环(P2-2),并把菜单派生收敛出 routes(P2-1 环);
+3. **P2-1/P2-2 均已完成修复**:菜单派生已收敛出 routes,请求层认证状态已改为由应用入口注入;
 4. 重复治理按「先树工具 → 再 FormDialog 体系 → 后列表页骨架」推进(P2-9/P2-10),两项均已完成,后续继续以现有页面测试为回归护栏;
 5. 零消费组件/函数(P3-2~P3-4)按约定允许存在、无需处理,仅作提醒;补齐 service 拦截器测试。
 
 ---
 
 ## 修复记录
+
+### P2-2 · store ↔ service 双向依赖
+
+- **修复时间**:2026-09-06
+- **修复方式**:
+  1. `src/service/request.ts` 删除对 `src/store/useAuthor` 的值导入,新增 `configureAuthHandlers`,仅通过 `getToken` 与 `onUnauthorized` 回调访问认证能力;
+  2. 新增 `src/features/auth/session.ts`,集中提供 token 读取及「清理认证状态并跳转登录页」能力,Header 手动登出与修改密码后登出均改为使用该模块;
+  3. `src/main.tsx` 作为应用组合入口将 auth session 注入请求层;`src/store/useDictStore.ts` 继续单向依赖 `src/service/dict`,运行时依赖方向统一为 store → service,不再形成闭环;
+  4. 新增 `test/service/request.test.ts` 与 `test/features/authSession.test.ts`,分别覆盖请求层认证契约及 auth session 的状态清理、登录页跳转行为。
+- **修复证据**:
+  - `src/service/` 对 `src/store/` 的导入为 0;`src/store/useAuthor.ts` 对 service 的引用仅为类型导入,运行期擦除;
+  - `pnpm exec vitest run test/service/request.test.ts test/features/authSession.test.ts test/store/useDictStore.test.ts test/hooks/useRequest.test.ts test/components/Header.test.tsx`:5 个测试文件、26 个用例全部通过;
+  - `pnpm lint`、`pnpm compile` 通过。
 
 ### P2-9 · CRUD 弹窗体系同构
 

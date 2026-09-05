@@ -1,6 +1,5 @@
 import { HttpClient } from './http'
 import type { HttpError, HttpResponse } from './http/types'
-import useAuthor from '@/store/useAuthor'
 
 export type BusResponse<T = unknown> = {
   code: number
@@ -21,9 +20,24 @@ export const http = HttpClient.create({
   timeout: 10000,
 })
 
+type AuthHandlers = {
+  getToken: () => string | number | null
+  onUnauthorized: () => void
+}
+
+let authHandlers: AuthHandlers = {
+  getToken: () => null,
+  onUnauthorized: () => undefined,
+}
+
+/** 由应用组合层注入认证状态，避免请求基础设施反向依赖 store。 */
+export function configureAuthHandlers(handlers: AuthHandlers) {
+  authHandlers = handlers
+}
+
 // 请求拦截：注入鉴权头
 http.interceptors.request.use((config) => {
-  const token = useAuthor.getState().token
+  const token = authHandlers.getToken()
   if (token) {
     config.headers = {
       ...config.headers,
@@ -56,17 +70,7 @@ http.interceptors.response.use(unwrapResponse)
 http.interceptors.error.use(async (err: HttpError) => {
   // 401 未授权：清除凭证并重定向到登录页
   if (err.status === CODE.AUTHCODE) {
-    authLogout()
+    authHandlers.onUnauthorized()
   }
   throw err
 })
-
-export function authLogout() {
-  useAuthor.getState().setToken('')
-  useAuthor.getState().setUser(null)
-  useAuthor.getState().setRoleKey(null)
-  // 动态导入：顶层静态导入会与 router/routes/页面组件形成加载期循环依赖
-  import('@/router').then(({ default: router }) => {
-    router.navigate('/login', { replace: true })
-  })
-}
